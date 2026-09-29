@@ -29,9 +29,11 @@ const [rw, , rd] = LAYOUT.rack.size
 const BOXES: readonly BoxSlot[] = [
   { slug: 'terra', position: [sx - 0.62, sy + 0.935, sz + 0.08], color: '#57b894', size: BOARD_BOX },
   { slug: 'aldeia_dorme', position: [sx - 0.24, sy + 0.935, sz + 0.08], color: '#3a3f8f', size: BOARD_BOX },
-  { slug: 'porrilandia', position: [rx + 0.35, RACK_TOP_Y + 0.085, rz + 0.02], color: '#e4572e', size: GAME_CASE },
-  { slug: 'peter', position: [rx + 0.52, RACK_TOP_Y + 0.085, rz + 0.02], color: '#4c8bf5', size: GAME_CASE },
-  { slug: 'o_anel', position: [rx + 0.69, RACK_TOP_Y + 0.085, rz + 0.02], color: '#f2c14e', size: GAME_CASE },
+  { slug: 'porrilandia', position: [rx + 0.25, RACK_TOP_Y + 0.085, rz + 0.02], color: '#e4572e', size: GAME_CASE },
+  { slug: 'peter', position: [rx + 0.38, RACK_TOP_Y + 0.085, rz + 0.02], color: '#4c8bf5', size: GAME_CASE },
+  { slug: 'o_anel', position: [rx + 0.51, RACK_TOP_Y + 0.085, rz + 0.02], color: '#f2c14e', size: GAME_CASE },
+  { slug: 'racco', position: [rx + 0.64, RACK_TOP_Y + 0.085, rz + 0.02], color: '#10b981', size: GAME_CASE },
+  { slug: 'memory_game', position: [rx + 0.77, RACK_TOP_Y + 0.085, rz + 0.02], color: '#a855f7', size: GAME_CASE },
 ]
 
 /**

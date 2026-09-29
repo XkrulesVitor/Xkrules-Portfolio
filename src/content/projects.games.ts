@@ -1,10 +1,5 @@
 import type { GameProject } from './types'
 
-// Fonte: repositórios públicos em github.com/XkrulesVitor e informações do próprio autor.
-// Os slugs são os de `GameSlug` e os mesmos das peças da estante (nó `box_<slug>`).
-// `accent` espelha a cor da caixa 3D na estante (provisória no grey-box).
-// [TODO] capturas de tela e capas em public/media/games/<slug>/ (webp).
-// [TODO] itch.io: adicionar links `kind: 'itch'` quando os jogos forem publicados lá.
 export const GAME_PROJECTS: readonly GameProject[] = [
   {
     slug: 'porrilandia',
@@ -12,10 +7,11 @@ export const GAME_PROJECTS: readonly GameProject[] = [
     kind: 'digital',
     context: 'Game Jam CrazyGames',
     year: 2026,
-    summary: '[TODO: descrever]',
+    summary: 'Em breve.',
     accent: '#e4572e',
     images: [],
     links: [
+      { label: 'Itch.io', href: 'https://xkrulesf3lipe.itch.io/porriland', kind: 'itch' },
       { label: 'Repositório', href: 'https://github.com/XkrulesVitor/PorriLand', kind: 'repo' },
     ],
   },
@@ -26,11 +22,11 @@ export const GAME_PROJECTS: readonly GameProject[] = [
     context: 'Game Jam CPG 2026',
     engine: 'GameMaker',
     year: 2026,
-    summary:
-      'Jogo de cartas em que o jogador combina cartas numéricas e operações matemáticas para zerar a vida do inimigo. Entre as fases, escolhe 1 de 3 cartas de recompensa, no estilo roguelike.',
+    summary: 'Em breve.',
     accent: '#4c8bf5',
     images: [],
     links: [
+      { label: 'Itch.io', href: 'https://xkrulesf3lipe.itch.io/piter', kind: 'itch' },
       {
         label: 'Repositório',
         href: 'https://github.com/XkrulesVitor/PIter-Math-Adventure',
@@ -43,17 +39,42 @@ export const GAME_PROJECTS: readonly GameProject[] = [
     title: 'O Anel',
     kind: 'digital',
     context: 'Game Jam',
-    summary: '[TODO: descrever]',
+    summary: 'Em breve.',
     accent: '#f2c14e',
     images: [],
-    links: [],
+    links: [
+      { label: 'Itch.io', href: 'https://xkrulesf3lipe.itch.io/um-jogo-de-hordas-o-anel', kind: 'itch' },
+    ],
+  },
+  {
+    slug: 'racco',
+    title: 'Racco',
+    kind: 'digital',
+    context: 'Game Jam',
+    summary: 'Em breve.',
+    accent: '#10b981',
+    images: [],
+    links: [
+      { label: 'Itch.io', href: 'https://beinez.itch.io/racco', kind: 'itch' },
+    ],
+  },
+  {
+    slug: 'memory_game',
+    title: 'Jogo da Memória',
+    kind: 'digital',
+    summary: 'Em breve.',
+    accent: '#a855f7',
+    images: [],
+    links: [
+      { label: 'Repositório', href: 'https://github.com/XkrulesVitor/Memory-Game-React', kind: 'repo' },
+    ],
   },
   {
     slug: 'terra',
     title: 'Expansão de Terra',
     kind: 'tabuleiro',
     context: 'Expansão',
-    summary: '[TODO: descrever]',
+    summary: 'Em breve.',
     accent: '#57b894',
     images: [],
     links: [],
@@ -62,7 +83,7 @@ export const GAME_PROJECTS: readonly GameProject[] = [
     slug: 'aldeia_dorme',
     title: 'A Aldeia Dorme',
     kind: 'tabuleiro',
-    summary: '[TODO: descrever]',
+    summary: 'Em breve.',
     accent: '#3a3f8f',
     images: [],
     links: [],

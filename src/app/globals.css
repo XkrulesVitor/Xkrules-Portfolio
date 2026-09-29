@@ -100,7 +100,7 @@
 
 /* Registro global do --px para cálculo dinâmico via container queries */
 @property --px {
-  syntax: '<length>';
+  syntax: '*';
   inherits: true;
   initial-value: 1px;
 }

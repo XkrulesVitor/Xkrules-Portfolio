@@ -1,12 +1,10 @@
 import type { WebProject } from './types'
 
-// Fonte: repositórios públicos em github.com/XkrulesVitor (READMEs e linguagens), set/2026.
-// [TODO] capturas de tela em public/media/web/<slug>/ (webp, 1280x800) e vídeos curtos.
 export const WEB_PROJECTS: readonly WebProject[] = [
   {
     slug: 'inatel2',
     title: 'Inatel²',
-    summary: 'Calculadora de notas para os cursos do Inatel.',
+    summary: 'Em breve.',
     stack: ['Next.js', 'React', 'TypeScript'],
     repoUrl: 'https://github.com/XkrulesVitor/Inatel2',
     year: 2025,
@@ -16,9 +14,10 @@ export const WEB_PROJECTS: readonly WebProject[] = [
   {
     slug: 'cp2ejr',
     title: 'CP2eJR - Corporative',
-    summary: 'Replicação de site feita para o processo seletivo da CP2eJR.',
+    summary: 'Em breve.',
+    role: 'Gerente',
     stack: ['HTML', 'CSS', 'JavaScript'],
-    repoUrl: 'https://github.com/XkrulesVitor/Case_CP2eJR',
+    repoUrl: 'https://github.com/NECP2eJr/Corporative-CP2eJr',
     year: 2025,
     images: [],
     accent: '#22c55e',
@@ -26,12 +25,8 @@ export const WEB_PROJECTS: readonly WebProject[] = [
   {
     slug: 'mrp-mobi',
     title: 'MRP Mobi',
-    summary: 'Landing page de indicação para o app MRP Mobi, pensada para conversão.',
-    details: [
-      'Carrossel com auto-play dos seis pilares do app, animação de entrada no hero ao rolar e QR code com cópia do link em um clique.',
-      'SEO completo com Open Graph, Twitter Cards, JSON-LD, sitemap e robots.',
-    ],
-    stack: ['Next.js 15', 'React 19', 'TypeScript', 'Tailwind CSS v4', 'Framer Motion', 'Lucide'],
+    summary: 'Em breve.',
+    stack: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS'],
     repoUrl: 'https://github.com/XkrulesVitor/MRP-Mobi',
     liveUrl: 'https://mobi-lilac.vercel.app',
     year: 2026,
@@ -41,8 +36,7 @@ export const WEB_PROJECTS: readonly WebProject[] = [
   {
     slug: 'memory-game',
     title: 'Jogo da Memória',
-    summary:
-      'Jogo da memória responsivo feito para o ecossistema de sites da CP2eJR. O tabuleiro se ajusta à quantidade de imagens.',
+    summary: 'Em breve.',
     stack: ['Next.js', 'React', 'Tailwind CSS'],
     repoUrl: 'https://github.com/XkrulesVitor/Memory-Game-React',
     year: 2026,
@@ -52,12 +46,66 @@ export const WEB_PROJECTS: readonly WebProject[] = [
   {
     slug: 'love-letter',
     title: 'Carta de Amor Interativa',
-    summary:
-      'Template de carta digital com envelope animado, carrossel de fotos e trilha sonora, configurável por um único arquivo.',
-    stack: ['Next.js 14', 'TypeScript', 'Tailwind CSS', 'Lottie'],
+    summary: 'Em breve.',
+    stack: ['Next.js', 'TypeScript', 'Tailwind CSS'],
     repoUrl: 'https://github.com/XkrulesVitor/Template-for-Love-Letter',
     year: 2026,
     images: [],
     accent: '#f43f5e',
+  },
+  {
+    slug: 'made-by-you',
+    title: 'Made By You',
+    summary: 'Em breve.',
+    role: 'Contribuinte (Privado)',
+    stack: ['React', 'TypeScript'],
+    repoUrl: 'https://github.com/XkrulesVitor/Made-By-You',
+    year: 2026,
+    images: [],
+    accent: '#ec4899',
+  },
+  {
+    slug: 'noronha-app',
+    title: 'Noronha App',
+    summary: 'Em breve.',
+    role: 'Privado',
+    stack: ['React Native', 'TypeScript'],
+    repoUrl: 'https://github.com/XkrulesVitor/Noronha-App',
+    year: 2026,
+    images: [],
+    accent: '#06b6d4',
+  },
+  {
+    slug: 'val-finance',
+    title: 'V.A.L Finance',
+    summary: 'Em breve.',
+    role: 'Privado',
+    stack: ['Next.js', 'TypeScript', 'Tailwind CSS'],
+    repoUrl: 'https://github.com/XkrulesVitor/V.A.L-Finance',
+    year: 2026,
+    images: [],
+    accent: '#10b981',
+  },
+  {
+    slug: 'lp-jessica',
+    title: 'LP Jessica',
+    summary: 'Em breve.',
+    role: 'Contribuinte',
+    stack: ['HTML', 'CSS', 'JavaScript'],
+    repoUrl: 'https://github.com/NECP2eJr/LP-Jessica',
+    year: 2025,
+    images: [],
+    accent: '#f59e0b',
+  },
+  {
+    slug: 'dicionario-c04a',
+    title: 'Dicionário C04A',
+    summary: 'Em breve.',
+    role: 'Contribuinte',
+    stack: ['React', 'TypeScript'],
+    repoUrl: 'https://github.com/enzors444/dicionario-C04A',
+    year: 2025,
+    images: [],
+    accent: '#6366f1',
   },
 ]

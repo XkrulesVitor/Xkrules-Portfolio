@@ -116,7 +116,7 @@ export interface PrintShowcase {
 }
 
 /** Slugs das peças físicas da estante (nó `box_<slug>`, ARCHITECTURE §6.4). */
-export type GameSlug = 'terra' | 'aldeia_dorme' | 'porrilandia' | 'peter' | 'o_anel'
+export type GameSlug = 'terra' | 'aldeia_dorme' | 'porrilandia' | 'peter' | 'o_anel' | 'racco' | 'memory_game'
 
 export type GameKind = 'tabuleiro' | 'digital'
 
