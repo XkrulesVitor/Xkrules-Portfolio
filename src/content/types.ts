@@ -116,6 +116,8 @@ export interface GameProject {
   year?: number
   summary: string
   engine?: string
+  /** Cor de destaque do cartão no painel (hex). Espelha a cor da caixa 3D na estante. */
+  accent?: string
   images: readonly MediaImage[]
   links: readonly ExternalLink[]
 }
