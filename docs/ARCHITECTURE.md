@@ -8,6 +8,8 @@ Relacionados: [ASSET_PIPELINE.md](./ASSET_PIPELINE.md) · [BACKLOG.md](./BACKLOG
 
 ## 0. Decisões fixas (TL;DR)
 
+> **Escopo atual: só desktop (decisão de 2026-09-29).** Mobile e touch ficam fora do escopo por enquanto. O código responsivo que já existe (bottom-sheet dos painéis, `ProjectsApp` avulso) pode ficar, mas não recebe trabalho nem entra nos critérios de aceite. Tarefas de mobile no backlog estão marcadas como adiadas.
+
 | Tema | Decisão | Motivo |
 |---|---|---|
 | Framework | Next 16.3 App Router, **uma única rota `/`** | O portfólio é uma SPA espacial; o App Router só serve shell, metadata e fallback SEO |
@@ -206,7 +208,7 @@ interface CameraPreset {
 - Cada hotspot tem seu preset. Desk: câmera **exatamente** perpendicular à tela do monitor (target = centro da tela, position = target + normal * d), `userControl:false`.
 - Preferência `prefers-reduced-motion`: `smoothTime = 0` e `setLookAt(..., false)`.
 - Afinar valores com `leva` em dev (painel `Camera` com botões "copiar preset atual"). Presets finais ficam hardcoded.
-- **Enquadramento responsivo (pendente, BACKLOG 3.6)**: os presets são posições fixas, afinadas em 16:9. Em 4:3 e em retrato o conteúdo escapa do quadro ou fica sob o painel (medido na estante: em 4:3 a TV entra sob o painel esquerdo). A solução planejada troca `position` fixa por `{ focusBox, direction, panelSide }` e deixa o `CameraRig` calcular a distância e o deslocamento lateral a partir do aspect e da largura do painel.
+- **Enquadramento responsivo (pendente, BACKLOG 3.6)**: os presets são posições fixas, afinadas em 16:9. Em 4:3 o conteúdo escapa do quadro ou fica sob o painel (medido na estante: em 4:3 a TV entra sob o painel esquerdo). A solução planejada troca `position` fixa por `{ focusBox, direction, panelSide }` e deixa o `CameraRig` calcular a distância e o deslocamento lateral a partir do aspect e da largura do painel.
 - Câmera ortográfica **não** será usada: o zoom-in nos hotspots precisa de perspectiva. O "look isométrico" vem de fov baixo (~30–35) e ângulo fixo.
 
 ---
@@ -336,7 +338,7 @@ A TV não tem hitbox própria. O hover nela cai na hitbox da mesa, o que mantém
 **Budget alvo (desktop médio, 1080p)**
 | Métrica | Alvo |
 |---|---|
-| Frame | ≤ 16 ms (60 fps); ≥ 30 fps em mobile |
+| Frame | ≤ 16 ms (60 fps) em desktop |
 | Draw calls | < 120 |
 | Triângulos | < 350k |
 | Texturas | 1 lightmap 2K (KTX2) + demais ≤ 1K; total VRAM < 80 MB |
@@ -371,7 +373,7 @@ Layout do `Overlay`:
 - Painéis laterais: largura `min(440px, 92vw)`, altura `100dvh`, à direita (chair, printer) ou esquerda (shelf), decidido no registry.
 - `AnimatePresence mode="wait"` com variantes `initial: {x: 40, opacity: 0}`, `animate`, `exit`. Duração 0.35 s, ease `[0.22, 1, 0.36, 1]`.
 - `BackButton` aparece em `focused` e `transitioning(to hotspot)`. `Esc` sempre ativo.
-- Mobile (`< 768px`): painéis viram bottom-sheet (altura 70dvh) e o monitor **não** usa `Html transform`: o `ProjectsApp` é montado como painel DOM comum (mesmo componente, container diferente).
+- Mobile: **adiado** (fora do escopo por enquanto, ver §0). O plano, se voltar: abaixo de 768px os painéis viram bottom-sheet de 70dvh e o monitor não usa `Html transform`; o `ProjectsApp` entra como painel DOM comum.
 
 Ícones: `@phosphor-icons/react`, sempre pelos nomes com sufixo `Icon` (ex.: `GithubLogoIcon`; os nomes sem sufixo estão obsoletos). Peso `duotone` por padrão, que aproxima o estilo Bulk do Iconly da referência, e `regular` em controles pequenos. O pacote está em `experimental.optimizePackageImports`.
 
@@ -402,11 +404,11 @@ npm i @phosphor-icons/react
 | Fase | Entrega | Critério de pronto |
 |---|---|---|
 | 0 Fundação | deps, pastas, store, Canvas shell, loading, CameraRig+presets, hotspot system, overlay com Voltar/Esc, **grey-box** com primitivas | navegar entre 4 hotspots e home sem cortes, `tsc` e `lint` limpos |
-| 1 UI 2D | tokens, GlassCard, painéis About/Printer/Games data-driven, conteúdo real em `content/*` | painéis abrem/fecham com motion; mobile bottom-sheet |
+| 1 UI 2D | tokens, GlassCard, painéis About/Printer/Games data-driven, conteúdo real em `content/*` | painéis abrem/fecham com motion |
 | 2 Monitor OS | `MonitorHtml` + `ui/os/*` com janelas de projetos | clicável só em focused; sem distorção em resize |
 | 3 Micro-interações 3D | cadeira spring, telas emissive, impressora eixos, caixas + partículas, Bloom/DoF, quality tiers | 60 fps desktop com composer ligado |
 | 4 Assets reais | pipeline Blender → glb → gltfjsx, substituir placeholders | draw calls e tris dentro do budget |
-| 5 Polish | áudio, touch, reduced-motion, deep-link `?focus`, SEO fallback, analytics, deploy Vercel | Lighthouse perf ≥ 80 mobile |
+| 5 Polish | áudio, reduced-motion, deep-link `?focus`, SEO fallback, analytics, deploy Vercel | Lighthouse perf ≥ 80 desktop |
 
 ---
 

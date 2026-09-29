@@ -9,5 +9,6 @@
 - Nunca `setState` nem `new Vector3()` dentro de `useFrame`; use refs, `maath/easing.damp` ou `@react-spring/three`.
 - Câmera só se move via `CameraControls.setLookAt(..., true)` no `CameraRig`; nenhum outro componente toca a câmera.
 - Posições do quarto: fonte única em `src/experience/scene/layout.ts`. Placeholders, hitboxes e presets de câmera derivam dali.
+- Escopo atual: só desktop. Mobile e touch estão fora do escopo por enquanto (ARCHITECTURE §0).
 - Textos, links e imagens só em `src/content/*`.
 - Aceite de qualquer tarefa: `npx tsc --noEmit && npm run lint && npm run build` limpos.

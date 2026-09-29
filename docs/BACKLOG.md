@@ -101,9 +101,9 @@ Integração: o modelo arquiteto roda `tsc`, `lint`, `test` e `build`, revisa no
 
 ### 1.3 Painéis reais
 - `AboutPanel` (bio, skills em tags, redes), `PrinterPanel` (carrossel, specs, loja), `GamesPanel` (abas tabuleiro/digital; hover em item → `store.highlightBox`).
-- Variantes motion de §8; lado (esq/dir) vindo do registry; mobile bottom-sheet.
+- Variantes motion de §8; lado (esq/dir) vindo do registry.
 - `role="dialog"`, foco inicial, fechamento por Esc já existente.
-- Aceite: **A**; **M** desktop e 375px.
+- Aceite: **A**; **M** desktop.
 
 ---
 
@@ -112,14 +112,14 @@ Integração: o modelo arquiteto roda `tsc`, `lint`, `test` e `build`, revisa no
 ### 2.1 `ui/os/*`
 - `Desktop` (wallpaper, ícones), `Taskbar`, `Window` (arrastável dentro do desktop, minimizar/fechar, z-order), `apps/ProjectsApp` listando `projects.web` e `ProjectWindow` (vídeo/imagens, botões repo/live).
 - Layout inteiro relativo ao wrapper 1280×720 (`container-type: size`, `cqw/cqh`); proibido `vw/vh`.
-- `ProjectsApp` precisa funcionar sozinho, fora do `Desktop`, num container comum (no mobile a 2.2 o monta como painel DOM).
+- `ProjectsApp` funciona sozinho, fora do `Desktop`, num container comum (reservado para um mobile futuro).
 - Textos do SO em `content/os.ts`; projetos lidos de `content/projects.web.ts` sem alterá-lo.
 - Crie `src/app/dev/os/page.tsx` (server) renderizando um `Preview.tsx` com `'use client'` na mesma pasta.
 - Aceite: **A**; **M** em `/dev/os` renderizado num div 1280×720 e num 640×360 sem quebrar.
 
 ### 2.2 `MonitorHtml`
 - Conforme §6.2: `Html transform occlude="blending"`, `distanceFactor` calibrado para o plano `screen_monitor_main` do grey-box, `pointerEvents` ligado só em `focused:desk`, crossfade com o wallpaper emissivo.
-- Mobile: não montar `Html`; montar `ProjectsApp` como painel DOM.
+- Mobile: adiado (fora do escopo por enquanto).
 - Aceite: **A**; **M** redimensionar a janela não altera o layout interno; cliques só funcionam após a câmera parar.
 
 ---
@@ -131,7 +131,7 @@ Integração: o modelo arquiteto roda `tsc`, `lint`, `test` e `build`, revisa no
 ### 3.3 Impressora: `usePrinterAnimation` (§6.3) em `useFrame` com refs; peça cresce ao focar.
 ### 3.4 Estante: `GameBox` spring z + `highlightBox`; `ShelfParticles` (Sparkles ≤ 80) só em focused; shader de estática (`uTime`) usado pela `WallTv` no modo `shelf`.
 ### 3.5 `scene/Effects.tsx`: `EffectComposer` com `SMAA` + `Bloom(threshold .9, intensity .6, mipmapBlur)`; `DepthOfField` montado só quando `focus==='chair' && mode==='focused'`. `PerformanceMonitor` + `AdaptiveDpr` → `quality` (§7).
-### 3.6 Enquadramento responsivo (ARCHITECTURE §4): presets passam a `{ focusBox, direction, panelSide }` e o `CameraRig` calcula distância e deslocamento pelo aspect e pela largura do painel. Aceite: em 16:9, 4:3 e 390×844 (retrato, painel como bottom-sheet) o conteúdo do hotspot fica inteiro e fora do painel.
+### 3.6 Enquadramento responsivo (ARCHITECTURE §4): presets passam a `{ focusBox, direction, panelSide }` e o `CameraRig` calcula distância e deslocamento pelo aspect e pela largura do painel. Aceite: em 16:9 e 4:3 o conteúdo do hotspot fica inteiro e fora do painel.
 - Aceite (fase): **A**; **M** `r3f-perf` ≥ 55 fps desktop com composer; hover em cada hotspot mostra a animação; nada anima durante `transitioning`.
 
 ---
@@ -148,10 +148,10 @@ Integração: o modelo arquiteto roda `tsc`, `lint`, `test` e `build`, revisa no
 ## Fase 5 — Polish e deploy
 
 ### 5.1 Áudio (`useAudio`, mudo por padrão, toggle no Hud, ventoinha no hover desk, estática na estante).
-### 5.2 Touch: primeiro toque = click; gestos de órbita do camera-controls configurados; testar iOS Safari.
+### 5.2 Touch: **adiado** (mobile fora do escopo por enquanto).
 ### 5.3 `prefers-reduced-motion`: transições instantâneas, sem partículas, sem pulso de LED.
 ### 5.4 SEO/fallback: `<noscript>`, `h1` oculto, OpenGraph image estática (screenshot do diorama), `sitemap`.
-### 5.5 Deploy Vercel + analytics leve. Lighthouse mobile perf ≥ 80.
+### 5.5 Deploy Vercel + analytics leve. Lighthouse desktop perf ≥ 80.
 
 ---
 
