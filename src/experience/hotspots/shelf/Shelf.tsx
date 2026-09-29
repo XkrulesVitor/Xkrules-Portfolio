@@ -1,3 +1,4 @@
+import type { GameSlug } from '@/content/types'
 import { useHotspot } from '../../interaction/useHotspot'
 import { Hitbox } from '../../scene/placeholders/Hitbox'
 import { ShelfPlaceholder } from '../../scene/placeholders/ShelfPlaceholder'
@@ -6,7 +7,7 @@ import { GameBox } from './GameBox'
 
 interface BoxSlot {
   /** Mesmo slug de content/projects.games.ts: é o que `store.highlightBox` recebe. */
-  slug: string
+  slug: GameSlug
   position: Vec3
   color: string
   size?: Vec3

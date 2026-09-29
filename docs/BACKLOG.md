@@ -10,6 +10,7 @@ inteiro e siga as decisões, a estrutura de pastas e as convenções de código 
 Leia também node_modules/next/dist/docs/01-app/02-guides/lazy-loading.md (regra do ssr:false).
 Não altere docs/*.md. Não instale dependências além das listadas na tarefa.
 Ao terminar rode: npx tsc --noEmit && npm run lint && npm run build. Corrija até passar.
+(Em execução paralela vale o "Protocolo de execução paralela" abaixo: sem build, checagens filtradas.)
 Reporte em 10 linhas: arquivos criados, decisões tomadas, o que ficou pendente.
 ```
 
@@ -61,15 +62,41 @@ Legenda de aceite: **A** = `tsc`/`lint`/`build` limpos · **M** = verificação 
 
 ---
 
+## Protocolo de execução paralela (Fase 1 ‖ Fase 2.1)
+
+As duas tarefas rodam ao mesmo tempo **na mesma árvore de trabalho**. O que evita conflito é posse de arquivos, não isolamento.
+
+**Congelado antes do disparo** (commit `chore: contratos...`): tipos em `content/types.ts`, `content/projects.web.ts` com dados reais, identidade e links em `content/site.ts`, a rota `src/app/dev/layout.tsx` (404 em produção) e o pacote `@phosphor-icons/react` instalado.
+
+| Agente | Cria ou edita | Só lê |
+|---|---|---|
+| Fase 1 (UI e conteúdo) | `ui/primitives/**`, `ui/panels/**`, `content/about.ts`, `content/projects.print.ts`, `content/projects.games.ts`, `UI_TEXT` em `content/site.ts`, `src/app/dev/ui/**`, `src/app/globals.css` | `content/types.ts` (pode **adicionar campos opcionais** em About, Print e Game), `store/**`, `ui/overlay/**` |
+| Fase 2.1 (SO do monitor) | `ui/os/**`, `content/os.ts`, `src/app/dev/os/**` | `content/types.ts`, `content/projects.web.ts`, `content/site.ts` |
+
+Proibido para os dois: `package.json` e lockfile (nenhum `npm install`), `next.config.ts`, `tsconfig.json`, `src/experience/**`, `src/store/**`, `docs/**`, `git commit`. O tipo `WebProject` não muda.
+
+Verificação durante o trabalho:
+- Tipos: `npx tsc --noEmit` e olhar só os erros nos próprios caminhos. Erros em arquivos do outro agente, ou em `.next/**` (tipos de rota gerados, que ficam desatualizados quando nasce uma rota nova), são ignorados e citados no relatório. Nunca corrigir arquivo alheio.
+- Lint: `npx eslint <seus caminhos>`.
+- Sem `npm run build`: quem integra roda o build no fim.
+- Servidor: já existe um `next dev` em http://localhost:3000. Não iniciar outro e não parar esse. Um segundo `next dev` só imprime o PID do que já roda.
+- Browser: abrir uma aba própria para a sua rota (`/dev/ui` ou `/dev/os`). O painel pode estar oculto; nesse caso `requestAnimationFrame` não roda, então valide pelo DOM e por capturas, sem depender de animação terminar.
+
+Integração: o modelo arquiteto roda `tsc`, `lint`, `test` e `build`, revisa no browser e só então comita.
+
+---
+
 ## Fase 1 — UI 2D e conteúdo
 
 ### 1.1 Primitivas glass
 - `ui/primitives/GlassCard`, `Tabs`, `Carousel` (scroll-snap + setas), `IconButton`, `Kbd`, `Tag`. Estética: cartões translúcidos, blur, borda branca fina, micro-interações (hover eleva 2px, foco visível). Referências: glass.samasante.com, skiper-ui.com.
-- Aceite: **A**; **M** página `/dev/ui` (route group `(dev)` visível só em dev) exibindo todas as primitivas.
+- Ícones: `@phosphor-icons/react`, nomes com sufixo `Icon` (ex.: `GithubLogoIcon`), peso `duotone` por padrão e `regular` em controles pequenos.
+- Aceite: **A**; **M** página `/dev/ui` exibindo todas as primitivas. O layout `src/app/dev/layout.tsx` já existe; crie `src/app/dev/ui/page.tsx` (server) renderizando um `Preview.tsx` com `'use client'` na mesma pasta.
 
 ### 1.2 Conteúdo tipado
-- `content/about.ts`, `projects.web.ts`, `projects.print.ts`, `projects.games.ts` com os tipos de `content/types.ts`: `WebProject {slug,title,summary,stack[],repoUrl?,liveUrl?,video?,images[]}`, `PrintProject {slug,title,material:'resina'|'filamento',images[],slicer{layer,supports,...},storeUrl?}`, `GameProject {slug,title,kind:'tabuleiro'|'digital',role,summary,images[],links[]}`.
-- Preencher com os projetos citados (Inatel², CP2eJR Corporative, Reino de Amestris, Porrilândia, As Aventuras de Peter, expansão de Terra, A Aldeia Dorme, O Anel). Textos placeholder claros `[TODO: descrever]` onde faltar informação.
+- Os tipos já existem em `content/types.ts` (`AboutContent`, `PrintShowcase`, `PrintProject`, `GameProject`, `GameSlug`) e `projects.web.ts` já está preenchido com dados reais do GitHub.
+- Criar `content/about.ts`, `content/projects.print.ts` e `content/projects.games.ts` só com fatos confirmados (o prompt da tarefa traz os fatos). O que faltar vira `[TODO: ...]` explícito, nunca texto inventado.
+- Os slugs dos jogos são os de `GameSlug`, os mesmos das peças da estante.
 - Aceite: **A**.
 
 ### 1.3 Painéis reais
@@ -85,6 +112,9 @@ Legenda de aceite: **A** = `tsc`/`lint`/`build` limpos · **M** = verificação 
 ### 2.1 `ui/os/*`
 - `Desktop` (wallpaper, ícones), `Taskbar`, `Window` (arrastável dentro do desktop, minimizar/fechar, z-order), `apps/ProjectsApp` listando `projects.web` e `ProjectWindow` (vídeo/imagens, botões repo/live).
 - Layout inteiro relativo ao wrapper 1280×720 (`container-type: size`, `cqw/cqh`); proibido `vw/vh`.
+- `ProjectsApp` precisa funcionar sozinho, fora do `Desktop`, num container comum (no mobile a 2.2 o monta como painel DOM).
+- Textos do SO em `content/os.ts`; projetos lidos de `content/projects.web.ts` sem alterá-lo.
+- Crie `src/app/dev/os/page.tsx` (server) renderizando um `Preview.tsx` com `'use client'` na mesma pasta.
 - Aceite: **A**; **M** em `/dev/os` renderizado num div 1280×720 e num 640×360 sem quebrar.
 
 ### 2.2 `MonitorHtml`

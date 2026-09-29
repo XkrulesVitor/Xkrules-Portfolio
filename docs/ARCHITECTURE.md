@@ -49,6 +49,10 @@ Quatro hotspots: `chair` (Sobre mim), `desk` (Projetos Web / SO fictício no mon
 src/
 ├─ app/
 │  ├─ layout.tsx              # fonts, metadata, <html lang="pt-BR">
+│  ├─ dev/                    # SÓ em dev (404 em produção): previews isolados de UI
+│  │  ├─ layout.tsx           # guarda de NODE_ENV + rolagem local
+│  │  ├─ ui/                  # page.tsx + Preview.tsx ('use client'): primitivas e painéis
+│  │  └─ os/                  # page.tsx + Preview.tsx ('use client'): SO do monitor
 │  ├─ page.tsx                # SERVER component: SEO + <noscript> fallback + <ExperienceLoader/>
 │  └─ globals.css             # tokens de design (cores, glass, blur), reset
 │
@@ -103,6 +107,8 @@ src/
 │  ├─ projects.web.ts         # Inatel², CP2eJR Corporative, ...
 │  ├─ projects.print.ts       # Reino de Amestris
 │  ├─ projects.games.ts       # Porrilândia, Peter, Terra, Aldeia Dorme, O Anel...
+│  ├─ os.ts                   # textos do SO fictício do monitor
+│  ├─ site.ts                 # identidade, links globais e UI_TEXT (chrome)
 │  └─ types.ts
 │
 ├─ lib/
@@ -360,6 +366,8 @@ Layout do `Overlay`:
 - `BackButton` aparece em `focused` e `transitioning(to hotspot)`. `Esc` sempre ativo.
 - Mobile (`< 768px`): painéis viram bottom-sheet (altura 70dvh) e o monitor **não** usa `Html transform`: o `ProjectsApp` é montado como painel DOM comum (mesmo componente, container diferente).
 
+Ícones: `@phosphor-icons/react`, sempre pelos nomes com sufixo `Icon` (ex.: `GithubLogoIcon`; os nomes sem sufixo estão obsoletos). Peso `duotone` por padrão, que aproxima o estilo Bulk do Iconly da referência, e `regular` em controles pequenos. O pacote está em `experimental.optimizePackageImports`.
+
 Acessibilidade mínima: painéis com `role="dialog"`, foco inicial no título, `aria-label` no botão voltar; a página tem `<noscript>` e um `<h1>` visualmente oculto com resumo e links (SEO/leitores de tela).
 
 ---
@@ -371,6 +379,10 @@ npm i zustand @react-spring/three motion @react-three/postprocessing postprocess
 ```
 ```bash
 npm i -D leva r3f-perf @gltf-transform/cli
+```
+Ícones (instalado antes das Fases 1 e 2.1, para os dois agentes paralelos não tocarem no lockfile):
+```bash
+npm i @phosphor-icons/react
 ```
 `gltfjsx` roda via `npx gltfjsx`. Não instalar `gsap` (CameraControls + spring + motion cobrem tudo).
 
@@ -394,7 +406,7 @@ npm i -D leva r3f-perf @gltf-transform/cli
 ## 11. Convenções de código
 
 - TypeScript estrito; sem `any`. Props de componentes 3D tipadas com `ThreeElements['group']` etc.
-- Componentes 3D: PascalCase, um por arquivo, `'use client'` **apenas** em `ExperienceLoader.tsx` (o resto já está do lado client por ser importado dele).
+- Componentes 3D: PascalCase, um por arquivo, `'use client'` **apenas** em `ExperienceLoader.tsx` (o resto já está do lado client por ser importado dele). A única outra exceção são os `Preview.tsx` das rotas `src/app/dev/**`, que são entradas client próprias.
 - Nunca `setState` dentro de `useFrame`. Use refs + damp/spring.
 - Nunca criar `new Vector3()`/`new Color()` dentro de `useFrame`; alocar no módulo ou `useMemo`.
 - Nomes de nós do glb seguem `ASSET_PIPELINE.md` (ex.: `chair_root`, `printer_head`). Componentes gerados por gltfjsx vão para `experience/models/` e **não são editados**; a lógica fica no wrapper do hotspot.

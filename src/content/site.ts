@@ -1,14 +1,19 @@
 // Textos globais do site e strings de UI (chrome). Conteúdo só aqui.
+import type { ExternalLink } from './types'
 
 export const SITE = {
-  author: 'Vitor Hugo Noronha',
-  title: 'Vitor Hugo Noronha — Portfólio 3D',
-  shortTitle: 'Vitor Hugo · Portfólio',
+  author: 'Vitor "XKrules" Noronha',
+  title: 'Vitor "XKrules" Noronha — Portfólio 3D',
+  shortTitle: 'Vitor "XKrules" Noronha',
   description:
     'Portfólio 3D interativo: projetos web, impressão 3D, board games e game dev num diorama isométrico.',
   themeColor: '#0b1020',
-  /** Links externos (redes, repositórios). [TODO: preencher com os links reais] */
-  links: [] as readonly { label: string; href: string }[],
+  /** Código-fonte deste portfólio. */
+  sourceUrl: 'https://github.com/XkrulesVitor/Xkrules-Portfolio',
+  /** Links globais. [TODO] LinkedIn, Instagram, itch.io e loja do Reino de Amestris. */
+  links: [
+    { label: 'GitHub', href: 'https://github.com/XkrulesVitor', kind: 'github' },
+  ] as readonly ExternalLink[],
 } as const
 
 export const UI_TEXT = {
