@@ -42,4 +42,10 @@ export const COLORS = {
   printerBase: '#3f4652',
   accent: '#ef6c3b',
   part: '#ff9f6b',
+  bedFrame: '#8a6a4f',
+  mattress: '#e9e4da',
+  pillow: '#f6f3ec',
+  blanket: '#4f6aa3',
+  blanketFold: '#6a84bb',
+  dice: '#f2efe8',
 } as const

@@ -13,6 +13,13 @@ import { PRESETS, type PresetKey } from './presets'
 
 type Vec3 = [number, number, number]
 
+declare global {
+  interface Window {
+    /** Só em dev: afinar presets pelo console, ex. `__cameraControls.setLookAt(px, py, pz, tx, ty, tz, false)`. */
+    __cameraControls?: CameraControlsImpl
+  }
+}
+
 const FOCUS_OPTIONS: PresetKey[] = ['home', 'chair', 'desk', 'printer', 'shelf']
 const tmpPosition = new Vector3()
 const tmpTarget = new Vector3()
@@ -31,6 +38,11 @@ export default function CameraDebug() {
 
   useEffect(() => {
     controlsRef.current = controls
+    if (!controls) return
+    window.__cameraControls = controls
+    return () => {
+      delete window.__cameraControls
+    }
   }, [controls])
 
   useControls(

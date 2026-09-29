@@ -8,11 +8,11 @@ Complementa [ARCHITECTURE.md](./ARCHITECTURE.md) §7. Define como os modelos sã
 
 | Arquivo | Conteúdo | Bake | Motivo da separação |
 |---|---|---|---|
-| `room-static.glb` | chão/ilha, paredes, mesa, bancada, estante, PC, monitores (carcaça), TV (carcaça), objetos decorativos parados | 1 atlas 2K (cor + luz + AO) | 1 draw call por atlas; nunca se move |
+| `room-static.glb` | chão/ilha, paredes, mesa, bancada, estante (com decoração e console), cama, PC, monitores (carcaça), TV de parede (carcaça), objetos decorativos parados | 1 atlas 2K (cor + luz + AO) | 1 draw call por atlas; nunca se move |
 | `chair.glb` | cadeira + personagem sentado (nó raiz `chair_root`) | atlas 1K próprio | gira no hover |
 | `printer.glb` | impressora com partes separadas (`printer_axisZ`, `printer_head`, `printer_bed`, `printer_part`, `printer_led`) | atlas 1K próprio | partes animadas |
-| `shelf-boxes.glb` | caixas de jogos, cada uma como nó separado `box_<slug>` | atlas 1K | cada caixa flutua individualmente |
-| `screens.glb` | planos das telas: `screen_monitor_main`, `screen_monitor_vertical`, `screen_tv`, `screen_console_tv`, `led_case` | sem bake (material emissivo em runtime) | materiais trocados por código |
+| `shelf-boxes.glb` | caixas dos board games e capinhas dos jogos digitais, cada uma como nó separado `box_<slug>` | atlas 1K | cada caixa flutua individualmente |
+| `screens.glb` | planos das telas: `screen_monitor_main`, `screen_monitor_vertical`, `screen_tv`, `led_case` | sem bake (material emissivo em runtime) | materiais trocados por código |
 
 Objetos que **nunca** animam vão para `room-static.glb`. Se algo precisar animar depois, ele sai do room e ganha glb próprio (o bake do room é refeito).
 
@@ -31,12 +31,12 @@ printer_head                  # filho de printer_axisZ; move X/Z local
 printer_bed
 printer_part                  # peça sendo impressa (pivô na base; escala Y anima)
 printer_led
-box_porrilandia · box_terra · box_aldeia_dorme · box_peter · box_o_anel   # slug = mesmo de content/projects.games.ts
-console_root
+box_terra · box_aldeia_dorme                     # caixas dos board games (prateleira 1)
+box_porrilandia · box_peter · box_o_anel         # capinhas dos jogos digitais, ao lado do console (prateleira 3)
+                                                 # slug = mesmo de content/projects.games.ts
 screen_monitor_main           # plano único, normal apontando para fora, pivô no centro
 screen_monitor_vertical
-screen_tv
-screen_console_tv
+screen_tv                     # TV de parede, compartilhada por desk e shelf (ARCHITECTURE §6.5)
 led_case
 hit_chair · hit_desk · hit_printer · hit_shelf   # caixas invisíveis de raycast (exportadas junto)
 ```

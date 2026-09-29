@@ -94,16 +94,18 @@ export const PRESETS: Record<PresetKey, CameraPreset> = {
   },
   // Impressora: macro por cima/na frente. Painel à direita -> impressora à esquerda do centro.
   printer: {
-    position: [3.4, 2.2, 0.2],
-    target: [1.5, 1.15, -3.4],
+    position: [4.15, 2.2, 0.2],
+    target: [2.25, 1.15, -3.4],
     smoothTime: 0.9,
     userControl: false,
     limits: OPEN_LIMITS,
   },
-  // Estante: enquadra a estante inteira. Painel à esquerda -> estante à direita do centro.
+  // Zona de jogos: TV de parede + estante inteira no mesmo quadro (3/4 pela direita).
+  // Painel à esquerda -> alvo deslocado para a esquerda, conteúdo nos ~66% da direita.
+  // Afinado em 16:9 (1280x720). Em 4:3 a TV entra sob o painel: ver BACKLOG 3.6 (enquadramento responsivo).
   shelf: {
-    position: [2.4, 1.8, 2.2],
-    target: [3.6, 1.3, -3.6],
+    position: [1.1, 1.85, 2.3],
+    target: [-2.3, 1.35, -3.7],
     smoothTime: 0.9,
     userControl: false,
     limits: OPEN_LIMITS,

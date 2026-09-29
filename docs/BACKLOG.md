@@ -97,10 +97,11 @@ Legenda de aceite: **A** = `tsc`/`lint`/`build` limpos · **M** = verificação 
 ## Fase 3 — Micro-interações 3D e pós-processamento
 
 ### 3.1 Cadeira: `useChairSpring` (§6.1) com `@react-spring/three`, giro ~190° elástico no hover, retorno no unhover/home.
-### 3.2 Telas e LED: `Screens.tsx` com damp de emissive (§6.2), LED pulsante, `toneMapped:false`.
+### 3.2 Telas e LED: `Screens.tsx` com damp de emissive nos monitores (§6.2), LED pulsante, `toneMapped:false`. `WallTv` com os três modos de §6.5 (apagada, `desk`, `shelf`).
 ### 3.3 Impressora: `usePrinterAnimation` (§6.3) em `useFrame` com refs; peça cresce ao focar.
-### 3.4 Estante: `GameBox` spring z + `highlightBox`; `ShelfParticles` (Sparkles ≤ 80) só em focused; TV do console com shader de estática (`uTime`).
+### 3.4 Estante: `GameBox` spring z + `highlightBox`; `ShelfParticles` (Sparkles ≤ 80) só em focused; shader de estática (`uTime`) usado pela `WallTv` no modo `shelf`.
 ### 3.5 `scene/Effects.tsx`: `EffectComposer` com `SMAA` + `Bloom(threshold .9, intensity .6, mipmapBlur)`; `DepthOfField` montado só quando `focus==='chair' && mode==='focused'`. `PerformanceMonitor` + `AdaptiveDpr` → `quality` (§7).
+### 3.6 Enquadramento responsivo (ARCHITECTURE §4): presets passam a `{ focusBox, direction, panelSide }` e o `CameraRig` calcula distância e deslocamento pelo aspect e pela largura do painel. Aceite: em 16:9, 4:3 e 390×844 (retrato, painel como bottom-sheet) o conteúdo do hotspot fica inteiro e fora do painel.
 - Aceite (fase): **A**; **M** `r3f-perf` ≥ 55 fps desktop com composer; hover em cada hotspot mostra a animação; nada anima durante `transitioning`.
 
 ---

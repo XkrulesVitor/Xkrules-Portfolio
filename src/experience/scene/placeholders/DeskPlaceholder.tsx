@@ -4,6 +4,7 @@ import { ledMaterial, screenMaterial } from './materials'
 import { NO_RAYCAST } from './raycast'
 
 // Mesa em L (coordenadas de mundo). Tampo principal encostado na parede -X, asa na parede -Z.
+// A TV acima da asa é compartilhada com a estante e mora em scene/WallTv.tsx.
 // Tampo: y = 0.88. Monitor principal em (-4.35, _, -1.0) com a tela voltada para +X.
 const TOP = 0.88
 
@@ -26,8 +27,6 @@ const DESK_PARTS = [
   box([0.3, 0.03, 0.3], [-4.4, TOP + 0.015, -2.0], COLORS.darker),
   box([0.05, 0.34, 0.05], [-4.45, TOP + 0.2, -2.0], COLORS.darker),
   box([0.05, 0.95, 0.55], [-4.4, 1.6, -2.0], COLORS.bezel),
-  // TV na parede -Z, acima da asa
-  box([1.7, 1.0, 0.06], [-3.25, 2.3, -3.85], COLORS.bezel),
   // teclado + mouse
   box([0.22, 0.02, 0.6], [-3.75, TOP + 0.01, -1.0], COLORS.dark),
   box([0.06, 0.03, 0.1], [-3.75, TOP + 0.015, -0.45], COLORS.dark),
@@ -57,14 +56,6 @@ export function DeskPlaceholder() {
         raycast={NO_RAYCAST}
       >
         <planeGeometry args={[0.5, 0.88]} />
-      </mesh>
-      <mesh
-        name="screen_tv"
-        position={[-3.25, 2.3, -3.819]}
-        material={screenMaterial}
-        raycast={NO_RAYCAST}
-      >
-        <planeGeometry args={[1.6, 0.9]} />
       </mesh>
       <mesh
         name="led_case"
