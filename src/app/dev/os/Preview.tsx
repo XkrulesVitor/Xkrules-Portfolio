@@ -6,6 +6,7 @@ import type { WebProject } from '@/content/types'
 import { ProjectsApp } from '@/ui/os/apps/ProjectsApp'
 import { ProjectWindow } from '@/ui/os/apps/ProjectWindow'
 import { Desktop } from '@/ui/os/Desktop'
+import { MonitorScreen } from '@/ui/os/MonitorScreen'
 
 // Página de desenvolvimento: os rótulos abaixo não são conteúdo do site.
 
@@ -91,40 +92,40 @@ const SCALED_STYLE: CSSProperties = {
 }
 
 export function Preview() {
-  // Na Fase 2.2 o wrapper do Html do drei alterna pointer-events (auto só em focused:desk).
-  // Aqui o mesmo controle prova que nada do SO captura clique quando o monitor está desfocado.
-  const [interactive, setInteractive] = useState(true)
+  // O MonitorScreen é o wrapper que a Fase 2.2 leva para dentro do monitor 3D (MonitorHtml): a
+  // prop `active` é a mesma que lá vem de `focused` + `desk`. Desligada, o SO some (opacidade 0),
+  // deixa de receber clique (pointer-events: none) e fica `inert`.
+  const [active, setActive] = useState(true)
 
   return (
     <main className="mx-auto max-w-[1360px] space-y-14 p-6 pb-24">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold">SO do monitor (Fase 2.1)</h1>
+        <h1 className="text-2xl font-bold">SO do monitor (Fases 2.1 e 2.2)</h1>
         <p className="max-w-3xl text-sm text-ink/70">
-          O mesmo Desktop em duas molduras (o layout escala pelo container, sem vw/vh), o Desktop sob
-          um transform CSS (simula o matrix3d do drei: o arraste tem de continuar certo), o ProjectsApp
-          sozinho num painel estreito e o detalhe com mídia sintética.
+          O wrapper do monitor (1280×720, janela Projetos já aberta, fade e inert), o mesmo Desktop em
+          outra moldura (o layout escala pelo container, sem vw/vh), o Desktop sob um transform CSS
+          (simula o matrix3d do drei: o arraste tem de continuar certo), o ProjectsApp sozinho num
+          painel estreito e o detalhe com mídia sintética.
         </p>
       </header>
 
       <Frame
-        title="Desktop 1280×720"
-        note="Tamanho do wrapper do Html transform da Fase 2.2."
+        title="MonitorScreen 1280×720"
+        note="Exatamente o que o Html transform da Fase 2.2 recebe, com o foco no monitor ligado."
         width={1280}
         height={720}
         actions={
           <label className="flex cursor-pointer items-center gap-2 text-sm">
             <input
               type="checkbox"
-              checked={interactive}
-              onChange={(event) => setInteractive(event.target.checked)}
+              checked={active}
+              onChange={(event) => setActive(event.target.checked)}
             />
-            Monitor interativo (pointer-events do wrapper: {interactive ? 'auto' : 'none'})
+            Monitor em foco (SO {active ? 'visível e interativo' : 'invisível, sem ponteiro e inert'})
           </label>
         }
       >
-        <div style={{ width: '100%', height: '100%', pointerEvents: interactive ? 'auto' : 'none' }}>
-          <Desktop />
-        </div>
+        <MonitorScreen active={active} />
       </Frame>
 
       <Frame

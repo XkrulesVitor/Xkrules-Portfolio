@@ -20,7 +20,7 @@ Relacionados: [ASSET_PIPELINE.md](./ASSET_PIPELINE.md) · [BACKLOG.md](./BACKLOG
 | Animação 3D | `@react-spring/three` para molas (cadeira, caixas) e `useFrame + maath/easing.damp` para valores contínuos (emissive, eixos da impressora) | Mola quando há "física elástica"; damp quando é lerp contínuo |
 | Animação UI 2D | `motion` (`motion/react`, sucessor do framer-motion) com `AnimatePresence` | Entrada/saída de painéis glassmorphism |
 | Pós-processamento | `@react-three/postprocessing`: `Bloom` sempre; `DepthOfField` só em `focused:chair` | DoF é caro; liga só quando a narrativa pede |
-| HTML dentro do 3D | **Apenas o monitor** usa `<Html transform occlude="blending">`. Os painéis "Sobre", "Impressora" e "Games" são **DOM overlay fora do Canvas** | Overlay DOM é mais nítido, acessível e não sofre distorção de resize |
+| HTML dentro do 3D | **Apenas o monitor** usa `<Html transform>`, sem `occlude` (o SO só aparece com a câmera parada de frente para o monitor). Os painéis "Sobre", "Impressora" e "Games" são **DOM overlay fora do Canvas** | Overlay DOM é mais nítido, acessível e não sofre distorção de resize |
 | Iluminação | 100% **baked** (lightmap/AO na textura) + materiais **emissivos** para telas e LEDs. Zero luzes dinâmicas com sombra | 60 fps estáveis |
 | Loading | `useProgress` + `useGLTF.preload` de todos os `.glb` na tela de loading, depois voo de câmera de introdução | Cache completo antes da interação |
 | Estilo | Tailwind v4 (já instalado) + tokens CSS no `globals.css` | Glassmorphism via utilitários e variáveis |
@@ -287,15 +287,15 @@ Personagem: mesh estático com pose sentada (rig opcional; se houver animação 
 ```tsx
 <Html
   transform
-  occlude="blending"
-  position={screenCenter} rotation={screenRotation}
-  distanceFactor={SCREEN_DISTANCE_FACTOR}   // calibrado para 1 CSS px == 1 "pixel" da tela 3D
+  position={screenCenter + normal * 0.002} rotation={screenRotation}
+  scale={SCREEN_SCALE}                      // calibrado: 1280 CSS px == 1.3 m da tela 3D
   style={{ width: 1280, height: 720, pointerEvents: focused ? 'auto' : 'none' }}
-  zIndexRange={[10, 0]}
+  zIndexRange={[5, 0]}                      // abaixo do Overlay (z-10): o Voltar fica por cima
 >
-  <Desktop />
+  <Desktop initialWindows={[projects]} />
 </Html>
 ```
+**Sem `occlude` (decisão de 2026-09-29).** O `occlude="blending"` abre um buraco no canvas para o HTML aparecer atrás dele, e o `EffectComposer` da Fase 3 costuma apagar esse buraco. Como o SO só fica visível em `focused` + `desk`, com a câmera parada e perpendicular à tela, nada o encobre: basta o Html na frente do canvas, com opacidade 0, `pointer-events: none` e `inert` fora desse estado.
 Regra anti-distorção: o wrapper tem **tamanho fixo em px** (1280×720) e todo o layout interno usa unidades relativas a esse wrapper (`%`, `cqw` via `container-type: size`). Nunca usar `vw/vh` dentro do monitor. O `transform` do drei escala o bloco todo junto com o 3D; resize da janela não muda o layout interno.
 
 Antes do focus, a tela mostra um "wallpaper" estático (mesh emissivo com textura), e o `Html` fica com `visible=false`/opacidade 0 para poupar CSS3D. Ao chegar, faz crossfade.

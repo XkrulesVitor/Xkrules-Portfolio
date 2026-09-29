@@ -120,7 +120,7 @@ Integração: o modelo arquiteto roda `tsc`, `lint`, `test` e `build`, revisa no
 - Aceite: **A**; **M** em `/dev/os` renderizado num div 1280×720 e num 640×360 sem quebrar.
 
 ### 2.2 `MonitorHtml` (arquivo já montado: `src/experience/hotspots/desk/MonitorHtml.tsx`)
-- Conforme §6.2: drei `<Html transform occlude="blending">` com o `Desktop` de `src/ui/os` num wrapper FIXO de 1280×720 CSS px. Posição, rotação e escala derivadas de `LAYOUT.monitorMain` (centro, normal +X, 1.3 × 0.73 m): o wrapper precisa cobrir exatamente a tela (calibrar `distanceFactor`/`scale` pela razão 1.3 m / 1280 px).
+- Conforme §6.2: drei `<Html transform>` SEM `occlude` (ver a decisão em §6.2) com o `Desktop` de `src/ui/os` num wrapper FIXO de 1280×720 CSS px. Posição, rotação e escala derivadas de `LAYOUT.monitorMain` (centro, normal +X, 1.3 × 0.73 m): o wrapper precisa cobrir exatamente a tela (calibrar `distanceFactor`/`scale` pela razão 1.3 m / 1280 px).
 - Fica 2 mm à frente do plano `screen_monitor_main` (ao longo da normal) para não brigar em profundidade com a tela.
 - Interativo só com `mode === 'focused' && focus === 'desk'`: `pointer-events` e `inert` alternam no wrapper. Fora disso o SO fica invisível (opacidade 0) para poupar o CSS3D; ao chegar no foco, crossfade de ~0.3 s.
 - O `Desktop` abre com a janela `Projetos` (`initialWindows`), para a tela não chegar vazia.

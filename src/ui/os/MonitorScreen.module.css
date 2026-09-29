@@ -1,0 +1,30 @@
+/* Wrapper de tamanho fixo do SO dentro do monitor 3D (ver MonitorScreen.tsx). O tamanho vem inline.
+   Sem foco no monitor: invisível, sem ponteiro e, no fim do fade, `visibility: hidden` (a tela
+   escondida não pinta nem recebe Tab). Com foco: fade de entrada e ponteiro liberado. */
+.screen {
+  --fade: 0.3s;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  /* A visibilidade só some DEPOIS do fade de saída. */
+  transition:
+    opacity var(--fade) var(--ease-glass, ease-out),
+    visibility 0s linear var(--fade);
+}
+
+.screen[data-active='true'] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity var(--fade) var(--ease-glass, ease-out),
+    visibility 0s;
+}
+
+/* Sem fade para quem pediu menos movimento: a tela liga e desliga na hora. */
+@media (prefers-reduced-motion: reduce) {
+  .screen,
+  .screen[data-active='true'] {
+    transition: none;
+  }
+}
