@@ -66,7 +66,9 @@ const KEEP_EVENTS_INSIDE = {
  * emissiva do monitor para o SO aparecer sobre um fundo escuro.
  */
 export function MonitorHtml() {
-  const active = useExperienceStore((s) => s.mode === 'focused' && s.focus === 'desk')
+  const active = useExperienceStore(
+    (s) => (s.mode === 'focused' || (s.mode === 'transitioning' && s.focus === 'desk')) && s.focus === 'desk',
+  )
 
   return (
     <Html
