@@ -1,11 +1,12 @@
+import { LAYOUT } from './layout'
 import { MergedParts } from './placeholders/MergedParts'
 import { COLORS, box } from './placeholders/parts'
 import { screenMaterial } from './placeholders/materials'
 import { NO_RAYCAST } from './placeholders/raycast'
 
-/** Centro da TV de parede (mundo). A estante fica colada à direita dela (Shelf.tsx). */
-// x = -2.85: a borda direita (-2.0) fica fora da sombra visual da estante na câmera HOME (azimute 45°).
-export const WALL_TV_CENTER = [-2.85, 2.3, -3.85] as const
+// Centro em scene/layout.ts. A borda direita da TV fica fora da "sombra" da estante na câmera HOME
+// (azimute 45°): para isso, x_borda - z_parede <= x_estante - z_frente_estante.
+const [tx, ty, tz] = LAYOUT.wallTv
 
 const BEZEL_PARTS = [box([1.7, 1.0, 0.06], [0, 0, 0], COLORS.bezel)]
 
@@ -19,7 +20,7 @@ const BEZEL_PARTS = [box([1.7, 1.0, 0.06], [0, 0, 0], COLORS.bezel)]
  */
 export function WallTv() {
   return (
-    <group name="wall_tv" position={[WALL_TV_CENTER[0], WALL_TV_CENTER[1], WALL_TV_CENTER[2]]}>
+    <group name="wall_tv" position={[tx, ty, tz]}>
       <MergedParts name="tv_bezel" parts={BEZEL_PARTS} />
       <mesh
         name="screen_tv"

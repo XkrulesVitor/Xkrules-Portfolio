@@ -61,6 +61,7 @@ src/
 │  ├─ Experience.tsx          # <Canvas> + <Suspense> + <Scene/> + <Effects/> + <CameraRig/>
 │  ├─ scene/
 │  │  ├─ Scene.tsx            # composição: <Room/> + 4 hotspots + <Lights/>
+│  │  ├─ layout.ts            # FONTE ÚNICA das posições do quarto (§6.0)
 │  │  ├─ Room.tsx             # geometria estática baked (1 draw call por atlas), inclui a cama
 │  │  ├─ WallTv.tsx           # TV de parede COMPARTILHADA por desk e shelf (§6.5)
 │  │  ├─ Lights.tsx           # só ambient/hemisphere fraca (o resto é baked)
@@ -237,18 +238,24 @@ Responsabilidades do hook:
 ## 6. Comportamento por hotspot (implementação)
 
 ### 6.0 Layout espacial (mundo, 1 unidade = 1 m)
-Ilha de 10 × 8 com origem no centro do piso. Paredes em x = -5 (esquerda) e z = -4 (fundo). A câmera HOME olha da diagonal +X/+Z.
+Ilha de 8.6 × 7.0 com origem no centro do piso. Paredes em x = -4.3 (esquerda) e z = -3.5 (fundo); as bordas +X e +Z são abertas. A câmera HOME olha da diagonal +X/+Z.
+
+**Fonte única: `src/experience/scene/layout.ts`.** Placeholders, hitboxes e presets de câmera leem as âncoras de lá, e os presets dos hotspots são relativos a elas. Mover um móvel é mudar esse arquivo; a câmera acompanha.
 
 | Elemento | Posição | Observação |
 |---|---|---|
-| Mesa em L | tampo principal na parede esquerda, asa na parede do fundo (x -4.75 a -1.75) | monitores voltados para +X |
-| TV de parede | centro (-2.85, 2.3, -3.85), acima da asa | compartilhada por `desk` e `shelf` (§6.5) |
-| Estante | centro (-0.6, 0, -3.6), colada à direita da TV | "zona de jogos": TV, console e caixas no mesmo quadro |
-| Bancada + impressora | centro (1.75, 0.9, -3.4) | maker space à direita |
-| Cama | canto direito do fundo, x 3.3 a 4.8 | estática, sem hotspot, vai no `room-static.glb` |
-| Cadeira | (-2.75, 0, -1.0) | à frente, de costas para a câmera |
+| Mesa em L | tampo principal na parede esquerda (z -2.2 a 1.5), asa no fundo (x -4.05 a -1.05) | quem senta olha para -X: a direita dessa pessoa é -Z |
+| Monitor horizontal | tela 1.3 × 0.73 com centro em (-3.62, 1.62, -0.5), normal +X | a câmera do `desk` para a 1.55 m da tela |
+| Monitor vertical | tela 0.56 × 1.0, à direita de quem senta (-Z) | |
+| Teclado e mouse | teclado em frente ao monitor; mouse e mousepad à direita (-Z) | |
+| PC gamer | em cima da mesa, à esquerda do monitor horizontal (+Z) | vidro lateral voltado para +Z, com fan e fita RGB emissivos |
+| TV de parede | centro (-2.15, 2.3, -3.35), acima da asa | compartilhada por `desk` e `shelf` (§6.5) |
+| Estante | centro (0.07, 0, -3.13), à direita da TV | board games na prateleira 2; console e jogos digitais na 3 |
+| Bancada + impressora | canto direito do fundo, centro (2.9, 0.9, -2.8) | maker space |
+| Cama | frente à direita, centro (2.6, 0, 2.35), comprimento ao longo de X | estática, sem hotspot; cabeceira em -X para a câmera ver o colchão |
+| Cadeira | (-2.05, 0, -0.5) | alinhada ao monitor horizontal |
 
-Regra das hitboxes: elas não se sobrepõem. A da mesa vai até x = -1.7, a da estante ocupa x -1.55 a 0.35 e a da impressora começa em 0.35.
+Regra das hitboxes: elas não se sobrepõem. A da mesa vai até x = -1.0, a da estante ocupa x -0.88 a 1.02 e a da impressora começa em 1.5.
 
 ### 6.1 `chair` — Sobre mim
 | Estado | Implementação |
@@ -264,7 +271,7 @@ Personagem: mesh estático com pose sentada (rig opcional; se houver animação 
 | Estado | Implementação |
 |---|---|
 | Idle | telas com `MeshBasicMaterial` preto + `envMap`/`MeshReflectorMaterial` sutil (desligada) |
-| Hover | `useFrame`: `damp(mat, 'emissiveIntensity', active ? 1.6 : 0, 0.25, dt)` em monitor e monitor vertical; a TV de parede acende no modo `desk` (§6.5); LED do gabinete pulsa (`sin(t*4)`); áudio opcional de ventoinha (só se `audioEnabled`) |
+| Hover | `useFrame`: `damp(mat, 'emissiveIntensity', active ? 1.6 : 0, 0.25, dt)` em monitor e monitor vertical; a TV de parede acende no modo `desk` (§6.5); o PC gamer acende fan e fita RGB (`pc_fan`, `pc_rgb`) e o LED do gabinete pulsa (`sin(t*4)`); áudio opcional de ventoinha (só se `audioEnabled`) |
 | Click | preset `desk` perpendicular à tela. Quando `mode === 'focused'`, `MonitorHtml` troca `pointerEvents` de `none` → `auto` e o SO fictício (`ui/os/*`) ganha interação |
 | Voltar | janelas minimizam (motion), câmera recua |
 
@@ -300,16 +307,16 @@ Painel: `PrinterPanel` com carrossel (`ui/primitives/Carousel`) de fotos reais, 
 |---|---|
 | Idle | caixas alinhadas |
 | Hover | `GameBox` usa spring `z: active ? 0.08 : 0` (projeta para fora). A TV de parede entra no modo `shelf` e mostra estática retrô (§6.5) |
-| Click | preset "zona de jogos": TV e estante inteira no mesmo quadro; `ShelfParticles` (drei `Sparkles`, count ≤ 80) monta |
+| Click | zoom nas prateleiras 2 e 3 (board games, console e jogos digitais), com a estante inteira ao lado do painel; a TV fica fora desse quadro e aparece no hover, na visão geral; `ShelfParticles` (drei `Sparkles`, count ≤ 80) monta |
 | UI | `GamesPanel` com abas. Hover em item do painel → `store.highlightBox = slug` → `GameBox` correspondente faz spring extra |
 | Voltar | partículas desmontam, caixas voltam, câmera recua |
 
 Isso exige um campo extra no store: `highlightBox: string | null` (única exceção de comunicação UI→3D além de focus).
 
 Conteúdo físico da estante (o slug é o mesmo de `content/projects.games.ts` e do nó `box_<slug>`):
-- **Board games autorais** (`terra`, `aldeia_dorme`): caixas grandes na prateleira 1.
+- **Board games autorais** (`terra`, `aldeia_dorme`): caixas grandes na prateleira 2, na altura em que a câmera foca.
 - **Jogos digitais e game jams** (`porrilandia`, `peter`, `o_anel`): capinhas ao lado do console, na prateleira 3.
-- **Decoração** (Root, Heat, pilhas, miniaturas, dados): estática, sem slug, fundida no `shelf_frame`.
+- **Decoração**: Root e Heat na prateleira 2, pilhas e miniaturas na 1, dados na 3, fileira de caixas na 4. Estática, sem slug, fundida no `shelf_frame`.
 
 ### 6.5 TV de parede compartilhada
 A TV acima da asa da mesa é a tela do PC **e** a tela do console da estante. Ela é um componente próprio (`scene/WallTv.tsx`), fora dos dois hotspots, e seu material segue o store:
@@ -317,7 +324,7 @@ A TV acima da asa da mesa é a tela do PC **e** a tela do console da estante. El
 | Estado do store | Tela |
 |---|---|
 | `hovered` ou `focus` = `desk` | acende com o wallpaper emissivo, junto com os monitores |
-| `hovered` ou `focus` = `shelf` | estática retrô (shader com `uTime`); em `focused`, pode mostrar a capa do jogo em `highlightBox` |
+| `hovered` ou `focus` = `shelf` | estática retrô (shader com `uTime`), visível na visão geral durante o hover |
 | qualquer outro | apagada |
 
 A TV não tem hitbox própria. O hover nela cai na hitbox da mesa, o que mantém a regra "um hover, um hotspot". Como `hovered` só guarda um id, os dois modos nunca disputam a tela.

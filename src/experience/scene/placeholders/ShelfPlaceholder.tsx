@@ -12,16 +12,16 @@ const FRAME_PARTS = [
   box([0.06, 2.6, 0.5], [0.87, 1.3, 0], COLORS.woodLight),
   box([1.8, 2.6, 0.04], [0, 1.3, -0.23], COLORS.wood),
   ...SHELF_LEVELS.map((y) => box([1.8, 0.05, 0.5], [0, y, 0], COLORS.woodLight)),
-  // Prateleira 1: caixas comerciais de decoração (Root, Heat) ao lado dos board games autorais.
-  box([0.34, 0.46, 0.1], [0.3, 0.285, 0.08], '#d9a441'),
-  box([0.34, 0.46, 0.1], [0.66, 0.285, 0.08], '#c8412f'),
-  // Prateleira 2: pilha de caixas deitadas + miniaturas.
-  box([0.6, 0.09, 0.42], [-0.45, 0.75, 0], '#3d6e8f'),
-  box([0.56, 0.09, 0.4], [-0.45, 0.84, 0], '#7a4f9a'),
-  box([0.52, 0.09, 0.38], [-0.45, 0.93, 0], '#2f8f6f'),
-  cyl(0.04, 0.1, [0.25, 0.755, 0.1], '#9aa3b5'),
-  cyl(0.04, 0.1, [0.37, 0.755, 0.14], '#b58b6a'),
-  cyl(0.04, 0.1, [0.49, 0.755, 0.08], '#6f8f5a'),
+  // Prateleira 1: pilha de caixas deitadas + miniaturas.
+  box([0.6, 0.09, 0.42], [-0.45, 0.1, 0], '#3d6e8f'),
+  box([0.56, 0.09, 0.4], [-0.45, 0.19, 0], '#7a4f9a'),
+  box([0.52, 0.09, 0.38], [-0.45, 0.28, 0], '#2f8f6f'),
+  cyl(0.04, 0.1, [0.25, 0.105, 0.1], '#9aa3b5'),
+  cyl(0.04, 0.1, [0.37, 0.105, 0.14], '#b58b6a'),
+  cyl(0.04, 0.1, [0.49, 0.105, 0.08], '#6f8f5a'),
+  // Prateleira 2: caixas comerciais de decoração (Root, Heat) ao lado dos board games autorais.
+  box([0.34, 0.46, 0.1], [0.3, 0.935, 0.08], '#d9a441'),
+  box([0.34, 0.46, 0.1], [0.66, 0.935, 0.08], '#c8412f'),
   // Prateleira 3: console (ligado na TV de parede), controle e dados.
   box([0.34, 0.07, 0.26], [-0.5, 1.39, 0.05], COLORS.dark),
   box([0.14, 0.035, 0.09], [-0.15, 1.3725, 0.12], COLORS.darker),

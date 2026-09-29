@@ -22,7 +22,7 @@ import {
 } from './presets'
 
 // Pan (truck) em HOME fica preso a esta caixa, para o usuário não "perder" a ilha.
-const HOME_TARGET_BOUNDARY = new Box3(new Vector3(-2, 0.4, -3), new Vector3(3, 2, 2))
+const HOME_TARGET_BOUNDARY = new Box3(new Vector3(-1.8, 0.4, -2.6), new Vector3(2.4, 2, 1.8))
 
 // Chegada: a promise de `setLookAt` só resolve no evento `rest` do camera-controls, e a cauda
 // do amortecimento exponencial leva vários segundos depois de a câmera "parecer" parada
