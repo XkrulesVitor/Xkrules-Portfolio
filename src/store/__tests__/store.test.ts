@@ -140,6 +140,37 @@ describe('store: máquina de estados', () => {
     assert.equal(get().highlightBox, null)
   })
 
+  it('requestFocus guarda a sub-vista pedida (null = padrão)', () => {
+    toIdle()
+    get().requestFocus('shelf', 'digital')
+    assert.equal(get().focus, 'shelf')
+    assert.equal(get().view, 'digital')
+    get().onCameraRest()
+    get().requestHome()
+    assert.equal(get().view, null)
+    get().onCameraRest()
+    get().requestFocus('desk')
+    assert.equal(get().view, null)
+  })
+
+  it('setView só em focused, sem sair do foco, e limpa o highlightBox', () => {
+    toIdle()
+    get().setView('digital')
+    assert.equal(get().view, null) // idle: ignorado
+    get().requestFocus('shelf')
+    get().setView('digital')
+    assert.equal(get().view, null) // transitioning: ignorado
+    get().onCameraRest()
+    get().setHighlightBox('terra')
+    get().setView('digital')
+    assert.equal(get().mode, 'focused')
+    assert.equal(get().focus, 'shelf')
+    assert.equal(get().view, 'digital')
+    assert.equal(get().highlightBox, null)
+    get().setView('tabuleiro')
+    assert.equal(get().view, 'tabuleiro')
+  })
+
   it('toggleAudio e setQuality', () => {
     get().toggleAudio()
     assert.equal(get().audioEnabled, true)

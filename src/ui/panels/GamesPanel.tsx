@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { DiceFiveIcon, GameControllerIcon, HandPointingIcon } from '@phosphor-icons/react'
 import { motion, type Variants } from 'motion/react'
-import { getHotspot } from '@/content/hotspots'
+import { getHotspot, resolveFocus } from '@/content/hotspots'
 import { GAME_PROJECTS } from '@/content/projects.games'
 import { UI_TEXT } from '@/content/site'
 import type { GameKind, GameProject } from '@/content/types'
@@ -57,9 +57,26 @@ interface GamesPanelProps {
 /**
  * Painel do hotspot `shelf`: abas Tabuleiro e Digital / Game Jams. Hover ou foco num jogo destaca
  * a caixa dele na estante (`store.highlightBox`, ARCHITECTURE §6.4).
+ *
+ * A aba É a sub-vista da zona de jogos (ARCHITECTURE §5): com o hotspot em foco, a aba ativa vem de
+ * `store.view` e trocar de aba chama `setView`, que leva a câmera da estante para a TV (ou volta) e
+ * passa o painel para o outro lado. Fora do foco (previews de /dev/ui), a aba é estado local.
  */
 export function GamesPanel({ games = GAME_PROJECTS, defaultKind = 'tabuleiro', autoFocus }: GamesPanelProps) {
   const t = UI_TEXT.games
+  const focusedView = useExperienceStore((s) =>
+    s.mode === 'focused' && s.focus === 'shelf' ? (s.view ?? 'tabuleiro') : undefined,
+  )
+  const [localKind, setLocalKind] = useState<GameKind>(defaultKind)
+  const kind: GameKind =
+    focusedView === undefined ? localKind : focusedView === 'digital' ? 'digital' : 'tabuleiro'
+  const { side } = resolveFocus('shelf', kind)
+
+  const selectKind = (id: string) => {
+    const next: GameKind = id === 'digital' ? 'digital' : 'tabuleiro'
+    setLocalKind(next)
+    useExperienceStore.getState().setView(next)
+  }
 
   // Ao fechar o painel, nenhum destaque pode ficar preso na cena.
   useEffect(() => () => useExperienceStore.getState().setHighlightBox(null), [])
@@ -78,6 +95,7 @@ export function GamesPanel({ games = GAME_PROJECTS, defaultKind = 'tabuleiro', a
   return (
     <PanelShell
       hotspotId="shelf"
+      side={side}
       eyebrow={t.eyebrow}
       subtitle={getHotspot('shelf').description}
       leading={<PanelIcon icon={GameControllerIcon} />}
@@ -88,7 +106,7 @@ export function GamesPanel({ games = GAME_PROJECTS, defaultKind = 'tabuleiro', a
           <HandPointingIcon size={16} weight="duotone" aria-hidden="true" className="shrink-0" />
           {t.hint}
         </p>
-        <Tabs label={t.tabsLabel} items={items} defaultValue={defaultKind} />
+        <Tabs label={t.tabsLabel} items={items} value={kind} onValueChange={selectKind} />
       </PanelSection>
     </PanelShell>
   )

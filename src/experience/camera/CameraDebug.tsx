@@ -5,7 +5,7 @@ import { button, useControls } from 'leva'
 import { Vector3 } from 'three'
 import { isHotspotId } from '@/content/hotspots'
 import { useExperienceStore } from '@/store/useExperienceStore'
-import { PRESETS, type PresetKey } from './presets'
+import { PRESETS } from './presets'
 
 // Ferramenta de DEV (montada só com NODE_ENV === 'development', ver DevTools.tsx).
 // Exceção controlada à regra "só o CameraRig move a câmera": os sliders empurram a câmera
@@ -20,7 +20,8 @@ declare global {
   }
 }
 
-const FOCUS_OPTIONS: PresetKey[] = ['home', 'chair', 'desk', 'printer', 'shelf']
+// 'shelf:digital' = zona de jogos na sub-vista Digital (TV + console).
+const FOCUS_OPTIONS = ['home', 'chair', 'desk', 'printer', 'shelf', 'shelf:digital'] as const
 const tmpPosition = new Vector3()
 const tmpTarget = new Vector3()
 
@@ -64,8 +65,9 @@ export default function CameraDebug() {
           onChange: (value: string, _path: string, ctx: ChangeContext) => {
             if (ctx.initial || !ctx.fromPanel) return
             const s = useExperienceStore.getState()
-            if (value === 'home') s.requestHome()
-            else if (isHotspotId(value)) s.requestFocus(value)
+            const [id, view] = value.split(':')
+            if (id === 'home') s.requestHome()
+            else if (isHotspotId(id)) s.requestFocus(id, view ?? null)
           },
         },
         position: {

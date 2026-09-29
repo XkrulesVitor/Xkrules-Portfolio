@@ -8,11 +8,11 @@ Complementa [ARCHITECTURE.md](./ARCHITECTURE.md) §7. Define como os modelos sã
 
 | Arquivo | Conteúdo | Bake | Motivo da separação |
 |---|---|---|---|
-| `room-static.glb` | chão/ilha, paredes, mesa, bancada, estante (com decoração e console), cama, gabinete do PC gamer, monitores (carcaça), TV de parede (carcaça), objetos decorativos parados | 1 atlas 2K (cor + luz + AO) | 1 draw call por atlas; nunca se move |
+| `room-static.glb` | chão/ilha, paredes, mesa, bancada, estante (com decoração), rack da TV (com console e controle), cama, mesa com gaveteiro, gabinete do PC gamer, monitores (carcaça), TV de parede (carcaça), objetos decorativos parados | 1 atlas 2K (cor + luz + AO) | 1 draw call por atlas; nunca se move |
 | `chair.glb` | cadeira + personagem sentado (nó raiz `chair_root`) | atlas 1K próprio | gira no hover |
 | `printer.glb` | impressora com partes separadas (`printer_axisZ`, `printer_head`, `printer_bed`, `printer_part`, `printer_led`) | atlas 1K próprio | partes animadas |
 | `shelf-boxes.glb` | caixas dos board games e capinhas dos jogos digitais, cada uma como nó separado `box_<slug>` | atlas 1K | cada caixa flutua individualmente |
-| `screens.glb` | planos das telas e luzes: `screen_monitor_main`, `screen_monitor_vertical`, `screen_tv`, `led_case`, `pc_glass`, `pc_fan`, `pc_rgb` | sem bake (material emissivo em runtime) | materiais trocados por código |
+| `screens.glb` | planos das telas e luzes: `screen_monitor_main`, `screen_monitor_vertical`, `screen_tv`, `tv_backlight`, `led_case`, `pc_glass`, `pc_fan_top`, `pc_fan_bottom`, `pc_rgb` | sem bake (material emissivo em runtime) | materiais trocados por código |
 
 Objetos que **nunca** animam vão para `room-static.glb`. Se algo precisar animar depois, ele sai do room e ganha glb próprio (o bake do room é refeito).
 
@@ -32,13 +32,14 @@ printer_bed
 printer_part                  # peça sendo impressa (pivô na base; escala Y anima)
 printer_led
 box_terra · box_aldeia_dorme                     # caixas dos board games (prateleira 2)
-box_porrilandia · box_peter · box_o_anel         # capinhas dos jogos digitais, ao lado do console (prateleira 3)
+box_porrilandia · box_peter · box_o_anel         # capinhas dos jogos digitais, no tampo do rack da TV
                                                  # slug = mesmo de content/projects.games.ts
 screen_monitor_main           # plano único, normal apontando para fora, pivô no centro
 screen_monitor_vertical
-screen_tv                     # TV de parede, compartilhada por desk e shelf (ARCHITECTURE §6.5)
+screen_tv                     # TV da zona de jogos, acima do rack (ARCHITECTURE §6.5)
+tv_backlight                  # fita de LED rosa atrás da TV
 led_case                      # LED frontal do gabinete
-pc_glass · pc_fan · pc_rgb    # vidro lateral (+Z), anel do fan e fita RGB do PC gamer
+pc_glass · pc_fan_top · pc_fan_bottom · pc_rgb   # vidro lateral (+Z), dois fans e fita RGB do PC gamer
 hit_chair · hit_desk · hit_printer · hit_shelf   # caixas invisíveis de raycast (exportadas junto)
 ```
 

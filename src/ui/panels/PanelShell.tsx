@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { motion, useIsPresent, type Variants } from 'motion/react'
 import { getHotspot } from '@/content/hotspots'
-import type { HotspotId } from '@/content/types'
+import type { HotspotId, PanelSide } from '@/content/types'
 import { cx, DURATION, EASE, Reveal, STAGGER, useReduceMotion } from '../primitives'
 
 /** Abaixo desta largura (do container, que no app é o overlay inteiro) o painel vira bottom-sheet. */
@@ -19,6 +19,11 @@ interface PanelShellProps {
   leading?: ReactNode
   /** Foco inicial no título. Desligue só em pré-visualizações com vários painéis. */
   autoFocus?: boolean
+  /**
+   * Lado do painel. Padrão: o do registry. Painéis com sub-vistas (Jogos) passam o lado da vista
+   * ativa; ao mudar, o painel desliza para o outro lado (layout animation), sem desmontar.
+   */
+  side?: PanelSide
   children?: ReactNode
 }
 
@@ -38,6 +43,7 @@ export function PanelShell({
   subtitle,
   leading,
   autoFocus = true,
+  side,
   children,
 }: PanelShellProps) {
   const hotspot = getHotspot(hotspotId)
@@ -47,7 +53,7 @@ export function PanelShell({
   // Guarda 5: painéis só recebem pointer-events enquanto presentes (não durante o exit).
   const isPresent = useIsPresent()
   const reduce = useReduceMotion()
-  const fromLeft = hotspot.side === 'left'
+  const fromLeft = (side ?? hotspot.side) === 'left'
 
   // O modo (lateral x sheet) precisa estar definido ANTES do primeiro frame do `aside`, porque
   // define de que lado a animação de entrada parte. O ref callback mede o invólucro no commit
@@ -84,6 +90,9 @@ export function PanelShell({
     <div ref={measureRef} className="@container-size pointer-events-none absolute inset-0">
       {ready ? (
         <motion.aside
+          // Troca de lado (sub-vista) anima a posição por FLIP; a entrada/saída segue as variants.
+          layout="position"
+          transition={{ layout: { duration: reduce ? 0 : 0.55, ease: EASE } }}
           role="dialog"
           aria-labelledby={eyebrow ? eyebrowId + ' ' + titleId : titleId}
           variants={variants}

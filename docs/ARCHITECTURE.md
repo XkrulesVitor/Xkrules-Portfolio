@@ -24,6 +24,7 @@ Relacionados: [ASSET_PIPELINE.md](./ASSET_PIPELINE.md) · [BACKLOG.md](./BACKLOG
 | Iluminação | 100% **baked** (lightmap/AO na textura) + materiais **emissivos** para telas e LEDs. Zero luzes dinâmicas com sombra | 60 fps estáveis |
 | Loading | `useProgress` + `useGLTF.preload` de todos os `.glb` na tela de loading, depois voo de câmera de introdução | Cache completo antes da interação |
 | Estilo | Tailwind v4 (já instalado) + tokens CSS no `globals.css` | Glassmorphism via utilitários e variáveis |
+| Sub-vistas | Hotspot pode ter `views` no registry; `store.view` escolhe câmera e lado do painel sem sair do foco | A zona de jogos troca entre estante (Tabuleiro) e TV + console (Digital) pela aba do painel |
 | Dev tooling | `leva` (afinar presets de câmera), `r3f-perf` (medir), `gltfjsx` (gerar componentes tipados) | Só em dev |
 
 ---
@@ -145,13 +146,15 @@ export type Mode = 'loading' | 'intro' | 'idle' | 'transitioning' | 'focused'
 interface ExperienceState {
   mode: Mode
   focus: HotspotId | null          // alvo atual (durante transitioning = destino)
+  view: string | null              // sub-vista do foco (null = a primeira do registry)
   hovered: HotspotId | null
   quality: 'high' | 'medium' | 'low'
   audioEnabled: boolean
   // ações
   setMode(m: Mode): void
   setHovered(id: HotspotId | null): void
-  requestFocus(id: HotspotId): void   // idle → transitioning(focus=id)
+  requestFocus(id: HotspotId, view?: string | null): void   // idle → transitioning(focus=id, view)
+  setView(view: string | null): void  // só em focused: troca a sub-vista sem sair do foco
   requestHome(): void                 // focused|transitioning → transitioning(focus=null)
   onCameraRest(): void                // transitioning → focused | idle
   setQuality(q): void
@@ -165,10 +168,11 @@ interface ExperienceState {
 3. `hovered` é sempre `null` quando `mode !== 'idle'` (evita cadeira girando enquanto a câmera está nela).
 4. `onCameraRest` é chamado **apenas** pelo `CameraRig` (fonte única de verdade do "chegou").
 5. Painéis DOM só recebem `pointer-events: auto` quando `mode === 'focused'`.
+6. `view` só existe junto com `focus` (some em `requestHome` e fora de `focused`/`transitioning`). `setView` só vale em `focused` e limpa o `highlightBox`.
 
 **Quem lê o quê**
 - Componentes 3D leem o store com `useExperienceStore(selector)` para JSX, e com `useExperienceStore.subscribe(selector, cb)` / `getState()` dentro de `useFrame` para valores por frame.
-- URL: em `focused` sincronizar `?focus=<id>` via `history.replaceState` (shallow). Na carga, se houver `?focus`, pular o intro e ir direto ao preset.
+- URL: em `focused` sincronizar `?focus=<id>&view=<vista>` via `history.replaceState` (shallow). Na carga, se houver `?focus`, pular o intro e ir direto ao preset da vista.
 
 ---
 
@@ -205,6 +209,7 @@ interface CameraPreset {
 
 - **Chegada**: não usar a promise de `setLookAt` para decidir "chegou". Ela só resolve no evento `rest` do camera-controls, e a cauda do amortecimento leva vários segundos depois de a câmera parecer parada (medido: ~9 s na intro). O `CameraRig` detecta chegada em `useFrame` comparando `getPosition(v, false)`/`getTarget(v, false)` (valor **atual**, não o final) com o preset (eps 0.06) e usa `2.5 × smoothTime` como teto.
 - HOME: visão isométrica distante (ilha flutuante inteira). Órbita permitida em ±25° azimute, polar entre 35° e 70°, dolly entre 8 e 16 unidades. `truck` habilitado com limites (panning suave).
+- **Sub-vistas**: o preset de destino vem de `resolveFocus(focus, view)` (registry). O `CameraRig` assina `[mode, focus, view]`; em `focused`, se a vista mudar, ele voa para o preset novo **sem** chamar `onCameraRest` (o modo continua `focused` e o painel continua montado). Um `requestHome` no meio desse voo o substitui pelo token.
 - Cada hotspot tem seu preset. Desk: câmera **exatamente** perpendicular à tela do monitor (target = centro da tela, position = target + normal * d), `userControl:false`.
 - Preferência `prefers-reduced-motion`: `smoothTime = 0` e `setLookAt(..., false)`.
 - Afinar valores com `leva` em dev (painel `Camera` com botões "copiar preset atual"). Presets finais ficam hardcoded.
@@ -231,33 +236,34 @@ Responsabilidades do hook:
 - Troca `document.body.style.cursor` (pointer/auto).
 - Em touch: hover é ignorado (primeiro toque = click).
 
-**Hitbox**: cada hotspot tem um `<mesh visible={false}>` simples (box) por cima da geometria detalhada para raycast barato e área generosa. A geometria detalhada tem `raycast={() => null}`.
+**Hitbox**: cada hotspot tem um `<mesh visible={false}>` simples (box) por cima da geometria detalhada para raycast barato e área generosa. A geometria detalhada tem `raycast={() => null}`. Uma hitbox pode declarar `view` (vai para `userData.view`); o clique nela chama `requestFocus(id, view)`. Assim, clicar no rack da TV já abre a zona de jogos na vista Digital.
 
-**Registry** (`content/hotspots.ts`): `{ id, label, description, panel: 'about'|'os'|'printer'|'games', preset: keyof PRESETS }`. O `Overlay` usa o registry para decidir qual painel montar.
+**Registry** (`content/hotspots.ts`): `{ id, label, description, panel, preset, side, views? }`. `views` é uma lista `{ id, preset, side }`; a primeira é a padrão. `resolveFocus(id, view)` devolve o preset e o lado efetivos. O `Overlay` usa o registry para decidir qual painel montar; o painel com sub-vistas passa o lado da vista ao `PanelShell`, que desliza de um lado para o outro (layout animation) sem desmontar.
 
 ---
 
 ## 6. Comportamento por hotspot (implementação)
 
 ### 6.0 Layout espacial (mundo, 1 unidade = 1 m)
-Ilha de 8.6 × 7.0 com origem no centro do piso. Paredes em x = -4.3 (esquerda) e z = -3.5 (fundo); as bordas +X e +Z são abertas. A câmera HOME olha da diagonal +X/+Z.
+Ilha de 8.6 × 7.0 com origem no centro do piso. Paredes em x = -4.3 (esquerda) e z = -3.5 (fundo); as bordas +X e +Z são abertas ("paredes invisíveis"). A câmera HOME olha da diagonal +X/+Z. Referência de clima: quarto aconchegante de fim de noite, piso de madeira, luzes roxas, azuis e rosa.
 
 **Fonte única: `src/experience/scene/layout.ts`.** Placeholders, hitboxes e presets de câmera leem as âncoras de lá, e os presets dos hotspots são relativos a elas. Mover um móvel é mudar esse arquivo; a câmera acompanha.
 
 | Elemento | Posição | Observação |
 |---|---|---|
-| Mesa em L | tampo principal na parede esquerda (z -2.2 a 1.5), asa no fundo (x -4.05 a -1.05) | quem senta olha para -X: a direita dessa pessoa é -Z |
-| Monitor horizontal | tela 1.3 × 0.73 com centro em (-3.62, 1.62, -0.5), normal +X | a câmera do `desk` para a 1.55 m da tela |
+| Mesa reta | parede esquerda, do canto do fundo para a frente (z -3.3 a 0.5) | gaveteiro branco sob a ponta da frente; quem senta olha para -X, então a direita é -Z |
+| Monitor horizontal | tela 1.3 × 0.73 com centro em (-3.62, 1.62, -1.45), normal +X | a câmera do `desk` para a 1.55 m da tela |
 | Monitor vertical | tela 0.56 × 1.0, à direita de quem senta (-Z) | |
 | Teclado e mouse | teclado em frente ao monitor; mouse e mousepad à direita (-Z) | |
-| PC gamer | em cima da mesa, à esquerda do monitor horizontal (+Z) | vidro lateral voltado para +Z, com fan e fita RGB emissivos |
-| TV de parede | centro (-2.15, 2.3, -3.35), acima da asa | compartilhada por `desk` e `shelf` (§6.5) |
-| Estante | centro (0.07, 0, -3.13), à direita da TV | board games na prateleira 2; console e jogos digitais na 3 |
-| Bancada + impressora | canto direito do fundo, centro (2.9, 0.9, -2.8) | maker space |
-| Cama | frente à direita, centro (2.6, 0, 2.35), comprimento ao longo de X | estática, sem hotspot; cabeceira em -X para a câmera ver o colchão |
-| Cadeira | (-2.05, 0, -0.5) | alinhada ao monitor horizontal |
+| PC gamer | torre grande em cima da mesa, à esquerda do monitor horizontal (+Z) | vidro lateral para +Z com dois fans e fita RGB |
+| Rack da TV | parede do fundo, centro (-1.6, 0.25, -3.14), 1.9 de largura | console, controle e capinhas dos jogos digitais no tampo |
+| TV | na parede acima do rack, tela 1.68 × 0.94 com centro em (-1.6, 1.3, -3.32) | tela da zona de jogos (§6.5) |
+| Estante | à direita do rack, centro (0.7, 0, -3.13) | só board games e decoração |
+| Bancada + impressora | canto direito do fundo, centro (3.0, 0.9, -2.8), 2.4 de largura | maker space |
+| Cama de casal | frente à direita, centro (3.12, 0, 2.35), 2.2 × 1.8 | cabeceira em +X encostada na borda direita; estática, sem hotspot |
+| Cadeira | (-2.2, 0, -1.45) | diante do monitor horizontal |
 
-Regra das hitboxes: elas não se sobrepõem. A da mesa vai até x = -1.0, a da estante ocupa x -0.88 a 1.02 e a da impressora começa em 1.5.
+Regra das hitboxes: elas não se sobrepõem. A da mesa vai até x = -2.6, a do rack ocupa x -2.58 a -0.62, a da estante x -0.25 a 1.65 e a da impressora começa em 1.7.
 
 ### 6.1 `chair` — Sobre mim
 | Estado | Implementação |
@@ -273,7 +279,7 @@ Personagem: mesh estático com pose sentada (rig opcional; se houver animação 
 | Estado | Implementação |
 |---|---|
 | Idle | telas com `MeshBasicMaterial` preto + `envMap`/`MeshReflectorMaterial` sutil (desligada) |
-| Hover | `useFrame`: `damp(mat, 'emissiveIntensity', active ? 1.6 : 0, 0.25, dt)` em monitor e monitor vertical; a TV de parede acende no modo `desk` (§6.5); o PC gamer acende fan e fita RGB (`pc_fan`, `pc_rgb`) e o LED do gabinete pulsa (`sin(t*4)`); áudio opcional de ventoinha (só se `audioEnabled`) |
+| Hover | `useFrame`: `damp(mat, 'emissiveIntensity', active ? 1.6 : 0, 0.25, dt)` em monitor e monitor vertical; o PC gamer acende os fans e a fita RGB (`pc_fan_*`, `pc_rgb`) e o LED do gabinete pulsa (`sin(t*4)`). A TV não é mais da mesa; áudio opcional de ventoinha (só se `audioEnabled`) |
 | Click | preset `desk` perpendicular à tela. Quando `mode === 'focused'`, `MonitorHtml` troca `pointerEvents` de `none` → `auto` e o SO fictício (`ui/os/*`) ganha interação |
 | Voltar | janelas minimizam (motion), câmera recua |
 
@@ -304,32 +310,40 @@ Antes do focus, a tela mostra um "wallpaper" estático (mesh emissivo com textur
 
 Painel: `PrinterPanel` com carrossel (`ui/primitives/Carousel`) de fotos reais, specs de slicer, link da loja. Fotos em `public/media/print/*.webp`.
 
-### 6.4 `shelf` — Board games & Game dev
+### 6.4 `shelf` — Zona de jogos (board games e game dev)
+A zona de jogos é UM hotspot com DUAS sub-vistas (§5). A aba do `GamesPanel` é a vista.
+
+| Vista (`store.view`) | Câmera (preset) | Painel | Hitbox que abre |
+|---|---|---|---|
+| `tabuleiro` (padrão) | `shelf`: zoom nas prateleiras 2 e 3 da estante | à esquerda | estante |
+| `digital` | `shelfDigital`: TV + rack com o console, em diagonal pela direita | à direita | rack + TV |
+
 | Estado | Implementação |
 |---|---|
-| Idle | caixas alinhadas |
-| Hover | `GameBox` usa spring `z: active ? 0.08 : 0` (projeta para fora). A TV de parede entra no modo `shelf` e mostra estática retrô (§6.5) |
-| Click | zoom nas prateleiras 2 e 3 (board games, console e jogos digitais), com a estante inteira ao lado do painel; a TV fica fora desse quadro e aparece no hover, na visão geral; `ShelfParticles` (drei `Sparkles`, count ≤ 80) monta |
-| UI | `GamesPanel` com abas. Hover em item do painel → `store.highlightBox = slug` → `GameBox` correspondente faz spring extra |
+| Idle | caixas alinhadas, TV apagada |
+| Hover | `GameBox` usa spring `z: active ? 0.08 : 0` (projeta para fora); a TV mostra estática retrô (§6.5) |
+| Click | a hitbox clicada define a vista; `ShelfParticles` (drei `Sparkles`, count ≤ 80) monta junto da vista ativa |
+| Troca de aba | `setView` → a câmera voa entre estante e TV sem sair do foco e o painel desliza para o outro lado |
+| UI | hover num jogo do painel → `store.highlightBox = slug` → a `GameBox` correspondente faz spring extra |
 | Voltar | partículas desmontam, caixas voltam, câmera recua |
 
-Isso exige um campo extra no store: `highlightBox: string | null` (única exceção de comunicação UI→3D além de focus).
+`highlightBox: string | null` e `view` são os dois canais UI→3D além de `focus`.
 
-Conteúdo físico da estante (o slug é o mesmo de `content/projects.games.ts` e do nó `box_<slug>`):
-- **Board games autorais** (`terra`, `aldeia_dorme`): caixas grandes na prateleira 2, na altura em que a câmera foca.
-- **Jogos digitais e game jams** (`porrilandia`, `peter`, `o_anel`): capinhas ao lado do console, na prateleira 3.
-- **Decoração**: Root e Heat na prateleira 2, pilhas e miniaturas na 1, dados na 3, fileira de caixas na 4. Estática, sem slug, fundida no `shelf_frame`.
+Conteúdo físico (o slug é o mesmo de `content/projects.games.ts` e do nó `box_<slug>`):
+- **Board games autorais** (`terra`, `aldeia_dorme`): caixas grandes na prateleira 2 da estante.
+- **Jogos digitais e game jams** (`porrilandia`, `peter`, `o_anel`): capinhas de pé no tampo do rack, ao lado do console.
+- **Decoração da estante**: Root e Heat na prateleira 2; pilhas e miniaturas na 1; caixas deitadas, torre de dados, miniaturas e dados na 3; fileira de caixas na 4. Estática, fundida no `shelf_frame`.
 
-### 6.5 TV de parede compartilhada
-A TV acima da asa da mesa é a tela do PC **e** a tela do console da estante. Ela é um componente próprio (`scene/WallTv.tsx`), fora dos dois hotspots, e seu material segue o store:
+### 6.5 TV da zona de jogos
+A TV fica na parede acima do rack, é um componente próprio (`scene/WallTv.tsx`) e não tem hitbox: o clique nela cai na hitbox `digital` do rack. A mesa não mexe mais nela. O material segue o store:
 
 | Estado do store | Tela |
 |---|---|
-| `hovered` ou `focus` = `desk` | acende com o wallpaper emissivo, junto com os monitores |
-| `hovered` ou `focus` = `shelf` | estática retrô (shader com `uTime`), visível na visão geral durante o hover |
+| `hovered === 'shelf'` | estática retrô (shader com `uTime`) |
+| `focused` + `shelf` + vista `digital` | "ligada no console": tela de título tingida pelo `accent` do jogo em `highlightBox` (ou neutra) |
 | qualquer outro | apagada |
 
-A TV não tem hitbox própria. O hover nela cai na hitbox da mesa, o que mantém a regra "um hover, um hotspot". Como `hovered` só guarda um id, os dois modos nunca disputam a tela.
+Atrás da TV vai uma fita de LED rosa emissiva (`tv_backlight`), como na referência, para o Bloom.
 
 ---
 

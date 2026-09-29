@@ -43,7 +43,9 @@ export function useHotspot(id: HotspotId): HotspotState {
       },
       onClick: (e) => {
         e.stopPropagation()
-        useExperienceStore.getState().requestFocus(id) // ignorado fora de idle
+        // A hitbox clicada pode pedir uma sub-vista (Hitbox `view` -> userData.view).
+        const view = e.object.userData?.view
+        useExperienceStore.getState().requestFocus(id, typeof view === 'string' ? view : null)
       },
     }),
     [id],

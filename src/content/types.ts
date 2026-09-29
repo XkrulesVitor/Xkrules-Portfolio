@@ -6,16 +6,31 @@ export type PanelKind = 'about' | 'os' | 'printer' | 'games'
 
 export type PanelSide = 'left' | 'right' | 'none'
 
+/** Chaves dos presets de câmera (experience/camera/presets.ts). */
+export type PresetKey = 'home' | HotspotId | 'shelfDigital'
+
+/**
+ * Sub-vista de um hotspot (ARCHITECTURE §5): muda a câmera e o lado do painel sem sair do foco.
+ * No `shelf`, os ids são os valores de GameKind ('tabuleiro' | 'digital').
+ */
+export interface HotspotView {
+  id: string
+  preset: PresetKey
+  side: PanelSide
+}
+
 export interface HotspotDef {
   id: HotspotId
   label: string
   description: string
   /** Qual painel o Overlay monta quando o hotspot está em `focused`. */
   panel: PanelKind
-  /** Chave do preset de câmera (experience/camera/presets.ts). Igual ao id. */
-  preset: HotspotId
+  /** Preset de câmera padrão (usado quando não há sub-vistas). */
+  preset: PresetKey
   /** Lado do painel DOM (`none` = sem painel lateral, ex.: SO no monitor). */
   side: PanelSide
+  /** Sub-vistas opcionais. A primeira é a padrão (`store.view === null`). */
+  views?: readonly HotspotView[]
 }
 
 // ---------------------------------------------------------------------------

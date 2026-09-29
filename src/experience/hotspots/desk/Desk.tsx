@@ -1,17 +1,27 @@
 import { useHotspot } from '../../interaction/useHotspot'
+import { LAYOUT } from '../../scene/layout'
 import { Hitbox } from '../../scene/placeholders/Hitbox'
 import { DeskPlaceholder } from '../../scene/placeholders/DeskPlaceholder'
+import { MonitorHtml } from './MonitorHtml'
+import { Screens } from './Screens'
 
-/** Hotspot `desk` (Projetos Web). Fase 2: `MonitorHtml`; Fase 3: emissive das telas. */
+const [dx, , dz] = LAYOUT.desk.center
+const [, , dd] = LAYOUT.desk.size
+
+/**
+ * Hotspot `desk` (Projetos Web): mesa reta, monitores e PC gamer.
+ * Pontos de montagem fixos para as fases seguintes, para ninguém precisar editar este arquivo:
+ * `Screens` (Fase 3: emissive e luzes do PC) e `MonitorHtml` (Fase 2.2: SO dentro do monitor).
+ */
 export function Desk() {
   const { bind } = useHotspot('desk')
   return (
     <group name="desk_root" {...bind}>
-      {/* mesa principal + monitores + PC gamer */}
-      <Hitbox position={[-3.35, 1.15, -0.35]} size={[1.5, 2.3, 3.8]} />
-      {/* asa da mesa + TV de parede (scene/WallTv). Termina em x = -1.0, antes da estante. */}
-      <Hitbox position={[-2.55, 1.5, -2.8]} size={[3.1, 3.0, 1.3]} />
+      {/* mesa + monitores + PC gamer. Vai até x = -2.6; o rack da TV começa em -2.55. */}
+      <Hitbox position={[dx, 1.15, dz]} size={[1.5, 2.3, dd + 0.1]} />
       <DeskPlaceholder />
+      <Screens />
+      <MonitorHtml />
     </group>
   )
 }

@@ -9,6 +9,7 @@ import { useKeyboard } from './interaction/useKeyboard'
 import { useUrlSync } from './interaction/useUrlSync'
 import { LoadingBridge } from './LoadingBridge'
 import './preload'
+import { Effects } from './scene/Effects'
 import { Scene } from './scene/Scene'
 
 // leva + r3f-perf só existem no bundle de desenvolvimento: em produção `NODE_ENV` é
@@ -35,6 +36,7 @@ export default function Experience() {
         >
           <Suspense fallback={null}>
             <Scene />
+            <Effects />
           </Suspense>
           <CameraRig />
           {DevTools ? <DevTools /> : null}

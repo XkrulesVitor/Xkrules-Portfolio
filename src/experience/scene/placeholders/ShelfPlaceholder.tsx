@@ -2,7 +2,7 @@ import { MergedParts } from './MergedParts'
 import { COLORS, box, cyl } from './parts'
 
 // Estante 1.8 x 2.6 x 0.5 com origem no piso, centro da largura, no meio da profundidade; frente em +Z.
-// Fica colada à direita da TV de parede (scene/WallTv): o console da prateleira 3 está "ligado" nela.
+// Estante SÓ de board games, à direita do rack da TV. O console e os jogos digitais ficam no rack.
 // Topos das prateleiras: 0.055, 0.705, 1.355, 2.005 e 2.605.
 // Aqui só entra o que é ESTÁTICO. As caixas dos projetos (interativas) são GameBox, em Shelf.tsx.
 const SHELF_LEVELS = [0.03, 0.68, 1.33, 1.98, 2.58]
@@ -22,9 +22,12 @@ const FRAME_PARTS = [
   // Prateleira 2: caixas comerciais de decoração (Root, Heat) ao lado dos board games autorais.
   box([0.34, 0.46, 0.1], [0.3, 0.935, 0.08], '#d9a441'),
   box([0.34, 0.46, 0.1], [0.66, 0.935, 0.08], '#c8412f'),
-  // Prateleira 3: console (ligado na TV de parede), controle e dados.
-  box([0.34, 0.07, 0.26], [-0.5, 1.39, 0.05], COLORS.dark),
-  box([0.14, 0.035, 0.09], [-0.15, 1.3725, 0.12], COLORS.darker),
+  // Prateleira 3: caixas deitadas, torre de dados e miniaturas.
+  box([0.5, 0.08, 0.4], [-0.45, 1.395, 0], '#c25b4a'),
+  box([0.46, 0.08, 0.38], [-0.45, 1.475, 0], '#5b7fc2'),
+  box([0.16, 0.26, 0.16], [0.15, 1.485, 0.05], '#6b4f3a'),
+  cyl(0.04, 0.1, [0.42, 1.405, 0.1], '#9aa3b5'),
+  cyl(0.04, 0.1, [0.54, 1.405, 0.06], '#b58b6a'),
   box([0.05, 0.05, 0.05], [0.72, 1.38, 0.1], COLORS.dice),
   box([0.05, 0.05, 0.05], [0.64, 1.38, 0.16], '#d64545'),
   // Prateleira 4: fileira decorativa.

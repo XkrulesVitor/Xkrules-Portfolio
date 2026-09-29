@@ -6,11 +6,11 @@ import { NO_RAYCAST } from './raycast'
 // Bancada + impressora com origem no centro do tampo da bancada (y = 0 é a superfície).
 const STATIC_PARTS = [
   // bancada
-  box([2.6, 0.08, 1.1], [0, -0.04, 0], COLORS.wood),
-  box([0.08, 0.82, 0.08], [-1.2, -0.49, -0.48], COLORS.woodLight),
-  box([0.08, 0.82, 0.08], [1.2, -0.49, -0.48], COLORS.woodLight),
-  box([0.08, 0.82, 0.08], [-1.2, -0.49, 0.48], COLORS.woodLight),
-  box([0.08, 0.82, 0.08], [1.2, -0.49, 0.48], COLORS.woodLight),
+  box([2.4, 0.08, 1.1], [0, -0.04, 0], COLORS.wood),
+  box([0.08, 0.82, 0.08], [-1.1, -0.49, -0.48], COLORS.woodLight),
+  box([0.08, 0.82, 0.08], [1.1, -0.49, -0.48], COLORS.woodLight),
+  box([0.08, 0.82, 0.08], [-1.1, -0.49, 0.48], COLORS.woodLight),
+  box([0.08, 0.82, 0.08], [1.1, -0.49, 0.48], COLORS.woodLight),
   // impressora: base, colunas, viga superior
   box([0.9, 0.14, 0.8], [0, 0.07, 0], COLORS.printerBase),
   box([0.08, 1.0, 0.08], [-0.4, 0.64, -0.3], COLORS.metal),

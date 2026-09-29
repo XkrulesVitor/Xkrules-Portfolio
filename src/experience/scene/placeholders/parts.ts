@@ -22,16 +22,18 @@ export const cyl = (radius: number, height: number, position: Vec3, color: strin
   color,
 })
 
-// Paleta clay/neutra do grey-box.
+// Paleta do grey-box, puxada para a referência (quarto aconchegante de fim de noite): piso de
+// madeira, paredes claras levemente tingidas, borda da ilha escura. A cor final vem do bake (Fase 4).
 export const COLORS = {
-  floor: '#d9d0c1',
-  floorSide: '#a89b88',
-  floorUnder: '#8f8373',
-  wallLeft: '#ece6db',
-  wallRight: '#e4ddd0',
-  rug: '#b7c2cf',
+  floor: '#b8865a',
+  floorSide: '#3a3350',
+  floorUnder: '#2b2640',
+  wallLeft: '#e8e2ef',
+  wallRight: '#efe3e5',
+  rug: '#8c83b3',
   wood: '#b08d6a',
   woodLight: '#c8a27a',
+  white: '#ece8e1',
   dark: '#2f3542',
   darker: '#1f232c',
   bezel: '#20242c',

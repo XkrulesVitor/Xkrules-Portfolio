@@ -16,6 +16,8 @@ Reporte em 10 linhas: arquivos criados, decisões tomadas, o que ficou pendente.
 
 Legenda de aceite: **A** = `tsc`/`lint`/`build` limpos · **M** = verificação manual no browser (`npm run dev`).
 
+**Status (2026-09-29):** Fases 0, 1 e 2.1 concluídas e comitadas. Layout da referência aplicado (mesa reta, PC gamer grande, rack da TV com console, cama de casal) e sub-vistas da zona de jogos prontas. Em andamento, em paralelo: Fase 2.2 ‖ Fase 3 (protocolo abaixo da Fase 2).
+
 ---
 
 ## Fase 0 — Fundação (grey-box navegável)
@@ -117,22 +119,48 @@ Integração: o modelo arquiteto roda `tsc`, `lint`, `test` e `build`, revisa no
 - Crie `src/app/dev/os/page.tsx` (server) renderizando um `Preview.tsx` com `'use client'` na mesma pasta.
 - Aceite: **A**; **M** em `/dev/os` renderizado num div 1280×720 e num 640×360 sem quebrar.
 
-### 2.2 `MonitorHtml`
-- Conforme §6.2: `Html transform occlude="blending"`, `distanceFactor` calibrado para o plano `screen_monitor_main` do grey-box, `pointerEvents` ligado só em `focused:desk`, crossfade com o wallpaper emissivo.
+### 2.2 `MonitorHtml` (arquivo já montado: `src/experience/hotspots/desk/MonitorHtml.tsx`)
+- Conforme §6.2: drei `<Html transform occlude="blending">` com o `Desktop` de `src/ui/os` num wrapper FIXO de 1280×720 CSS px. Posição, rotação e escala derivadas de `LAYOUT.monitorMain` (centro, normal +X, 1.3 × 0.73 m): o wrapper precisa cobrir exatamente a tela (calibrar `distanceFactor`/`scale` pela razão 1.3 m / 1280 px).
+- Fica 2 mm à frente do plano `screen_monitor_main` (ao longo da normal) para não brigar em profundidade com a tela.
+- Interativo só com `mode === 'focused' && focus === 'desk'`: `pointer-events` e `inert` alternam no wrapper. Fora disso o SO fica invisível (opacidade 0) para poupar o CSS3D; ao chegar no foco, crossfade de ~0.3 s.
+- O `Desktop` abre com a janela `Projetos` (`initialWindows`), para a tela não chegar vazia.
+- O Esc global continua voltando para HOME; o SO não trata Esc.
 - Mobile: adiado (fora do escopo por enquanto).
-- Aceite: **A**; **M** redimensionar a janela não altera o layout interno; cliques só funcionam após a câmera parar.
+- Aceite: **A**; **M** na visão do `desk` a tela do SO cobre o monitor sem sobrar borda; clicar e arrastar janelas funciona só depois que a câmera para; em HOME e nos outros hotspots nada do SO recebe clique; redimensionar a janela do browser não muda o layout interno.
+
+---
+
+## Protocolo de execução paralela (Fase 2.2 ‖ Fase 3)
+
+Mesmas regras do protocolo das Fases 1 ‖ 2.1 (checagem de tipos filtrada, eslint com escopo, sem `npm run build`, sem commit, um `next dev` só). O layout (`scene/layout.ts`) e os pontos de montagem estão congelados: `Desk.tsx` já monta `Screens` e `MonitorHtml`, `Shelf.tsx` já monta `ShelfParticles` e `Experience.tsx` já monta `Effects`.
+
+| Agente | Cria ou edita | Só lê |
+|---|---|---|
+| Fase 2.2 (SO no monitor) | `src/experience/hotspots/desk/MonitorHtml.tsx`, `src/ui/os/**` (ajustes para embutir, ex.: `initialWindows`, `interactive`), `src/app/dev/os/**` | `scene/layout.ts`, `store/**`, `content/**` |
+| Fase 3 (micro-interações e pós) | `hotspots/chair/**`, `hotspots/printer/**`, `hotspots/shelf/GameBox.tsx`, `hotspots/shelf/ShelfParticles.tsx` (e hooks novos nessas pastas), `hotspots/desk/Screens.tsx`, `scene/WallTv.tsx`, `scene/Effects.tsx`, `scene/Lights.tsx`, `scene/placeholders/materials.ts`, `scene/placeholders/PrinterPlaceholder.tsx`, `experience/Experience.tsx` (só `PerformanceMonitor`, `AdaptiveDpr` e props do Canvas), `experience/camera/**` (só na 3.6) | `scene/layout.ts`, `store/**`, `content/**` |
+
+Proibido para os dois: `package.json` e lockfile (tudo o que é preciso já está instalado), `next.config.ts`, `tsconfig.json`, `docs/**`, `scene/layout.ts`, `hotspots/desk/Desk.tsx`, `hotspots/shelf/Shelf.tsx`, `store/**`, `content/**`, `ui/panels/**`, `ui/primitives/**`, `ui/overlay/**`.
+
+Contrato entre os dois na tela do monitor: com `focused` + `desk`, o `Screens` (Fase 3) apaga a tela emissiva do monitor horizontal para o SO (Fase 2.2) aparecer por cima; o `MonitorHtml` fica 2 mm à frente do plano.
+
+Verificação no browser: o painel costuma estar oculto e aí o canvas nem monta. Uma captura de tela força o desenho, e depois disso o canvas monta. Em dev, `window.__experienceStore` e `window.__cameraControls` permitem forçar estados (`setState({ mode: 'focused', focus: 'desk' })`) e enquadramentos sem esperar os voos.
 
 ---
 
 ## Fase 3 — Micro-interações 3D e pós-processamento
 
-### 3.1 Cadeira: `useChairSpring` (§6.1) com `@react-spring/three`, giro ~190° elástico no hover, retorno no unhover/home.
-### 3.2 Telas e LED: `Screens.tsx` com damp de emissive nos monitores (§6.2), LED pulsante, `toneMapped:false`. `WallTv` com os três modos de §6.5 (apagada, `desk`, `shelf`). PC gamer: `pc_fan` e `pc_rgb` pulsam no hover da mesa.
-### 3.3 Impressora: `usePrinterAnimation` (§6.3) em `useFrame` com refs; peça cresce ao focar.
-### 3.4 Estante: `GameBox` spring z + `highlightBox`; `ShelfParticles` (Sparkles ≤ 80) só em focused; shader de estática (`uTime`) usado pela `WallTv` no modo `shelf`.
-### 3.5 `scene/Effects.tsx`: `EffectComposer` com `SMAA` + `Bloom(threshold .9, intensity .6, mipmapBlur)`; `DepthOfField` montado só quando `focus==='chair' && mode==='focused'`. `PerformanceMonitor` + `AdaptiveDpr` → `quality` (§7).
-### 3.6 Enquadramento responsivo (ARCHITECTURE §4): presets passam a `{ focusBox, direction, panelSide }` e o `CameraRig` calcula distância e deslocamento pelo aspect e pela largura do painel. Aceite: em 16:9 e 4:3 o conteúdo do hotspot fica inteiro e fora do painel.
-- Aceite (fase): **A**; **M** `r3f-perf` ≥ 55 fps desktop com composer; hover em cada hotspot mostra a animação; nada anima durante `transitioning`.
+### 3.1 Cadeira: `useChairSpring` (§6.1) com `@react-spring/three`, giro ~190° elástico no hover, retorno no unhover e ao voltar para HOME.
+### 3.2 Telas e luzes (`hotspots/desk/Screens.tsx` e `scene/WallTv.tsx`)
+- Monitores: damp de emissive com `useHotspot('desk').active` (§6.2), `toneMapped: false`. Em `focused` + `desk` a tela do monitor horizontal fica escura (o SO da 2.2 aparece por cima).
+- PC gamer: `pc_fan_top`, `pc_fan_bottom` e `pc_rgb` pulsam no hover da mesa; `led_case` com sin(t). Um material por instância; nada de setState no useFrame.
+- TV (§6.5): estática retrô no hover da zona de jogos; em `focused` + vista `digital`, tela de título tingida pelo `accent` do jogo em `highlightBox` (lendo `GAME_PROJECTS`); apagada no resto. Fita de LED rosa `tv_backlight` atrás da TV, emissiva.
+### 3.3 Impressora: `usePrinterAnimation` (§6.3) em `useFrame` com refs; peça cresce ao focar. Pode ajustar `PrinterPlaceholder.tsx` para expor refs dos nós.
+### 3.4 Zona de jogos: `GameBox` com spring z no hover e spring extra no `highlightBox`; `ShelfParticles` (Sparkles ≤ 80) só em `focused` + `shelf`, posicionadas na vista ativa (estante em `tabuleiro`, rack e TV em `digital`).
+### 3.5 Pós e clima (`scene/Effects.tsx`, `scene/Lights.tsx`, `Experience.tsx`)
+- `EffectComposer` com `SMAA` + `Bloom(threshold ~0.9, intensity ~0.6, mipmapBlur)`; `DepthOfField` só com `focused` + `chair`. `PerformanceMonitor` + `AdaptiveDpr` alimentam `quality` (§7).
+- Iluminação PROVISÓRIA no clima da referência (até o bake da Fase 4): fim de noite, luz ambiente baixa, preenchimento roxo/azul vindo da mesa e dos monitores, rosa vindo da TV, um toque quente. Sem sombras. As emissivas (telas, fita RGB, LED da TV) devem estourar no Bloom e as paredes claras não podem virar branco chapado.
+### 3.6 Enquadramento responsivo (ARCHITECTURE §4, dono de `experience/camera/**`): presets passam a `{ focusBox, direction, panelSide }` e o `CameraRig` calcula distância e deslocamento pelo aspect e pela largura do painel. Manter o contrato de sub-vistas (`presetKeyFor`, `resolveFocus`, voo sem `onCameraRest` em `focused`). Aceite: em 16:9 e 4:3 o conteúdo de cada hotspot e de cada vista da zona de jogos fica inteiro e fora do painel.
+- Aceite (fase): **A**; **M** `r3f-perf` ≥ 55 fps no desktop com o composer; hover em cada hotspot mostra a animação; nada anima durante `transitioning`; trocar a aba da zona de jogos continua voando entre estante e TV.
 
 ---
 

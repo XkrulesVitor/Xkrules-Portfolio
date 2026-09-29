@@ -10,6 +10,11 @@ export interface ExperienceState {
   mode: Mode
   /** Alvo atual (durante `transitioning` = destino; `null` = home). */
   focus: HotspotId | null
+  /**
+   * Sub-vista do hotspot em foco (ARCHITECTURE §5). `null` = a vista padrão (a primeira do registry).
+   * Só existe junto com `focus`; trocar a vista em `focused` move a câmera sem sair do foco.
+   */
+  view: string | null
   hovered: HotspotId | null
   quality: Quality
   audioEnabled: boolean
@@ -18,10 +23,12 @@ export interface ExperienceState {
   setMode(mode: Mode): void
   setHovered(id: HotspotId | null): void
   /**
-   * idle | intro | transitioning(home) -> transitioning(focus = id).
+   * idle | intro | transitioning(home) -> transitioning(focus = id, view).
    * Ignorado em loading, focused e transitioning rumo a outro hotspot (sem spam de câmera).
    */
-  requestFocus(id: HotspotId): void
+  requestFocus(id: HotspotId, view?: string | null): void
+  /** Troca a sub-vista do hotspot em foco. Só em `focused`; limpa o highlightBox. */
+  setView(view: string | null): void
   /** focused | transitioning -> transitioning(focus = null). */
   requestHome(): void
   /** transitioning -> focused | idle; intro -> idle. Chamado APENAS pelo CameraRig. */
@@ -35,6 +42,7 @@ export const useExperienceStore = create<ExperienceState>()(
   subscribeWithSelector((set, get) => ({
     mode: 'loading',
     focus: null,
+    view: null,
     hovered: null,
     quality: 'high',
     audioEnabled: false,
@@ -48,8 +56,9 @@ export const useExperienceStore = create<ExperienceState>()(
         mode,
         // Guarda 3: hovered só existe em idle.
         hovered: mode === 'idle' ? s.hovered : null,
-        // Fora de focused/transitioning não há alvo.
+        // Fora de focused/transitioning não há alvo (nem sub-vista).
         focus: mode === 'focused' || mode === 'transitioning' ? s.focus : null,
+        view: mode === 'focused' || mode === 'transitioning' ? s.view : null,
         highlightBox: mode === 'focused' ? s.highlightBox : null,
       })
     },
@@ -62,7 +71,7 @@ export const useExperienceStore = create<ExperienceState>()(
       set({ hovered: id })
     },
 
-    requestFocus: (id) => {
+    requestFocus: (id, view = null) => {
       // Guarda 1: aceito em idle, durante a intro e durante o voo de VOLTA (focus null).
       // Um clique enquanto a câmera ainda volta para HOME não deve ser perdido; já um clique
       // durante o voo rumo a outro hotspot é ignorado (evita spam de câmera).
@@ -70,16 +79,22 @@ export const useExperienceStore = create<ExperienceState>()(
       const canAccept =
         s.mode === 'idle' || s.mode === 'intro' || (s.mode === 'transitioning' && s.focus === null)
       if (!canAccept) return
-      set({ mode: 'transitioning', focus: id, hovered: null })
+      set({ mode: 'transitioning', focus: id, view, hovered: null })
+    },
+
+    setView: (view) => {
+      const s = get()
+      if (s.mode !== 'focused' || s.focus === null || s.view === view) return
+      set({ view, highlightBox: null })
     },
 
     requestHome: () => {
       const s = get()
       // Guarda 2: aceito em focused e transitioning (cancelar uma entrada).
       if (s.mode === 'focused') {
-        set({ mode: 'transitioning', focus: null, hovered: null, highlightBox: null })
+        set({ mode: 'transitioning', focus: null, view: null, hovered: null, highlightBox: null })
       } else if (s.mode === 'transitioning' && s.focus !== null) {
-        set({ focus: null, hovered: null, highlightBox: null })
+        set({ focus: null, view: null, hovered: null, highlightBox: null })
       }
     },
 

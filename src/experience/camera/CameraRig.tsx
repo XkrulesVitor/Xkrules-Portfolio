@@ -3,12 +3,12 @@ import { useFrame } from '@react-three/fiber'
 import { CameraControls, CameraControlsImpl } from '@react-three/drei'
 import { Box3, Vector3 } from 'three'
 import { shallow } from 'zustand/shallow'
-import { FOCUS_QUERY_PARAM } from '@/lib/constants'
+import { FOCUS_QUERY_PARAM, VIEW_QUERY_PARAM } from '@/lib/constants'
 import { prefersReducedMotion } from '@/lib/device'
-import { isHotspotId } from '@/content/hotspots'
+import { isHotspotId, resolveFocus } from '@/content/hotspots'
+import type { HotspotId, PresetKey } from '@/content/types'
 import type { Mode } from '@/store/useExperienceStore'
 import { useExperienceStore } from '@/store/useExperienceStore'
-import type { HotspotId } from '@/content/types'
 import {
   DEFAULT_SMOOTH_TIME,
   INTRO_SMOOTH_TIME,
@@ -18,7 +18,6 @@ import {
   USER_SMOOTH_TIME,
   type CameraLimits,
   type CameraPreset,
-  type PresetKey,
 } from './presets'
 
 // Pan (truck) em HOME fica preso a esta caixa, para o usuário não "perder" a ilha.
@@ -55,9 +54,21 @@ function applyLimits(controls: CameraControlsImpl, l: CameraLimits) {
   controls.maxAzimuthAngle = l.maxAzimuth
 }
 
-function readDeepLink(): HotspotId | null {
-  const value = new URLSearchParams(window.location.search).get(FOCUS_QUERY_PARAM)
-  return isHotspotId(value) ? value : null
+interface DeepLink {
+  focus: HotspotId
+  view: string | null
+}
+
+function readDeepLink(): DeepLink | null {
+  const params = new URLSearchParams(window.location.search)
+  const focus = params.get(FOCUS_QUERY_PARAM)
+  return isHotspotId(focus) ? { focus, view: params.get(VIEW_QUERY_PARAM) } : null
+}
+
+/** Preset de destino de um estado do store, com a sub-vista resolvida pelo registry. */
+function presetKeyFor(mode: Mode, focus: HotspotId | null, view: string | null): PresetKey {
+  if (mode === 'intro' || focus === null) return 'home'
+  return resolveFocus(focus, view).preset
 }
 
 /** Posiciona a câmera imediatamente (sem transição) e aplica limites/controle do preset. */
@@ -79,7 +90,8 @@ function settleAt(controls: CameraControlsImpl, key: PresetKey, p: CameraPreset)
 
 /**
  * Único componente que move a câmera (ARCHITECTURE §4): assina o store e reage a
- * `mode === 'intro' | 'transitioning'` com `setLookAt(..., true)`. É também a única
+ * `mode === 'intro' | 'transitioning'` com `setLookAt(..., true)`, e também à troca de sub-vista
+ * em `focused` (voo "lateral" que não sai do foco, então o painel continua montado). É a única
  * fonte de `onCameraRest()`.
  */
 export function CameraRig() {
@@ -113,15 +125,22 @@ export function CameraRig() {
     // Contadores mutáveis compartilhados com o useFrame (não apontam para nós React).
     const tokens = tokenRef
     const flights = flightRef
+    /** Preset em que a câmera está ou para onde está voando. */
+    let currentKey: PresetKey | null = null
 
-    const run = (mode: Mode, focus: HotspotId | null) => {
-      if (mode !== 'intro' && mode !== 'transitioning') return
+    interface FlyOptions {
+      intro: boolean
+      /** Deep-link lido na intro: pula o voo de introdução e depois foca o hotspot. */
+      link: DeepLink | null
+      /** Voos de intro/transição avisam o store ao chegar; troca de sub-vista não muda o modo. */
+      notifyRest: boolean
+    }
+
+    const fly = (key: PresetKey, opts: FlyOptions) => {
       const token = ++tokens.current
       const reduced = prefersReducedMotion()
-
-      const key: PresetKey = mode === 'intro' ? 'home' : (focus ?? 'home')
       const preset = PRESETS[key]
-      const link = mode === 'intro' ? readDeepLink() : null
+      currentKey = key
 
       // Bloqueia o input e libera os limites: eles só valem para o usuário, e um destino
       // fora dos limites do preset anterior não pode ser "puxado" no meio do voo.
@@ -129,10 +148,8 @@ export function CameraRig() {
       controls.setBoundary(undefined)
       applyLimits(controls, OPEN_LIMITS)
 
-      // Deep-link: pula o voo de introdução (teleporta para HOME, depois voa ao hotspot).
-      const animate = !reduced && !link
-      let smoothTime =
-        mode === 'intro' ? INTRO_SMOOTH_TIME : (preset.smoothTime ?? DEFAULT_SMOOTH_TIME)
+      const animate = !reduced && !opts.link
+      let smoothTime = opts.intro ? INTRO_SMOOTH_TIME : (preset.smoothTime ?? DEFAULT_SMOOTH_TIME)
       if (reduced) smoothTime = 0
       controls.smoothTime = smoothTime
 
@@ -146,9 +163,23 @@ export function CameraRig() {
         maxMs: animate ? Math.max(MIN_FLIGHT_MS, smoothTime * MAX_FLIGHT_FACTOR * 1000) : 0,
         onArrive: () => {
           settleAt(controls, key, preset)
+          if (!opts.notifyRest) return
           store.getState().onCameraRest()
-          if (link) store.getState().requestFocus(link)
+          if (opts.link) store.getState().requestFocus(opts.link.focus, opts.link.view)
         },
+      }
+    }
+
+    const react = (mode: Mode, focus: HotspotId | null, view: string | null) => {
+      if (mode === 'intro' || mode === 'transitioning') {
+        const link = mode === 'intro' ? readDeepLink() : null
+        fly(presetKeyFor(mode, focus, view), { intro: mode === 'intro', link, notifyRest: true })
+        return
+      }
+      // Troca de sub-vista em foco (ex.: aba Digital da zona de jogos).
+      if (mode === 'focused' && focus !== null) {
+        const key = presetKeyFor(mode, focus, view)
+        if (key !== currentKey) fly(key, { intro: false, link: null, notifyRest: false })
       }
     }
 
@@ -159,15 +190,16 @@ export function CameraRig() {
       applyLimits(controls, OPEN_LIMITS)
       void controls.setLookAt(...INTRO_START.position, ...INTRO_START.target, false)
       controls.enabled = false
-      if (initial.mode === 'intro') run('intro', null)
+      if (initial.mode === 'intro') react('intro', null, null)
     } else {
-      snapTo(controls, initial.focus ?? 'home')
-      if (initial.mode === 'transitioning') run('transitioning', initial.focus)
+      currentKey = presetKeyFor(initial.mode, initial.focus, initial.view)
+      snapTo(controls, currentKey)
+      if (initial.mode === 'transitioning') react('transitioning', initial.focus, initial.view)
     }
 
     const unsubscribe = store.subscribe(
-      (s) => [s.mode, s.focus] as const,
-      ([mode, focus]) => run(mode, focus),
+      (s) => [s.mode, s.focus, s.view] as const,
+      ([mode, focus, view]) => react(mode, focus, view),
       { equalityFn: shallow },
     )
 

@@ -1,4 +1,4 @@
-import type { HotspotId } from '@/content/types'
+import type { PresetKey } from '@/content/types'
 import { degToRad } from '@/lib/math'
 import { LAYOUT } from '../scene/layout'
 
@@ -29,7 +29,9 @@ export interface CameraPreset {
   dof?: { focusDistance: number; focalLength: number; bokehScale: number }
 }
 
-export type PresetKey = 'home' | HotspotId
+// A chave dos presets é declarada em content/types.ts, porque o registry (content/hotspots.ts)
+// referencia presets por chave nas sub-vistas.
+export type { PresetKey }
 
 /** Sem restrição: usado durante voos e nos hotspots (onde o usuário não orbita). */
 export const OPEN_LIMITS: CameraLimits = {
@@ -113,12 +115,22 @@ export const PRESETS: Record<PresetKey, CameraPreset> = {
     userControl: false,
     limits: OPEN_LIMITS,
   },
-  // Estante: zoom nas prateleiras 2 (board games) e 3 (console + jogos digitais), a ~3 m da frente.
+  // Zona de jogos, aba Tabuleiro: zoom nas prateleiras 2 e 3 da estante, a ~3 m da frente.
   // Painel à esquerda -> alvo deslocado para a esquerda, estante entre ~37% e ~93% da largura.
   // Afinado em 16:9; outros aspects dependem do BACKLOG 3.6 (enquadramento responsivo).
   shelf: {
     position: add(LAYOUT.shelf, [0.28, 1.42, 3.13]),
     target: add(LAYOUT.shelf, [-0.42, 1.25, 0.25]),
+    smoothTime: 0.9,
+    userControl: false,
+    limits: OPEN_LIMITS,
+  },
+  // Zona de jogos, aba Digital: TV + rack com o console. Painel à DIREITA -> TV e rack entre ~21% e
+  // ~57% da largura. A câmera vem da direita, em diagonal: de frente, a cadeira (que fica diante do
+  // monitor) entra no caminho e cobre a ponta esquerda do rack.
+  shelfDigital: {
+    position: add(LAYOUT.rack.center, [2.4, 1.05, 3.435]),
+    target: add(LAYOUT.rack.center, [0.55, 0.55, -0.05]),
     smoothTime: 0.9,
     userControl: false,
     limits: OPEN_LIMITS,
