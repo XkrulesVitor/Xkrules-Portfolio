@@ -14,7 +14,7 @@ const RACK_PARTS = [
   // duas portas de madeira na frente e o vão aberto do meio
   box([0.62, rh - 0.12, 0.01], [rx - 0.6, rh / 2, FRONT + 0.005], COLORS.woodLight),
   box([0.62, rh - 0.12, 0.01], [rx + 0.6, rh / 2, FRONT + 0.005], COLORS.woodLight),
-  box([0.5, 0.14, 0.02], [rx, 0.2, FRONT - 0.01], COLORS.darker),
+  box([0.5, 0.14, 0.01], [rx, 0.2, FRONT + 0.002], COLORS.darker),
   // console deitado (à esquerda) e controle no tampo
   box([0.3, 0.08, 0.22], [rx - 0.55, RACK_TOP_Y + 0.04, rz - 0.02], COLORS.dark),
   box([0.02, 0.012, 0.12], [rx - 0.4, RACK_TOP_Y + 0.066, rz + 0.07], '#7ff5d0'),

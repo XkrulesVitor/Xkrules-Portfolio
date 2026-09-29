@@ -98,6 +98,45 @@
   mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 28px), transparent 100%);
 }
 
+/* Registro global do --px para cálculo dinâmico via container queries */
+@property --px {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 1px;
+}
+
+:root {
+  --os-mint: #7ff5d0;
+  --os-blue: #6aa8ff;
+  --os-bg: var(--color-bg-canvas, #0b1020);
+  --os-ink: var(--color-ink, #eaf0ff);
+  --os-ink-dim: rgb(234 240 255 / 0.76);
+  --os-ink-soft: rgb(234 240 255 / 0.6);
+  --os-surface: #0e1630;
+  --os-surface-raised: #141e3e;
+  --os-line: rgb(255 255 255 / 0.1);
+  --os-line-strong: rgb(255 255 255 / 0.2);
+  --os-glass: rgb(255 255 255 / 0.06);
+  --os-glass-hover: rgb(255 255 255 / 0.12);
+
+  --fs-2xs: calc(var(--px) * 12);
+  --fs-xs: calc(var(--px) * 13);
+  --fs-sm: calc(var(--px) * 14);
+  --fs-md: calc(var(--px) * 16);
+  --fs-lg: calc(var(--px) * 18);
+  --fs-xl: calc(var(--px) * 24);
+  --fs-2xl: calc(var(--px) * 30);
+  --sp-1: calc(var(--px) * 4);
+  --sp-2: calc(var(--px) * 8);
+  --sp-3: calc(var(--px) * 12);
+  --sp-4: calc(var(--px) * 16);
+  --sp-5: calc(var(--px) * 24);
+  --sp-6: calc(var(--px) * 32);
+  --r-sm: calc(var(--px) * 6);
+  --r-md: calc(var(--px) * 10);
+  --r-lg: calc(var(--px) * 14);
+}
+
 html {
   color-scheme: dark;
 }
