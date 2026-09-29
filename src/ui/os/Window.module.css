@@ -1,0 +1,129 @@
+/* left/top/width/height/z-index chegam inline, em % do desktop (cqw/cqh, ver Window.tsx).
+   Sem `pointer-events: auto` aqui de propósito: o host controla o ponteiro por herança. */
+.positioner {
+  position: absolute;
+}
+
+.positioner[data-state='minimized'],
+.positioner[data-state='closing'] {
+  pointer-events: none;
+}
+
+/* Some da tela só depois da animação de minimizar; ao restaurar, volta de imediato. */
+.positioner[data-minimized='true'] {
+  visibility: hidden;
+  transition: visibility 0s linear 0.32s;
+}
+
+.window {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--os-line);
+  border-radius: var(--r-lg);
+  background: var(--os-surface);
+  box-shadow:
+    0 calc(var(--px) * 16) calc(var(--px) * 40) rgb(0 0 0 / 0.42),
+    0 0 0 1px rgb(0 0 0 / 0.35);
+  outline: none;
+  transform-origin: 50% 100%;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.positioner[data-active='true'] .window {
+  border-color: color-mix(in srgb, var(--accent, var(--os-mint)) 55%, transparent);
+  box-shadow:
+    0 calc(var(--px) * 28) calc(var(--px) * 64) rgb(0 0 0 / 0.55),
+    0 0 0 1px color-mix(in srgb, var(--accent, var(--os-mint)) 26%, transparent),
+    0 0 calc(var(--px) * 44) color-mix(in srgb, var(--accent, var(--os-mint)) 16%, transparent);
+}
+
+.titlebar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-3);
+  height: calc(var(--px) * 44);
+  padding: 0 var(--sp-2) 0 var(--sp-4);
+  border-bottom: 1px solid var(--os-line);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.02));
+  cursor: grab;
+  touch-action: none;
+}
+
+.titlebar[data-dragging='true'] {
+  cursor: grabbing;
+}
+
+.titleGlyph {
+  display: inline-flex;
+  flex: none;
+  font-size: calc(var(--px) * 22);
+  color: var(--accent, var(--os-mint));
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--os-ink-dim);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.positioner[data-active='true'] .title {
+  color: var(--os-ink);
+}
+
+.controls {
+  display: flex;
+  flex: none;
+  gap: var(--sp-1);
+  cursor: default;
+}
+
+.control {
+  display: grid;
+  place-items: center;
+  width: calc(var(--px) * 32);
+  height: calc(var(--px) * 32);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--os-ink-dim);
+  font-size: calc(var(--px) * 18);
+  cursor: pointer;
+  transition:
+    background-color 0.14s,
+    color 0.14s;
+}
+
+.control:hover {
+  background: var(--os-glass-hover);
+  color: var(--os-ink);
+}
+
+.controlClose:hover {
+  background: #e5484d;
+  color: #fff;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgb(255 255 255 / 0.28) transparent;
+  scrollbar-width: thin;
+  user-select: text;
+  -webkit-user-select: text;
+}

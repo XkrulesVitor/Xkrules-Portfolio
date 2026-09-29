@@ -1,0 +1,109 @@
+/* Container do SO: `container-type: size` permite que o stage derive --px da largura/altura do
+   PRÓPRIO desktop. O tamanho vem do pai (1280x720 no monitor 3D). */
+.desktop {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  container-type: size;
+  background: #070b17;
+  outline: none;
+}
+
+.stage {
+  /* 1 px de design = 1/1280 da largura do container (ou 1/720 da altura, o que for menor).
+     Em 1280x720 vale exatamente 1px; em 640x360, 0.5px: o SO inteiro escala junto. */
+  --px: min(100cqw / 1280, 100cqh / 720);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Papel de parede -------------------------------------------------------------------------- */
+
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(52% 62% at 14% 6%, rgb(127 245 208 / 0.17), transparent 68%),
+    radial-gradient(48% 60% at 94% 92%, rgb(106 168 255 / 0.22), transparent 66%),
+    radial-gradient(70% 90% at 62% 42%, rgb(30 44 92 / 0.55), transparent 72%),
+    linear-gradient(165deg, #0d1530 0%, #0b1020 48%, #070b17 100%);
+}
+
+/* Grade que some nas bordas. */
+.wallpaper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-position: center;
+  background-size: calc(var(--px) * 64) calc(var(--px) * 64);
+  mask-image: radial-gradient(75% 85% at 55% 45%, #000 15%, transparent 75%);
+}
+
+/* Granulado fino: quebra o banding dos gradientes escuros. */
+.wallpaper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: calc(var(--px) * 160) calc(var(--px) * 160);
+}
+
+/* Anéis concêntricos discretos, como um radar, à direita. */
+.rings {
+  position: absolute;
+  inset: 0;
+  background: repeating-radial-gradient(
+    circle at 80% 58%,
+    transparent 0,
+    transparent calc(var(--px) * 58),
+    rgb(106 168 255 / 0.07) calc(var(--px) * 58),
+    rgb(106 168 255 / 0.07) calc(var(--px) * 59)
+  );
+  mask-image: radial-gradient(circle at 80% 58%, #000 0, transparent 46%);
+}
+
+/* Atalhos ------------------------------------------------------------------------------------- */
+
+/* Grade que enche por coluna, 3 linhas por vez (convenção de área de trabalho). Com mais projetos
+   nascem novas colunas à direita; as janelas abrem à direita de duas colunas (windowManager.ts). */
+.icons {
+  position: absolute;
+  top: var(--sp-5);
+  left: var(--sp-5);
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, max-content);
+  gap: var(--sp-3) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Camada das janelas: caixa de tamanho ZERO que só cria o contexto de empilhamento (abaixo do
+   anteparo e da barra de tarefas). Como não cobre o desktop, não intercepta o clique dos atalhos
+   e dispensa pointer-events próprio: as janelas herdam o do host (o wrapper do Html do drei alterna
+   none/auto, e um `auto` explícito aqui reativaria o clique com o monitor desfocado). As janelas se
+   posicionam em cqw/cqh, ou seja, em % do desktop, e não em % desta caixa. */
+.windows {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 0;
+  height: 0;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}

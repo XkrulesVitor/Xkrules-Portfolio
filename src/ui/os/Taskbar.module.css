@@ -1,0 +1,174 @@
+/* A altura vem de --taskbar-h (% do desktop, definida pelo Desktop): as janelas param logo acima dela. */
+.taskbar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: var(--taskbar-h);
+  padding: 0 var(--sp-3);
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+  background: rgb(9 14 30 / 0.88);
+  backdrop-filter: blur(calc(var(--px) * 18)) saturate(150%);
+  box-shadow: 0 calc(var(--px) * -8) calc(var(--px) * 28) rgb(0 0 0 / 0.32);
+}
+
+.startWrap {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  height: 100%;
+}
+
+.start {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: calc(var(--px) * 40);
+  padding: 0 var(--sp-4) 0 var(--sp-2);
+  border: 1px solid rgb(127 245 208 / 0.38);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgb(127 245 208 / 0.24), rgb(106 168 255 / 0.18));
+  color: var(--os-ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.16s,
+    border-color 0.16s;
+}
+
+.start:hover,
+.start[aria-expanded='true'] {
+  border-color: rgb(127 245 208 / 0.7);
+  background: linear-gradient(135deg, rgb(127 245 208 / 0.36), rgb(106 168 255 / 0.28));
+}
+
+.startGlyph {
+  display: inline-flex;
+  font-size: calc(var(--px) * 26);
+  color: var(--os-mint);
+}
+
+.tasks {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+.taskItem {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+.task {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  max-width: calc(var(--px) * 210);
+  height: calc(var(--px) * 40);
+  padding: 0 var(--sp-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: rgb(255 255 255 / 0.05);
+  color: var(--os-ink-dim);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.16s,
+    border-color 0.16s,
+    color 0.16s;
+}
+
+.task:hover {
+  background: rgb(255 255 255 / 0.1);
+  color: var(--os-ink);
+}
+
+.task[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--accent, var(--os-mint)) 52%, transparent);
+  background: rgb(255 255 255 / 0.14);
+  color: var(--os-ink);
+}
+
+/* Traço sob o botão: janela aberta (largo se em primeiro plano, curto se minimizada). */
+.task::after {
+  content: '';
+  position: absolute;
+  right: 26%;
+  bottom: calc(var(--px) * 3);
+  left: 26%;
+  height: calc(var(--px) * 3);
+  border-radius: 999px;
+  background: var(--accent, var(--os-mint));
+  opacity: 0.55;
+}
+
+.task[aria-pressed='true']::after {
+  right: 14%;
+  left: 14%;
+  opacity: 1;
+}
+
+.task[data-minimized='true'] {
+  color: var(--os-ink-soft);
+}
+
+.task[data-minimized='true']::after {
+  right: 42%;
+  left: 42%;
+  opacity: 0.4;
+}
+
+.taskGlyph {
+  display: inline-flex;
+  flex: none;
+  font-size: calc(var(--px) * 20);
+  color: var(--accent, var(--os-mint));
+}
+
+.taskTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clock {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0 var(--sp-2);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.time {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+}
+
+.date {
+  color: var(--os-ink-soft);
+  font-size: var(--fs-2xs);
+}

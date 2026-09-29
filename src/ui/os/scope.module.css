@@ -1,0 +1,78 @@
+/*
+ * Escala e tokens do SO.
+ *
+ * Todo tamanho do SO é escrito em "px de design" (referência 1280x720): calc(var(--px) * 14).
+ * O Desktop define --px a partir do PRÓPRIO container (100cqw / 1280), então o SO inteiro escala
+ * junto com ele: 1280x720 no monitor 3D, 640x360 no preview, sem vw/vh. Fora do Desktop (ProjectsApp
+ * num painel DOM) ninguém define --px e vale o initial-value de 1px: a UI fica em tamanho real.
+ *
+ * --px é registrada (@property) para ser calculada onde é declarada e herdada já como comprimento
+ * absoluto. Sem isso o `cqw` seria reavaliado em cada ponto de uso e quebraria com qualquer
+ * container aninhado.
+ */
+@property --px {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 1px;
+}
+
+.scope {
+  /* Paleta: ancorada nos tokens do site (globals.css), com o valor literal como fallback. */
+  --os-mint: #7ff5d0;
+  --os-blue: #6aa8ff;
+  --os-bg: var(--color-bg-canvas, #0b1020);
+  --os-ink: var(--color-ink, #eaf0ff);
+  --os-ink-dim: rgb(234 240 255 / 0.76);
+  --os-ink-soft: rgb(234 240 255 / 0.6);
+  --os-surface: #0e1630;
+  --os-surface-raised: #141e3e;
+  --os-line: rgb(255 255 255 / 0.1);
+  --os-line-strong: rgb(255 255 255 / 0.2);
+  --os-glass: rgb(255 255 255 / 0.06);
+  --os-glass-hover: rgb(255 255 255 / 0.12);
+
+  /* Tipografia e espaçamento, sempre em px de design. */
+  --fs-2xs: calc(var(--px) * 12);
+  --fs-xs: calc(var(--px) * 13);
+  --fs-sm: calc(var(--px) * 14);
+  --fs-md: calc(var(--px) * 16);
+  --fs-lg: calc(var(--px) * 18);
+  --fs-xl: calc(var(--px) * 24);
+  --fs-2xl: calc(var(--px) * 30);
+  --sp-1: calc(var(--px) * 4);
+  --sp-2: calc(var(--px) * 8);
+  --sp-3: calc(var(--px) * 12);
+  --sp-4: calc(var(--px) * 16);
+  --sp-5: calc(var(--px) * 24);
+  --sp-6: calc(var(--px) * 32);
+  --r-sm: calc(var(--px) * 6);
+  --r-md: calc(var(--px) * 10);
+  --r-lg: calc(var(--px) * 14);
+
+  color: var(--os-ink);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-size-adjust: 100%;
+}
+
+.scope :focus-visible {
+  outline: 2px solid var(--os-mint);
+  outline-offset: 2px;
+}
+
+/* Sem animação para quem pediu menos movimento (o motion/react trata as suas via useReducedMotion). */
+@media (prefers-reduced-motion: reduce) {
+  .scope,
+  .scope *,
+  .scope *::before,
+  .scope *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}

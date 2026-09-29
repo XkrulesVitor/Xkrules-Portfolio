@@ -1,0 +1,123 @@
+.menu {
+  position: absolute;
+  bottom: calc(100% + var(--sp-3));
+  left: 0;
+  width: calc(var(--px) * 320);
+  padding: var(--sp-3);
+  border: 1px solid var(--os-line-strong);
+  border-radius: var(--r-lg);
+  background: rgb(12 18 38 / 0.95);
+  backdrop-filter: blur(calc(var(--px) * 18)) saturate(140%);
+  box-shadow:
+    0 calc(var(--px) * 24) calc(var(--px) * 60) rgb(0 0 0 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.1);
+  outline: none;
+  transform-origin: 0 100%;
+  animation: menuIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--px) * 10)) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--os-line);
+}
+
+.avatar {
+  display: inline-flex;
+  flex: none;
+  font-size: calc(var(--px) * 40);
+  color: var(--os-mint);
+}
+
+.who {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.name {
+  font-size: var(--fs-md);
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.os {
+  color: var(--os-ink-soft);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.section {
+  margin: var(--sp-3) var(--sp-2) var(--sp-1);
+  color: var(--os-ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-2);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--os-ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.14s;
+}
+
+.item:hover {
+  background: var(--os-glass-hover);
+}
+
+.glyph {
+  display: inline-flex;
+  flex: none;
+  font-size: calc(var(--px) * 24);
+  color: var(--os-mint);
+}
+
+.itemLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.arrow {
+  display: inline-flex;
+  flex: none;
+  font-size: calc(var(--px) * 16);
+  color: var(--os-ink-soft);
+}

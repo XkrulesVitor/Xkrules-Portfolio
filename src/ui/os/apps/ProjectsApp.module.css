@@ -1,0 +1,237 @@
+/* Não define fundo: dentro da Window quem pinta é a janela; num painel DOM, o painel. */
+.root {
+  display: block;
+  min-height: 100%;
+  padding: var(--sp-5);
+}
+
+/* Troca lista <-> detalhe (só no modo standalone; no Desktop a lista não anima). */
+.view {
+  animation: viewIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.viewStatic {
+  display: block;
+}
+
+@keyframes viewIn {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--px) * 14));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.heading {
+  margin-bottom: var(--sp-2);
+}
+
+.eyebrow {
+  margin: 0 0 var(--sp-1);
+  color: var(--os-mint);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.hint {
+  margin: 0 0 var(--sp-4);
+  color: var(--os-ink-dim);
+  font-size: var(--fs-sm);
+}
+
+.empty {
+  margin: var(--sp-5) 0;
+  color: var(--os-ink-soft);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--px) * 250)), 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-4);
+  overflow: hidden;
+  border: 1px solid var(--os-line);
+  border-radius: var(--r-lg);
+  background: var(--os-glass);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.18s,
+    border-color 0.18s,
+    background-color 0.18s;
+}
+
+/* Brilho na cor do projeto, no canto superior esquerdo. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    85% 95% at 0% 0%,
+    color-mix(in srgb, var(--accent, var(--os-mint)) 22%, transparent),
+    transparent 62%
+  );
+  pointer-events: none;
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent, var(--os-mint)) 58%, transparent);
+  background: var(--os-glass-hover);
+  transform: translateY(-2px);
+}
+
+.card:active {
+  transform: translateY(0);
+}
+
+.cardGlyph {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(var(--px) * 44);
+  height: calc(var(--px) * 44);
+  border-radius: calc(var(--px) * 12);
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--accent, var(--os-mint)) 92%, #fff 8%),
+    color-mix(in srgb, var(--accent, var(--os-mint)) 58%, #060a15)
+  );
+  box-shadow:
+    0 calc(var(--px) * 6) calc(var(--px) * 14) rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.32);
+  color: #fff;
+  font-size: calc(var(--px) * 26);
+}
+
+.cardMain {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.cardTitle {
+  min-width: 0;
+  font-size: var(--fs-lg);
+  font-weight: 650;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.cardYear {
+  flex: none;
+  color: var(--os-ink-soft);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardSummary {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--os-ink-dim);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.cardTags {
+  margin-top: auto;
+  padding-top: var(--sp-1);
+}
+
+.chevron {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-self: center;
+  color: var(--os-ink-soft);
+  font-size: calc(var(--px) * 16);
+  transition:
+    color 0.18s,
+    transform 0.18s;
+}
+
+.card:hover .chevron {
+  color: var(--accent, var(--os-mint));
+  transform: translateX(calc(var(--px) * 2));
+}
+
+/* Detalhe (standalone) ------------------------------------------------------------------------ */
+
+.toolbar {
+  margin-bottom: var(--sp-4);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: calc(var(--px) * 36);
+  padding: var(--sp-2) var(--sp-4) var(--sp-2) var(--sp-3);
+  border: 1px solid var(--os-line-strong);
+  border-radius: 999px;
+  background: var(--os-glass);
+  color: var(--os-ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.16s;
+}
+
+.back:hover {
+  background: var(--os-glass-hover);
+}
+
+.backGlyph {
+  display: inline-flex;
+  font-size: calc(var(--px) * 16);
+}

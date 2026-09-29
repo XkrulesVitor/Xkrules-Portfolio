@@ -1,0 +1,117 @@
+.root {
+  display: block;
+  padding: var(--sp-5);
+}
+
+/* Duas colunas quando cabem (mídia + texto), uma coluna em painéis estreitos. Sem media query:
+   os mínimos são em px de design, então a quebra acontece no mesmo ponto em qualquer escala. */
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-5);
+  align-items: flex-start;
+}
+
+.mediaCol {
+  flex: 1.2 1 calc(var(--px) * 300);
+  min-width: 0;
+}
+
+.infoCol {
+  display: flex;
+  flex: 1 1 calc(var(--px) * 270);
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.bar {
+  width: calc(var(--px) * 40);
+  height: calc(var(--px) * 4);
+  border-radius: 999px;
+  background: var(--accent, var(--os-mint));
+  box-shadow: 0 0 calc(var(--px) * 14) color-mix(in srgb, var(--accent, var(--os-mint)) 60%, transparent);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  outline: none;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  color: var(--os-ink-dim);
+  font-size: var(--fs-sm);
+}
+
+.metaItem {
+  display: flex;
+}
+
+.metaValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaGlyph {
+  display: inline-flex;
+  font-size: calc(var(--px) * 18);
+  color: var(--accent, var(--os-mint));
+}
+
+.summary {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.55;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.details p {
+  margin: 0;
+  color: var(--os-ink-dim);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+
+.sectionLabel {
+  margin: 0 0 var(--sp-2);
+  color: var(--os-ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  padding-top: var(--sp-1);
+}
+
+.flush {
+  padding: 0;
+}
