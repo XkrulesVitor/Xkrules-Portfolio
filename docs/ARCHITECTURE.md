@@ -214,7 +214,8 @@ interface CameraPreset {
 - Cada hotspot tem seu preset. Desk: câmera **exatamente** perpendicular à tela do monitor (target = centro da tela, position = target + normal * d), `userControl:false`.
 - Preferência `prefers-reduced-motion`: `smoothTime = 0` e `setLookAt(..., false)`.
 - Afinar valores com `leva` em dev (painel `Camera` com botões "copiar preset atual"). Presets finais ficam hardcoded.
-- **Enquadramento responsivo (pendente, BACKLOG 3.6)**: os presets são posições fixas, afinadas em 16:9. Em 4:3 o conteúdo escapa do quadro ou fica sob o painel (medido na estante: em 4:3 a TV entra sob o painel esquerdo). A solução planejada troca `position` fixa por `{ focusBox, direction, panelSide }` e deixa o `CameraRig` calcular a distância e o deslocamento lateral a partir do aspect e da largura do painel.
+- **Enquadramento responsivo (feito na V.4)**: cada preset tem `framing` (`focusBoxes` derivadas do `layout.ts` e `margin`). `position`/`target` continuam no preset como referência em 16:9 e definem a direção de olhar. O resolvedor puro `camera/framing.ts` calcula a menor distância e o deslocamento lateral para os 8 cantos de cada caixa caberem na área livre (tela menos margem menos o painel de `PANEL_WIDTH_PX`, do lado do registry); `camera/resolvePose.ts` liga isso à viewport. Todo voo usa a pose resolvida, e o resize (debounce 150 ms) refaz o enquadramento sem chamar `onCameraRest`. HOME usa 3 caixas (piso e as duas paredes) e mantém a órbita do usuário no resize; os limites de dolly acompanham a distância resolvida. Testes em `camera/__tests__/framing.test.ts`.
+- **Câmera viva (V.4)**: em HOME `idle`, depois de 3 s sem input, deriva lenta (`idleDrift.ts`, ±1.5° de azimute e ±0.8° de polar como deltas de `rotate`); input do usuário pausa. Em `focused` nos presets `chair`, `printer`, `shelf` e `shelfDigital`, parallax do mouse (`parallax.ts`, `setFocalOffset` de até 4 cm), zerado no começo de cada voo; nunca no `desk`. As duas desligam em `prefers-reduced-motion`. Testes em `camera/__tests__/life.test.ts`.
 - Câmera ortográfica **não** será usada: o zoom-in nos hotspots precisa de perspectiva. O "look isométrico" vem de fov baixo (~30–35) e ângulo fixo.
 
 ---
@@ -448,7 +449,7 @@ As referências (Bruno Simon, Henry Heffernan, Julien Quenneville) são bonitas 
 ### 12.2 Direção de arte
 - **Estilo:** diorama isométrico "quadradinho" e detalhado. Proporções robustas, bevel de 1 a 3 cm (2 a 3 segmentos) em tudo, nada de textura realista: cores sólidas, e o acabamento vem da luz baked e do AO.
 - **Densidade:** de 60 a 90 objetos distintos. O quarto tem que parecer habitado.
-- **Clima padrão:** noite. Ambiente baixo e frio, janela com cidade noturna, e três luzes de zona coloridas: TV rosa `#ff115e`, mesa laranja `#ff6700`, PC azul `#0082ff` (as cores da Bruno Simon). O tema dia é um bake à parte, com luz de janela quente.
+- **Clima padrão:** noite. Ambiente baixo e frio, janela com cidade noturna, e três luzes de zona coloridas: TV rosa `#ff115e`, mesa laranja `#ff6700`, PC azul `#0082ff` (as cores de Bruno Simon). O tema dia é um bake à parte, com luz de janela quente.
 - **Paleta:** piso de tábuas de madeira com frestas; paredes claras levemente tingidas; madeira quente nos móveis; plástico colorido nas caixas de jogos; borda da ilha escura.
 
 Objetos por zona (posições das âncoras do `layout.ts`; decoração livre sem invadir hitboxes):
@@ -463,7 +464,7 @@ Objetos por zona (posições das âncoras do `layout.ts`; decoração livre sem 
 | Cadeira (`chair`) | cadeira gamer com encosto alto, braços, base de 5 rodas (`chair_root`) |
 
 ### 12.3 Runtime
-- `experience/scene/baked/BakedMaterial.ts`: `shaderMaterial` do drei portado da Bruno Simon (REFERENCES.md): `uBakedNight`, `uBakedDay`, `uLightMap`, `uNightMix`, e cor + força para TV, mesa e PC, com blend `lighten` (`mix(base, max(base, cor), canal × força)`). Sem tone mapping no runtime (o bake já sai do Blender com AgX); `#include <colorspace_fragment>` no fim. Valores iniciais da Bruno Simon: forças TV 1.47, mesa 1.9, PC 1.4.
+- `experience/scene/baked/BakedMaterial.ts`: `shaderMaterial` do drei portado de Bruno Simon (REFERENCES.md): `uBakedNight`, `uBakedDay`, `uLightMap`, `uNightMix`, e cor + força para TV, mesa e PC, com blend `lighten` (`mix(base, max(base, cor), canal × força)`). Sem tone mapping no runtime (o bake já sai do Blender com AgX); `#include <colorspace_fragment>` no fim. Valores iniciais de Bruno Simon: forças TV 1.47, mesa 1.9, PC 1.4.
 - `experience/scene/baked/BakedRoom.tsx`: carrega `room.glb` e as três texturas (`useGLTF`, `useTexture`, preload na tela de loading), aplica o `BakedMaterial` em todos os nós da categoria baked e os materiais próprios nas outras categorias. Expõe os nós por nome num contexto (`useRoomNode(name)`) para hotspots e animações.
 - **Tema:** `store.theme` (`'night' | 'day'`, padrão noite) e `toggleTheme()`. O `uNightMix` faz damp até o alvo. Botão no HUD.
 - **Luzes de zona reagem ao foco:** hover ou foco na mesa aumenta G e B; na zona de jogos aumenta R. Damp, sem setState no frame.

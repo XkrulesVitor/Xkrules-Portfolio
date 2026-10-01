@@ -52,6 +52,12 @@
     box-shadow 0.2s;
 }
 
+.positioner .window:focus-visible {
+  /* A janela recebe foco programático (tabIndex -1): o brilho da janela ativa já indica o foco, e o anel
+     de .scope :focus-visible contornaria a janela inteira depois de qualquer tecla. */
+  outline: none;
+}
+
 .positioner[data-active='true'] .window {
   border-color: color-mix(in srgb, var(--accent, var(--os-mint)) 55%, transparent);
   box-shadow:

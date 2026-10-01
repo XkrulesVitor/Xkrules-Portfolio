@@ -162,9 +162,11 @@ export const PRESETS: Record<PresetKey, CameraPreset> = {
   desk: {
     position: add(LAYOUT.monitorMain.center, scale(LAYOUT.monitorMain.normal, DESK_SCREEN_DISTANCE)),
     target: LAYOUT.monitorMain.center,
-    // A tela inteira (plano 1.3 x 0.73 perpendicular à câmera), sem painel. A margem de 12% por lado
-    // reproduz os ~1.55 m de DESK_SCREEN_DISTANCE em 16:9 e deixa respirar a moldura do monitor.
-    framing: { focusBoxes: [screenBox(LAYOUT.monitorMain)], margin: 0.12 },
+    // A tela inteira (plano 1.3 x 0.73 perpendicular à câmera), sem painel. A margem de 12.6% por lado
+    // reproduz EXATAMENTE os 1.55 m de DESK_SCREEN_DISTANCE em 16:9 (tela em 75% da largura, moldura
+    // de 1.42 x 0.82 em ~84%). Em janelas mais largas que 16:9 quem limita é a altura, como no preset
+    // antigo (tela em ~75% da altura; a 1280x650 ocupa ~69% da largura). Mais respiro = margem maior.
+    framing: { focusBoxes: [screenBox(LAYOUT.monitorMain)], margin: 0.126 },
     smoothTime: 0.9,
     userControl: false,
     limits: OPEN_LIMITS,

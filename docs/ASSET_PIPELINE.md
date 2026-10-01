@@ -53,7 +53,7 @@ art/previews/    # home.png, desk.png, shelf.png, digital.png, printer.png, chai
 | `art/build/manifest.json` | Nós por categoria, bounding boxes no mundo (Y-up), triângulos por nó, tempo de cada etapa |
 
 **Categorias de nó (pelo prefixo do nome):**
-- **baked** (padrão): o runtime aplica o `BakedMaterial` compartilhado. São os `zone_*` e os nós vivos (`chair_root`, `printer_*` menos `printer_led`, `box_*`, `clock_*`). Cada nó vivo é **um mesh só** (partes unidas), com pivô no lugar certo; é baked na posição de repouso e movido em runtime, como a cadeira da Bruno Simon.
+- **baked** (padrão): o runtime aplica o `BakedMaterial` compartilhado. São os `zone_*` e os nós vivos (`chair_root`, `printer_*` menos `printer_led`, `box_*`, `clock_*`). Cada nó vivo é **um mesh só** (partes unidas), com pivô no lugar certo; é baked na posição de repouso e movido em runtime, como a cadeira de Bruno Simon.
 - `screen_*`: plano com UV 0..1 para vídeo, canvas ou `Html`. Fora do atlas.
 - `emit_*`, `led_*`, `pc_rgb`, `pc_fan_*`, `tv_backlight`: emissivos. No Blender têm shader de emissão e **iluminam a cena no bake**. No runtime recebem material emissivo com `toneMapped: false`. Fora do atlas.
 - `glass_*`: transparentes (`glass_pc`, `glass_window`). Fora do atlas.

@@ -228,12 +228,13 @@ describe('framing: direção, distância e alvo', () => {
 })
 
 describe('framing: desk (tela perpendicular, sem painel)', () => {
+  const DESK_MARGIN = 0.126 // presets.ts: desk.framing.margin
   const NORMAL: Vec3Tuple = [1, 0, 0]
   const CENTER = [-3.619, 1.62, -1.45] as const
 
   it('o alvo é o centro da tela e a câmera fica exatamente na normal', () => {
     for (const [name, w, h] of ASPECTS) {
-      const { result } = frame(NORMAL, SCREEN_BOX, w, h, 'none', { margin: 0.12 })
+      const { result } = frame(NORMAL, SCREEN_BOX, w, h, 'none', { margin: DESK_MARGIN })
       for (let i = 0; i < 3; i++) {
         assert.ok(Math.abs(result.target[i] - CENTER[i]) < 1e-6, `${name}: alvo eixo ${i}`)
       }
@@ -245,15 +246,23 @@ describe('framing: desk (tela perpendicular, sem painel)', () => {
 
   it('a tela inteira fica visível com margem, em 16:9 e em 4:3', () => {
     for (const [name, w, h] of ASPECTS) {
-      const { area, ndc } = frame(NORMAL, SCREEN_BOX, w, h, 'none', { margin: 0.12 })
+      const { area, ndc } = frame(NORMAL, SCREEN_BOX, w, h, 'none', { margin: DESK_MARGIN })
       assertInsideFreeArea(ndc, area, name)
       assertTight(ndc, area, name)
     }
   })
 
-  it('em 16:9 fica perto dos 1.55 m do preset de referência', () => {
-    const { result } = frame(NORMAL, SCREEN_BOX, 1920, 1080, 'none', { margin: 0.12 })
-    assert.ok(Math.abs(result.distance - 1.55) < 0.1, `distância ${result.distance}`)
+  it('em 16:9 reproduz os 1.55 m do preset antigo (DESK_SCREEN_DISTANCE)', () => {
+    for (const [w, h] of [[1920, 1080], [1280, 720]] as const) {
+      const { result } = frame(NORMAL, SCREEN_BOX, w, h, 'none', { margin: DESK_MARGIN })
+      assert.ok(Math.abs(result.distance - 1.55) < 0.01, `${w}x${h}: distância ${result.distance}`)
+    }
+  })
+
+  it('em janela mais larga que 16:9 a altura limita: a mesma distância de 16:9', () => {
+    const wide = frame(NORMAL, SCREEN_BOX, 1280, 650, 'none', { margin: DESK_MARGIN }).result.distance
+    const std = frame(NORMAL, SCREEN_BOX, 1280, 720, 'none', { margin: DESK_MARGIN }).result.distance
+    assert.ok(Math.abs(wide - std) < 0.01, `${wide} vs ${std}`)
   })
 })
 

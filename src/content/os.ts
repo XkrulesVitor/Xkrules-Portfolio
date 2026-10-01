@@ -275,7 +275,7 @@ export const OS_TEXT = {
   // Créditos -------------------------------------------------------------------------------------
   credits: {
     intro:
-      'Este portfólio não nasceu do zero. Estes projetos abertos me mostraram o caminho, e o XKrules OS é uma homenagem ao sistema do monitor da Henry Heffernan.',
+      'Este portfólio não nasceu do zero. Estes projetos abertos me mostraram o caminho, e o XKrules OS é uma homenagem ao sistema do monitor de Henry Heffernan.',
     inspirations: {
       heading: 'Inspirações',
       items: [
@@ -306,7 +306,7 @@ export const OS_TEXT = {
           work: 'Portfólio em Next e Three.js',
           description: 'Quarto em React Three Fiber com troca de tema entre dia e noite.',
           links: [
-            { label: 'Repositório', href: 'https://github.com/julienq1/nextthree-js-portfolio' },
+            { label: 'Repositório', href: 'https://github.com/JulienQ1/NextThree-js-Portfolio' },
           ],
         },
       ] as readonly {

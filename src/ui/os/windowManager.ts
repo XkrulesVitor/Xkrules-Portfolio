@@ -92,7 +92,7 @@ const BASE_GEOMETRY: Record<AppKind, WindowGeometry> = {
   project: { x: 33, y: 11, w: 56, h: 70 },
   computer: { x: 24, y: 9, w: 46, h: 68 },
   terminal: { x: 22, y: 13, w: 52, h: 60 },
-  memory: { x: 35, y: 4, w: 34, h: 83 },
+  memory: { x: 35, y: 4, w: 34, h: 88 },
   credits: { x: 30, y: 8, w: 44, h: 74 },
 }
 

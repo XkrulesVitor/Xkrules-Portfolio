@@ -144,7 +144,6 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
-  perspective: calc(var(--px) * 700);
   transition: transform 0.16s;
 }
 
@@ -156,15 +155,49 @@
   cursor: default;
 }
 
+/* Virar a carta é um flip 2D (scaleX 1 -> 0 -> 1) com a troca de face no meio. Não usa rotateY nem
+   backface-visibility: dentro do monitor 3D (o drei aplica matrix3d num ancestral) o navegador deixa
+   de esconder o verso e as duas faces apareceriam juntas, entregando as cartas. */
 .inner {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
-  transition: transform 0.46s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .card[data-faceup='true'] .inner {
-  transform: rotateY(180deg);
+  animation: flipUp 0.42s ease-in-out;
+}
+
+.card[data-faceup='false'] .inner {
+  animation: flipDown 0.42s ease-in-out;
+}
+
+@keyframes flipUp {
+  0% {
+    transform: scaleX(1);
+  }
+
+  50% {
+    transform: scaleX(0.04);
+  }
+
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+/* Mesmos quadros, outro nome: trocar de animação reinicia o flip ao desvirar. */
+@keyframes flipDown {
+  0% {
+    transform: scaleX(1);
+  }
+
+  50% {
+    transform: scaleX(0.04);
+  }
+
+  100% {
+    transform: scaleX(1);
+  }
 }
 
 .back,
@@ -174,8 +207,20 @@
   display: grid;
   place-items: center;
   border-radius: var(--r-md);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  /* A face troca na metade do flip: a transição de visibility só dispara depois do atraso. */
+  transition: visibility 0s linear 0.21s;
+}
+
+.front {
+  visibility: hidden;
+}
+
+.card[data-faceup='true'] .back {
+  visibility: hidden;
+}
+
+.card[data-faceup='true'] .front {
+  visibility: visible;
 }
 
 /* Verso: vidro escuro com um brilho discreto. */
@@ -189,9 +234,6 @@
   box-shadow:
     0 calc(var(--px) * 6) calc(var(--px) * 14) rgb(0 0 0 / 0.3),
     inset 0 1px 0 rgb(255 255 255 / 0.12);
-  transition:
-    border-color 0.16s,
-    color 0.16s;
 }
 
 .card:hover .back {
@@ -201,7 +243,6 @@
 
 /* Frente: ladrilho na cor do símbolo. */
 .front {
-  transform: rotateY(180deg);
   border: 1px solid color-mix(in srgb, var(--symbol) 60%, transparent);
   background: linear-gradient(
     150deg,
@@ -221,41 +262,38 @@
     inset 0 0 calc(var(--px) * 14) color-mix(in srgb, var(--symbol) 18%, transparent);
 }
 
-.card[data-matched='true'] .inner {
-  animation: matchPop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+.card[data-matched='true'] {
+  animation: matchPop 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s;
 }
 
 @keyframes matchPop {
-  0% {
-    transform: rotateY(180deg) scale(1);
+  0%,
+  100% {
+    transform: scale(1);
   }
 
   45% {
-    transform: rotateY(180deg) scale(1.1);
-  }
-
-  100% {
-    transform: rotateY(180deg) scale(1);
+    transform: scale(1.1);
   }
 }
 
 /* Par errado: balança de leve antes de desvirar. */
-.card[data-miss='true'] .inner {
-  animation: miss 0.4s ease-in-out;
+.card[data-miss='true'] {
+  animation: miss 0.4s ease-in-out 0.2s;
 }
 
 @keyframes miss {
   0%,
   100% {
-    transform: rotateY(180deg) translateX(0);
+    transform: translateX(0);
   }
 
   25% {
-    transform: rotateY(180deg) translateX(calc(var(--px) * -4));
+    transform: translateX(calc(var(--px) * -4));
   }
 
   75% {
-    transform: rotateY(180deg) translateX(calc(var(--px) * 4));
+    transform: translateX(calc(var(--px) * 4));
   }
 }
 
@@ -344,10 +382,4 @@
   min-height: calc(var(--px) * 34);
   padding: var(--sp-1) var(--sp-3);
   font-size: var(--fs-xs);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .inner {
-    transition: none;
-  }
 }

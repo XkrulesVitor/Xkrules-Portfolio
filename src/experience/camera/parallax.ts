@@ -1,6 +1,6 @@
 import { Vector3 } from 'three'
 
-// Parallax do mouse nos hotspots (BACKLOG V.4), como a mesa da Henry Heffernan (REFERENCES:
+// Parallax do mouse nos hotspots (BACKLOG V.4), como a mesa de Henry Heffernan (REFERENCES:
 // `DeskKeyframe`): a câmera se desloca um pouco na direção do ponteiro. Usa `setFocalOffset` (translação
 // da câmera no plano da tela, sem girar), então o alvo e a pose do preset não mudam, e zerar o
 // offset devolve a pose exata. NUNCA no `desk`: o SO do monitor precisa da tela parada.

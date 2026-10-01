@@ -221,7 +221,7 @@ Dono de `src/experience/camera/**`. Mantém os contratos do §4: chegada por fra
 - Aceite: **A** filtrado; **M** em 1920×1080 e 1024×768 (resize da janela do browser, desktop) todas as vistas cabem fora do painel; idle e parallax visíveis e sutis; `npm test` passa.
 
 ### V.6 XkrulesOS v2 (onda 1)
-Referência: o SO interno da Henry Heffernan (REFERENCES, inner-site). Dono de `src/ui/os/**`, `content/os.ts` e `src/app/dev/os/**`. Continua num wrapper fixo de 1280×720 com `cqw/cqh`, sem `vw/vh`, sem tratar Esc.
+Referência: o SO interno de Henry Heffernan (REFERENCES, inner-site). Dono de `src/ui/os/**`, `content/os.ts` e `src/app/dev/os/**`. Continua num wrapper fixo de 1280×720 com `cqw/cqh`, sem `vw/vh`, sem tratar Esc.
 - Janelas: **resize** pelas bordas e pelo canto (tamanho mínimo, presa à área de trabalho), **duplo clique na barra de título** maximiza e restaura, botão maximizar. Abrir um app já aberto foca a janela.
 - Apps novos (textos em `content/os.ts`; dados de `about.ts`, `site.ts`, `projects.web.ts` só lidos):
   - **Este Computador**: "specs" do autor em tom de brincadeira (CPU = stack, memória = anos de estrada etc.) usando fatos de `about.ts`; o que faltar vira `[TODO: ...]`, nunca texto inventado.
@@ -244,7 +244,7 @@ Lê ARCHITECTURE §7 e §12.3, ASSET_PIPELINE §3 e §4, REFERENCES (Bruno Simon
 Lê ARCHITECTURE §6 e §12.4, REFERENCES (Bruno: `CoffeeSteam`, `TopChair`, `Screen`, `GoogleLeds`, `BouncingLogo`; Henry: camadas do `MonitorScreen`). Usa `useRoomNode` do V.2; no grey-box, os mesmos efeitos nos placeholders quando fizer sentido.
 - Cadeira: balanço idle (`sin(t)`) somado ao giro elástico de ~190° no hover (antiga 3.1).
 - Telas: monitor vertical com editor de código rolando (canvas), TV com estática no hover da zona de jogos, tela de título tingida pelo jogo em `highlightBox` na vista `digital` e logo quicando quando ociosa (antiga 3.2 + §6.5).
-- Monitor do SO: camadas da Henry por cima do `Html` (sujeira aditiva ~0.12, sombra interna), sem bloquear o clique.
+- Monitor do SO: camadas de Henry Heffernan por cima do `Html` (sujeira aditiva ~0.12, sombra interna), sem bloquear o clique.
 - PC: fans girando, `pc_rgb` e `led_*` pulsando com fase por índice.
 - Impressora (antiga 3.3), caixas com spring (antiga 3.4), partículas na zona de jogos, relógio com hora real (`clock_*`), fumaça da caneca (`fx_mug_steam`, shader com ruído, `depthWrite:false`).
 - Aceite: **A**; **M** nada anima durante `transitioning`; `prefers-reduced-motion` desliga balanço, partículas e pulsos.

@@ -1,4 +1,4 @@
-// Deriva ociosa da câmera em HOME (BACKLOG V.4), no espírito do idle da Henry Heffernan
+// Deriva ociosa da câmera em HOME (BACKLOG V.4), no espírito do idle de Henry Heffernan
 // (REFERENCES: `Camera/CameraKeyframes.ts`, IdleKeyframe). Depois de IDLE_DELAY_S sem input, a
 // câmera balança bem devagar em torno da pose em que estiver.
 //
