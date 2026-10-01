@@ -1,5 +1,6 @@
-import type { SyntheticEvent } from 'react'
+import { useMemo, type RefObject, type SyntheticEvent } from 'react'
 import { Html } from '@react-three/drei'
+import { useThree } from '@react-three/fiber'
 import { useExperienceStore } from '@/store/useExperienceStore'
 import { MonitorScreen, OS_SCREEN_SIZE } from '@/ui/os/MonitorScreen'
 import { LAYOUT } from '../../scene/layout'
@@ -66,6 +67,14 @@ const KEEP_EVENTS_INSIDE = {
  * emissiva do monitor para o SO aparecer sobre um fundo escuro.
  */
 export function MonitorHtml() {
+  // PORTAL ESTÁVEL (bug de produção): sem `portal`, o drei usa `events.connected` como alvo, que só
+  // existe depois que o R3F conecta os eventos. O alvo muda no 2º render, o drei recria a raiz React
+  // do Html, e em produção a raiz ANTIGA faz o primeiro commit depois da nova: o React limpa o
+  // container nesse primeiro commit e o SO fica desconectado do documento (tela preta na Vercel).
+  // O pai do canvas existe desde o primeiro render e nunca muda, então a raiz é criada uma vez só.
+  const canvasParent = useThree((s) => s.gl.domElement.parentElement)
+  const portal = useMemo(() => ({ current: canvasParent }) as RefObject<HTMLElement>, [canvasParent])
+
   const active = useExperienceStore(
     (s) => (s.mode === 'focused' || (s.mode === 'transitioning' && s.focus === 'desk')) && s.focus === 'desk',
   )
@@ -73,6 +82,7 @@ export function MonitorHtml() {
   return (
     <Html
       transform
+      portal={portal}
       position={POSITION}
       rotation={ROTATION}
       scale={SCALE}
