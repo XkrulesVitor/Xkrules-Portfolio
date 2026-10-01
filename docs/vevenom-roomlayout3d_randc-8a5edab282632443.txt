@@ -1,0 +1,626 @@
+Directory structure:
+└── vevenom-roomlayout3d_randc/
+    ├── README.md
+    ├── fit_ransac.py
+    ├── infer_layout_from_image.py
+    ├── layout_structs.py
+    ├── LICENSE.md
+    ├── requirements.txt
+    ├── rl_config.py
+    ├── search_polygons.py
+    └── utils.py
+
+================================================
+FILE: README.md
+================================================
+# General 3D Room Layout from a Single View by Render-and-Compare
+
+![Teaser](./images/teaser.gif)
+
+By Sinisa Stekovic, Shreyas Hampali, Mahdi Rad, Sayan Deb Sarkar, Friedrich Fraundorfer, Vincent Lepetit
+ 
+This repository contains a reimplementation of our work "General 3D Room Layout from a Single View by Render-and-Compare" that was presented at ECCV 2020. 
+
+##### Note
+
+The reimplementation of the method might perform slightly differently in comparison to the published results.
+
+This implementation contains only the contributions from our original work. 
+To run the method with custom images, depth, plane segmentation, and semantic segmentation are required.
+Please see examples folder.
+
+## Introduction
+
+We present a novel method to reconstruct the 3D layout of a room—walls, ﬂoors, ceilings—from a single perspective view in challenging conditions, by contrast with previous single-view methods restricted to cuboid-shaped layouts.
+Our approach is formalized as solving a constrained discrete optimization problem to ﬁnd the set of 3D polygons that constitute the layout. In order to deal with occlusions between components of the layout, which is a problem ignored by previous works, we introduce an analysis-by-synthesis method to iteratively reﬁne the 3D layout estimate. 
+
+## Example Folder Structure
+
+Current repository provides some of the inference examples from the ScanNet-Layout dataset. If you 
+would like to test the method on your images, you first need to extract planes masks 
+(e.g by [PlaneRCNN](https://github.com/NVlabs/planercnn)) and 
+semantic segmentation (e.g. by [MSEG](https://github.com/mseg-dataset/mseg-semantic)).
+
+Provided examples use the following structure:
+
+* |--examples
+    * |--------color - original color images from the ScanNet dataset (*.jpg)  
+    * |--------depth - corresponding depth maps from the ScanNet dataset (*.png)  
+    * |--------depth_filled - corresponding filled depth maps from the ScanNet dataset (*.png) (we used https://github.com/kujason/ip_basic) 
+    * |--------mseg_labels - MSEG network semantic labels predictions (*.png) (Please see https://github.com/mseg-dataset/mseg-semantic)
+    * |--------mseg_confidence - MSEG network confidence predictions for the predicted semantic labels (*.png)
+    * |--------planercnn_seg - PlaneRCNN network planes instance masks predictions (*.npy) (Please see https://github.com/NVlabs/planercnn)
+
+
+
+## Inference
+
+First, setup the paths in `rl_config.py` file. Then, run the `infer_layout_from_image.py`. 
+To visualize intermediate results, you can set `plot_intermediate_results = True` in `rl_config.py`.
+
+## Dataset 
+
+If you are interested into our ScanNet-Layout dataset, please visit https://github.com/vevenom/ScanNet-Layout .
+
+## Citation
+If you use this dataset, please cite:
+
+@article{stekovic2020general,
+
+  title={{General 3D Room Layout from a Single View by Render-and-Compare}},  
+  
+  author={Stekovic, Sinisa and Hampali, Shreyas and Rad, Mahdi and Deb Sarkar, Sayan and Fraundorfer, Friedrich and Lepetit, Vincent},  
+  
+  journal={{European Conference on Computer Vision (ECCV)}},  
+  
+  year={2020}  
+}
+
+
+## License
+This work is distributed under BSD Clear license. See LICENSE file.
+
+## Acknowledgment 
+
+This work was supported by the Christian Doppler Laboratory for Semantic 3D Computer Vision, funded in part by Qualcomm Inc.
+
+
+
+================================================
+FILE: fit_ransac.py
+================================================
+import numpy as np
+
+from rl_config import *
+import itertools
+
+def fit_plane(points):
+    '''
+    Fit plane to points
+
+    :param points: 3d points (N, 4)
+    :return: plane (4,)
+    '''
+    assert points.shape[0] >= 3  # at least 3 points needed
+    _, _, vh = np.linalg.svd(points)
+    plane = vh[-1, :]
+    return plane
+
+def get_point2plane_dist(points, plane):
+    '''
+    Get distance of points to the plane
+
+    :param points: 3d points (N, 4)
+    :param plane: plane (4,)
+    :return: distances (N,)
+    '''
+    dists = np.abs(points @ plane) / np.sqrt(plane[0] ** 2 + plane[1] ** 2 + plane[2] ** 2)
+    return dists
+
+
+def fit_plane_RANSAC(points, inlier_thresh=0.05, iters=3000):
+    '''
+    Fit plane using RANSAC
+
+    :param points:  3d points (N, 4)
+    :param inlier_thresh: Inlier threshold value
+    :param return_outlier_list: If True, the function return the outlier list
+    :return:
+    '''
+
+    max_inlier_num = -1
+    max_inlier_list = None
+    best_plane = None
+
+    points_ransac = np.round(points, decimals=2)
+    points_ransac = np.unique(points_ransac, axis=0)
+    cand_points_ind = np.arange(points_ransac.shape[0])
+
+    points_fit = np.round(points, decimals=2)
+    points_fit = np.unique(points_fit, axis=0)
+
+    N = points_ransac.shape[0]
+    assert N >= 3
+
+    for i in range(iters):
+        chose_id = np.random.choice(cand_points_ind, 3, replace=False)
+
+        chose_points = points_ransac[chose_id, :]
+
+        tmp_plane = fit_plane(chose_points)
+
+        dists = get_point2plane_dist(points_fit, tmp_plane)
+        tmp_inlier_list = np.where(dists < inlier_thresh)[0]
+        tmp_inliers = points_fit[tmp_inlier_list, :]
+        num_inliers = tmp_inliers.shape[0]
+        if num_inliers > max_inlier_num:
+            max_inlier_num = num_inliers
+            max_inlier_list = tmp_inlier_list
+            best_plane = tmp_plane
+            # print('iter %d, %d inliers' % (i, max_inlier_num))
+
+    plane = best_plane
+
+    dists = get_point2plane_dist(points_fit, plane)
+
+    inlier_list = np.where(dists < inlier_thresh)[0]
+
+    outlier_list = np.where(dists >= inlier_thresh)[0]
+    return plane, inlier_list, outlier_list
+
+#LINE-----RANSAC--------------------------------------------------------------------------------------------------------
+
+def fit_line(points):
+    '''
+    Fit line to points
+
+    :param points: 2d points (N, 3)
+    :return: line (3,)
+    '''
+    assert points.shape[0] >= 2  # at least 3 points needed
+    _, _, vh = np.linalg.svd(points)
+    line = vh[-1, :]
+    return line
+
+def get_point2line_dist(points, line):
+    '''
+    Get distance of points to the line
+
+    :param points: 2d points (N, 3)
+    :param line: line (3,)
+    :return: distances (N,)
+    '''
+    dists = np.abs(points @ line) / np.sqrt(line[0] ** 2 + line[1] ** 2 + line[2] ** 2)
+    return dists
+
+def fit_line_RANSAC(points, inlier_thresh=0.05):
+    '''
+    Fit line using RANSAC
+
+    :param points:  2d points (N, 3)
+    :param inlier_thresh: Inlier threshold value
+    :param return_outlier_list: If True, the function return the outlier list
+    :return:
+    '''
+    max_inlier_num = -1
+    max_inlier_list = None
+    best_line = None
+
+    stride = max(int(points.shape[0] / (ransac_line_points_n)), 1)
+    # stride = 1
+    points_ransac = points[::stride, :]
+
+    stride = 1
+    points_fit = points[::stride, :]
+
+    N = points_ransac.shape[0]
+    assert N >= 2
+
+    chose_ids = itertools.permutations(list(range(N)), 2)
+
+    for chose_id in chose_ids:
+        chose_points = points_ransac[chose_id, :]
+        tmp_line = fit_line(chose_points)
+
+        tmp_m = - tmp_line[0] / tmp_line[1]
+        if np.abs(tmp_m) < 5:
+            continue
+        dists = get_point2line_dist(points_fit, tmp_line)
+        tmp_inlier_list = np.where(dists < inlier_thresh)[0]
+        tmp_inliers = points_fit[tmp_inlier_list, :]
+        num_inliers = tmp_inliers.shape[0]
+        if num_inliers > max_inlier_num:
+            max_inlier_num = num_inliers
+            max_inlier_list = tmp_inlier_list
+            best_line = tmp_line
+
+    if max_inlier_num < 2:
+        return (0, 0), [[0,0],[1,1]]
+    # final_points = points_fit[max_inlier_list, :]
+    # line = fit_line(final_points)
+    # fit_variance = np.var(get_point2line_dist(final_points, line))
+    # print('RANSAC fit variance: %f' % fit_variance)
+
+    line = best_line
+    dists = get_point2line_dist(points, line)
+
+    m = - line[0] / line[1]
+    b = - line[2] / line[1]
+
+    inlier_list = np.where(dists < inlier_thresh)[0]
+
+    outlier_list = np.where(dists >= inlier_thresh)[0]
+    return (m, b), inlier_list, outlier_list
+
+
+
+
+================================================
+FILE: infer_layout_from_image.py
+================================================
+from rl_config import *
+from RoomLayoutEstimator import RoomLayoutEstimator
+
+
+def main():
+    # Perform room layout estimation
+    room_layout_estimator = RoomLayoutEstimator(example=ex)
+    room_layout_estimator.infer_layout()
+
+    # Visualize results
+    room_layout_estimator.visualize_layout_2d()
+    room_layout_estimator.visualize_layout_3d()
+
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+================================================
+FILE: layout_structs.py
+================================================
+from collections import namedtuple
+
+# Struct that describes the layout plane
+LayoutPlane = namedtuple('LayoutPlane',
+                           ['plane',
+                            'mask',
+                            'type',
+                            ])
+LayoutPlane.__new__.__defaults__ = (None,) * len(LayoutPlane._fields)
+
+# Struct that describes the candidate layout component
+CandidateLayoutComp = namedtuple('CandidateLayoutComp',
+                           ['plane',
+                            'mask',
+                            'type',
+                            'poly',
+                            'poly_mask',
+                            'cost',
+                            'area'
+                            ])
+LayoutPlane.__new__.__defaults__ = (None,) * len(LayoutPlane._fields)
+
+
+================================================
+FILE: LICENSE.md
+================================================
+Copyright (c) 2020 Graz University of Technology
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted (subject to the limitations 
+in the disclaimer below) provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the 
+documentation and/or other materials provided with the distribution.
+
+* Neither the name of Graz University of Technology nor the names of its contributors may be used to endorse or promote products derived 
+from this software without specific prior written permission.
+
+NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS 
+AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+================================================
+FILE: requirements.txt
+================================================
+numpy==1.18.0
+open3d==0.9.0.0
+opencv-python==3.4.4.19
+PuLP==2.0
+Shapely==1.6.4.post2
+
+
+
+================================================
+FILE: rl_config.py
+================================================
+from deap import creator, base, tools, algorithms
+import numpy as np
+import os
+
+# Example folder path
+example_folder = "./examples/"
+
+# Example id
+ex = 616
+
+# Plot intermediate results
+plot_intermediate_results = False
+
+# Random seed
+seed = 8910
+
+# Layout indexing
+wall_type = 1
+floor_type = 2
+ceil_type = 3
+layout_type_to_string_dict = {}
+layout_type_to_string_dict[1] = "wall"
+layout_type_to_string_dict[2] = "floor"
+layout_type_to_string_dict[3] = "ceil"
+floor_wall_ceil = [2, 1,3]
+
+valid_layout_ind_dict = {}
+valid_layout_ind_dict[floor_type] = [2]
+valid_layout_ind_dict[wall_type] = [1]
+valid_layout_ind_dict[ceil_type] = [3]
+
+# MSEG segmentation indices (you might want to consider additional classes (e.g. windows, doors)
+floor_indices = [43]
+ceiling_indices = [36]
+wall_indices = [191]
+
+# Max depth (Too high is not good, due to depth measurement errors at larger depths)
+max_depth_value = 8.
+
+# Segmentation confidence thresholds (MSEG confidence for ceiling is low)
+seg_confidence_wall_thresh = 0.7
+seg_confidence_floor_thresh = 0.7
+seg_confidence_ceil_thresh = 0.5
+
+# percentage of pixels that should belong to layout semantic category across the layout plane
+val_threshold = 0.4
+
+# Ignore nearby planes ( 0. will work as well)
+min_depth = 1.3 # Do not consider planes that are closer than this threshold value
+
+# Plane fitting
+ransac_thresh = 0.005
+min_plane_size = 2000
+
+#Merging (PlaneRCNN sometimes outputs multiple planes in place of one. Merge them)
+merge_parallel_threshold = 3e-1
+merge_offset_threshold = .3
+merge_line_depth_thresh = 0.2
+
+# Boundary line thickness
+boundary_mask_thickness = 0
+
+# Invisible layout planes
+camera_height = 1.3
+
+# Small value that determines whether two planes are parallel
+par_thresh = 1e-2
+
+# Max. / Min. depth of room corners
+max_depth_thresh = 10.
+min_depth_thresh = 0.
+
+# Optimization cost term costs
+depth_discr_w = 1.
+poly_iou_w = 1.
+other_poly_iou_w = 1.
+empty_poly_cost = 10.
+
+# Iterative adjustment params
+min_discr_error = 0.01
+plane_depth_inc_thresh = -1e-1
+plane_depth_alignment_thresh = 2e-1
+
+# LINE FITTING
+ransac_line_thresh = .01
+ransac_line_points_n = 20
+
+# Refinement variables
+# Max. Number of refinements
+refinement_max_iter = 3
+discr_threshold = 0.3
+
+
+
+================================================
+FILE: search_polygons.py
+================================================
+import copy
+from shapely.geometry import LineString, Point
+
+def start_search_edge(edge_container):
+    edge_ind = edge_container[0]
+    start_edge = edge_container[1]
+    plane_edges_list = edge_container[2]
+    xys_list = edge_container[3]
+    intersection_dict_list = edge_container[4]
+    current_plane_index = edge_container[5]
+
+    start_vertex = start_edge[0]
+    current_vertex = start_edge[1]
+    used_vertices = [current_vertex]
+    used_lines_coord = [(xys_list[start_edge[0]][0], xys_list[start_edge[0]][1]),
+                        (xys_list[start_edge[1]][0], xys_list[start_edge[1]][1])]
+
+    plane_counter_usage = {}
+    for plane_index in intersection_dict_list[start_vertex]['inter_planes']:
+        plane_counter_usage[plane_index] = 1
+    for plane_index in intersection_dict_list[current_vertex]['inter_planes']:
+        if plane_index in plane_counter_usage:
+            plane_counter_usage[plane_index] += 1
+        else:
+            plane_counter_usage[plane_index] = 1
+    plane_counter_usage[current_plane_index] = -1e6
+    # print(plane_counter_usage)
+    # input("Her...")
+
+    # rest_edges_list = plane_edges_list[:edge_ind] + plane_edges_list[edge_ind + 1:]
+    rest_edges_list = plane_edges_list[edge_ind + 1:]
+    start_vertex_polygons_list = recursive_polygon_search(start_vertex, current_vertex,
+                                                          used_vertices, used_lines_coord, rest_edges_list, xys_list, intersection_dict_list, plane_counter_usage)
+    if len(start_vertex_polygons_list) == 0:
+        return None
+    else:
+        return start_vertex_polygons_list
+
+def recursive_polygon_search(sv, cv, uvs, ulsc, rel, xys_list, intersection_dict_list, plane_counter_usage):
+    sv_polygons_list = []
+    if cv == sv:
+        return [[sv] + uvs]
+    traversed_e_ind = []
+    for e_ind, e in enumerate(rel):
+        if cv in e:
+            traversed_e_ind.append(e_ind)
+            new_rel = [rel_el for i, rel_el in enumerate(rel) if i not in traversed_e_ind]
+
+            # new_rel = rel
+            # new_rel = rel[:e_ind] + rel[e_ind + 1:]
+
+            cv_e_index = e.index(cv)
+            new_cv = e[1 - cv_e_index]
+
+            if new_cv in uvs:
+                continue
+
+            new_plane_counter_usage = copy.copy(plane_counter_usage)
+            if new_cv != sv:
+                plane_usage_overf = False
+                for plane_index in intersection_dict_list[new_cv]['inter_planes']:
+                    if plane_index in new_plane_counter_usage:
+                        new_plane_counter_usage[plane_index] += 1
+                        plane_usage_overf = plane_usage_overf or new_plane_counter_usage[plane_index] > 2
+                    else:
+                        new_plane_counter_usage[plane_index] = 1
+
+                # print(uvs, new_cv)
+                # print(plane_counter_usage)
+                if plane_usage_overf:
+                    continue
+
+            new_uvs = uvs + [new_cv]
+
+            if len(new_uvs) >= 2:
+                line1 = LineString(ulsc[:-1]) if len(new_uvs) > 2 else Point(ulsc[0][0], ulsc[0][1])
+                line2 = [(xys_list[e[0]][0], xys_list[e[0]][1]),
+                         (xys_list[e[1]][0], xys_list[e[1]][1])]
+                line2 = LineString(line2)
+
+                min_dist = 1
+                if line1.distance(line2) < min_dist and new_cv != sv or \
+                        (len(new_uvs) > 3 and LineString(ulsc[1:-1]).distance(line2) < min_dist) or \
+                                LineString([ulsc[1], ulsc[-1]]).distance(
+                                    Point(ulsc[0][0], ulsc[0][1])) < min_dist:
+                    continue
+                line3 = LineString(ulsc[:-1] +
+                                   [(xys_list[e[1 - cv_e_index]][0], xys_list[e[1 - cv_e_index]][1])])
+                if line3.distance(Point(xys_list[e[cv_e_index]][0],
+                                        xys_list[e[cv_e_index]][1])) < min_dist or \
+                                        line1.distance(Point(xys_list[e[1 - cv_e_index]][0],
+                                                             xys_list[e[1 - cv_e_index]][
+                                                                 1])) < min_dist and new_cv != sv:
+                    continue
+
+            new_ulsc = ulsc + [(xys_list[e[1 - cv_e_index]][0], xys_list[e[1 - cv_e_index]][1])]
+
+            new_ulsc_LS = LineString(new_ulsc)
+
+
+            sv_polygons_list += recursive_polygon_search(sv, new_cv, new_uvs, new_ulsc, new_rel, xys_list, intersection_dict_list, new_plane_counter_usage)
+    return sv_polygons_list
+
+
+================================================
+FILE: utils.py
+================================================
+import numpy as np
+
+def calc_depth_grad(depth):
+    '''
+    Calculate depth gradient
+
+    :param depth: depth map
+    :return: depth gradient
+    '''
+
+    # [1 0 -1] kernel
+    depth_grad_y = np.abs(depth[2:] - depth[:-2])
+    depth_grad_x = np.abs(depth[:, 2:] - depth[:, :-2])
+
+    depth_grad = np.zeros_like(depth)
+    depth_grad[1:-1] = depth_grad_y
+    depth_grad[:, 1:-1] = np.maximum(depth_grad[:, 1:-1], depth_grad_x)
+
+    return depth_grad
+
+def get_coord_grid(h, w):
+    '''
+    Get coordinate grid
+
+    :param h: image height
+    :param w: image width
+    :return: coordinate grid (3, h * w), coordinate grid (h, w, 3)
+    '''
+
+    y_coords, x_coords = np.meshgrid(range(h), range(w), indexing='ij')
+    z_coords = np.ones_like(x_coords)
+    coordinate_grid_flat = np.array([x_coords, y_coords, z_coords])
+    coordinate_grid_flat = np.reshape(coordinate_grid_flat, newshape=(3, -1))
+    coordinate_grid_2d = np.concatenate((x_coords[:, :, None], y_coords[:, :, None], z_coords[:, :, None]), axis=2)
+
+    return coordinate_grid_flat, coordinate_grid_2d
+
+def calc_plane_type(plane_mask_flat, plane_seg_flat_sum_classes, val_ind):
+    '''
+    Calculate plane type
+
+    :param plane_mask_flat: Plane mask
+    :param plane_seg_flat_sum_classes: Number of points on plane for each of the segmentation classes
+    :param val_ind: valid segmentation indices
+    :return: Plane type
+    '''
+
+    plane_type = 0
+    plane_type_area = 0
+    for plane_type_cand in val_ind:
+        plane_type_cand_area = np.sum(plane_seg_flat_sum_classes[plane_type_cand]) / np.sum(plane_mask_flat)
+        if plane_type_cand_area > plane_type_area:
+            plane_type_area = plane_type_cand_area
+            plane_type = plane_type_cand
+
+    if plane_type > 0:
+        return plane_type
+    else:
+        return -1
+
+
+def norm_plane_params(plane_params):
+    '''
+    Normalize plane parameters
+
+    :param plane_params:
+    :return:
+    '''
+    plane_params = plane_params / np.sqrt(
+        plane_params[0] ** 2 + plane_params[1] ** 2 + plane_params[2] ** 2)
+    if plane_params.shape[0] == 4 and plane_params[-1] < 0.:
+        plane_params *= -1
+
+    return plane_params
+
+
+

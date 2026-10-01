@@ -5,10 +5,13 @@ import { SITE } from '@/content/site'
 import { LinkGlyph, OsGlyph } from './OsGlyph'
 import shared from './shared.module.css'
 import styles from './StartMenu.module.css'
+import { SYSTEM_APPS } from './systemApps'
+import type { AppRef } from './windowManager'
 
 interface StartMenuProps {
   id: string
-  onOpenProjects: () => void
+  onOpenApp: (app: AppRef) => void
+  onShutdown: () => void
   onClose: () => void
 }
 
@@ -17,7 +20,7 @@ interface StartMenuProps {
  * fecha ao clicar fora (o Desktop desenha um anteparo) ou quando o foco sai dele. Sem Esc: o Esc
  * global da experiência já devolve a câmera à visão geral.
  */
-export function StartMenu({ id, onOpenProjects, onClose }: StartMenuProps) {
+export function StartMenu({ id, onOpenApp, onShutdown, onClose }: StartMenuProps) {
   const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
     if (!event.currentTarget.contains(event.relatedTarget)) onClose()
   }
@@ -44,21 +47,23 @@ export function StartMenu({ id, onOpenProjects, onClose }: StartMenuProps) {
 
       <p className={styles.section}>{OS_TEXT.start.apps}</p>
       <ul className={styles.list} role="list">
-        <li>
-          <button type="button" className={styles.item} onClick={onOpenProjects}>
-            <span className={styles.glyph} aria-hidden="true">
-              <OsGlyph name="folder" />
-            </span>
-            <span className={styles.itemLabel}>{OS_TEXT.projects.title}</span>
-          </button>
-        </li>
+        {SYSTEM_APPS.map((entry) => (
+          <li key={entry.app.kind}>
+            <button type="button" className={styles.item} onClick={() => onOpenApp(entry.app)}>
+              <span className={styles.glyph} aria-hidden="true">
+                <OsGlyph name={entry.glyph} />
+              </span>
+              <span className={styles.itemLabel}>{entry.title}</span>
+            </button>
+          </li>
+        ))}
       </ul>
 
       <p className={styles.section}>{OS_TEXT.start.links}</p>
       <ul className={styles.list} role="list">
         {SITE.links.map((link) => (
           <li key={link.href}>
-            <a className={styles.item} href={link.href} target="_blank" rel="noopener noreferrer">
+            <a className={styles.item} href={link.href} target="_blank" rel="noreferrer">
               <span className={styles.glyph} aria-hidden="true">
                 <LinkGlyph kind={link.kind} />
               </span>
@@ -71,7 +76,7 @@ export function StartMenu({ id, onOpenProjects, onClose }: StartMenuProps) {
           </li>
         ))}
         <li>
-          <a className={styles.item} href={SITE.sourceUrl} target="_blank" rel="noopener noreferrer">
+          <a className={styles.item} href={SITE.sourceUrl} target="_blank" rel="noreferrer">
             <span className={styles.glyph} aria-hidden="true">
               <CodeIcon weight="duotone" />
             </span>
@@ -83,6 +88,15 @@ export function StartMenu({ id, onOpenProjects, onClose }: StartMenuProps) {
           </a>
         </li>
       </ul>
+
+      <div className={styles.footer}>
+        <button type="button" className={`${styles.item} ${styles.shutdown}`} onClick={onShutdown}>
+          <span className={styles.glyph} aria-hidden="true">
+            <OsGlyph name="power" />
+          </span>
+          <span className={styles.itemLabel}>{OS_TEXT.start.shutdown}</span>
+        </button>
+      </div>
     </div>
   )
 }

@@ -16,7 +16,7 @@ Reporte em 10 linhas: arquivos criados, decisões tomadas, o que ficou pendente.
 
 Legenda de aceite: **A** = `tsc`/`lint`/`build` limpos · **M** = verificação manual no browser (`npm run dev`).
 
-**Status (2026-09-29):** Fases 0, 1 e 2.1 concluídas e comitadas. Layout da referência aplicado (mesa reta, PC gamer grande, rack da TV com console, cama de casal) e sub-vistas da zona de jogos prontas. Em andamento, em paralelo: Fase 2.2 ‖ Fase 3 (protocolo abaixo da Fase 2).
+**Status (2026-10-01):** Fases 0, 1, 2.1 e 2.2 concluídas e comitadas; o XkrulesOS roda em produção (correção do `portal` estável no `MonitorHtml`). A Fase 3 não chegou a ser implementada e foi absorvida pela **Fase V** (visual v2, ARCHITECTURE §12), assim como as Fases 4 e 5. Próximo passo: onda 1 da Fase V.
 
 ---
 
@@ -149,6 +149,8 @@ Verificação no browser: o painel costuma estar oculto e aí o canvas nem monta
 
 ## Fase 3 — Micro-interações 3D e pós-processamento
 
+> **Absorvida pela Fase V** (3.1–3.4 → V.3, 3.5 → V.2, 3.6 → V.4). Mantida abaixo como especificação de comportamento.
+
 ### 3.1 Cadeira: `useChairSpring` (§6.1) com `@react-spring/three`, giro ~190° elástico no hover, retorno no unhover e ao voltar para HOME.
 ### 3.2 Telas e luzes (`hotspots/desk/Screens.tsx` e `scene/WallTv.tsx`)
 - Monitores: damp de emissive com `useHotspot('desk').active` (§6.2), `toneMapped: false`. Em `focused` + `desk` a tela do monitor horizontal fica escura (o SO da 2.2 aparece por cima).
@@ -166,6 +168,8 @@ Verificação no browser: o painel costuma estar oculto e aí o canvas nem monta
 
 ## Fase 4 — Assets reais (depende de modelagem externa)
 
+> **Substituída pela Fase V**: a cena passa a ser gerada por script no Blender (ASSET_PIPELINE v2), sem gltfjsx.
+
 ### 4.1 `scripts/optimize-models.mjs` + `npm run models:optimize` + headers de cache (ASSET_PIPELINE §4, §6).
 ### 4.2 Para cada glb entregue: rodar `gltfjsx` (ASSET_PIPELINE §5), substituir o placeholder pelo componente gerado no wrapper do hotspot, mapear nós (`chair_root`, `printer_head`…), remover `hemisphereLight` quando o bake chegar.
 ### 4.3 Recalibrar presets de câmera com leva e `distanceFactor` do monitor.
@@ -173,7 +177,93 @@ Verificação no browser: o painel costuma estar oculto e aí o canvas nem monta
 
 ---
 
+## Fase V — Visual v2 (competir com as referências)
+
+Decisão de 2026-10-01 (ARCHITECTURE §12). Substitui a Fase 4 e absorve as tarefas 3.1–3.6, que não tinham sido implementadas. Fontes: ARCHITECTURE §12, ASSET_PIPELINE (contrato inteiro), REFERENCES.md (técnicas com número de linha nos dumps).
+
+Ondas:
+
+| Onda | Tarefas | Depende de |
+|---|---|---|
+| 1 (paralela) | V.1 arte no Blender ‖ V.4 câmera viva ‖ V.6 XkrulesOS v2 | — |
+| 2 | V.2 runtime baked, tema e pós | arquivos do V.1 em `public/` |
+| 3 (paralela) | V.3 vida na cena ‖ V.5 som e acabamento | V.2 (`useRoomNode`, materiais) |
+| 4 | V.7 bake final, calibração e medição | todas |
+
+Todos os agentes são Sonnet 5.5. Em cada onda vale o protocolo de execução paralela (checagem de tipos filtrada, eslint com escopo, sem `npm run build`, sem commit, um `next dev` só); quem integra roda `tsc`, `lint`, `test` e `build`, revisa no browser e comita.
+
+### Protocolo da onda 1
+
+| Agente | Cria ou edita | Só lê |
+|---|---|---|
+| V.1 Arte | `art/**`, `scripts/art/**`, `public/models/**`, `public/textures/**`, `.gitignore` (só `art/build/`), `package.json` (só scripts `art:*` e a devDependency `@gltf-transform/cli`) e o lockfile | `scene/layout.ts`, `camera/presets.ts`, `scene/placeholders/**` (proporções e cores do grey-box), `content/**`, REFERENCES.md e dumps |
+| V.4 Câmera | `src/experience/camera/**`, `src/lib/constants.ts` (só para **adicionar** `PANEL_WIDTH_PX`) | `store/**`, `content/hotspots.ts`, `scene/layout.ts`, `ui/panels/PanelShell.tsx` |
+| V.6 SO | `src/ui/os/**`, `src/content/os.ts`, `src/app/dev/os/**` | `content/types.ts`, `content/projects.web.ts`, `content/about.ts`, `content/site.ts` |
+
+Proibido para os três: `docs/**`, `src/store/**`, `scene/layout.ts`, `next.config.ts`, `tsconfig.json`, `git commit`. V.4 e V.6 não mexem em `package.json`.
+
+Contrato V.1 ↔ V.4: `camera/presets.ts` continua exportando `PRESETS` com `position` e `target` (o enquadramento de referência em 16:9). O V.4 pode **acrescentar** campos e arquivos, mas não renomeia nem remove esses dois: o `export-layout.ts` do V.1 lê os presets para as câmeras dos previews.
+
+### V.1 Arte: pipeline Blender + quarto detalhado + bake draft (onda 1)
+Contrato completo em ASSET_PIPELINE. Resumo do que entregar:
+- `scripts/art/register.mjs` + hook de resolve, `scripts/art/export-layout.ts`, `scripts/art/blender.mjs` (acha o Blender por `BLENDER_BIN` ou `D:\Program Files\Blender\blender.exe` e repassa os argumentos; o caminho tem espaço), scripts `art:layout`, `art:build`, `art:optimize`, `art` no `package.json`.
+- `art/blender/*` conforme ASSET_PIPELINE §2, com a direção de arte de ARCHITECTURE §12.2: estilo "quadradinho" com bevel em tudo, de 60 a 90 objetos, todos os nomes obrigatórios do §4, estático unido por zona.
+- Bake `draft` completo (night, day, lightmap), glb otimizado em `public/models/room.glb`, texturas em `public/textures/`, `manifest.json` e os 7 previews em `art/previews/`.
+- Ordem de trabalho: (1) esqueleto do pipeline de ponta a ponta só com paredes, piso e as âncoras como caixas, até gerar glb, bake e previews; (2) móveis principais; (3) props e decoração por zona; (4) ajuste de luz olhando os previews. Rode o pipeline completo depois de cada etapa.
+- Aceite: checklist do ASSET_PIPELINE §7 com `--quality draft`; `npx tsc --noEmit` e `npx eslint scripts/art` limpos.
+
+### V.4 Câmera viva e enquadramento responsivo (onda 1)
+Dono de `src/experience/camera/**`. Mantém os contratos do §4: chegada por frame, `presetKeyFor`/`resolveFocus`, voo de sub-vista sem `onCameraRest`, deep link, `prefers-reduced-motion`.
+- **Enquadramento responsivo** (antiga 3.6): cada preset ganha um `framing` (`focusBox` em coordenadas do mundo derivadas do `layout.ts`, e o lado do painel vindo do registry). Um resolvedor puro em `camera/framing.ts` calcula, a partir do aspect da viewport e da largura do painel (`PANEL_WIDTH_PX = 440` em `lib/constants.ts`, mesmo valor do `w-[min(440px,92cqw)]` do `PanelShell`), a distância e o deslocamento lateral para a caixa caber inteira na área livre (fora do painel), mantendo a direção de olhar do preset atual. Em 16:9 1920×1080 o resultado deve ficar perto dos presets atuais. Recalcula no resize (com debounce) quando em `focused`. O `desk` continua perpendicular à tela, com a tela inteira visível.
+- **Idle em HOME**: depois de 3 s sem input, deriva lenta (período de 12 a 20 s, amplitude pequena) em torno da pose atual, como a Henry Heffernan (REFERENCES). Qualquer input do usuário pausa; volta a contar depois.
+- **Parallax do mouse** em `focused` nos presets `chair`, `printer`, `shelf` e `shelfDigital` (não no `desk`, porque o SO precisa da tela parada): deslocamento de no máximo ~4 cm via `setFocalOffset`, suavizado. Zera ao sair do foco e durante `transitioning`.
+- Tudo dentro de `camera/**`; nenhum outro componente toca a câmera. Nada de alocação ou setState no `useFrame`.
+- Aceite: **A** filtrado; **M** em 1920×1080 e 1024×768 (resize da janela do browser, desktop) todas as vistas cabem fora do painel; idle e parallax visíveis e sutis; `npm test` passa.
+
+### V.6 XkrulesOS v2 (onda 1)
+Referência: o SO interno da Henry Heffernan (REFERENCES, inner-site). Dono de `src/ui/os/**`, `content/os.ts` e `src/app/dev/os/**`. Continua num wrapper fixo de 1280×720 com `cqw/cqh`, sem `vw/vh`, sem tratar Esc.
+- Janelas: **resize** pelas bordas e pelo canto (tamanho mínimo, presa à área de trabalho), **duplo clique na barra de título** maximiza e restaura, botão maximizar. Abrir um app já aberto foca a janela.
+- Apps novos (textos em `content/os.ts`; dados de `about.ts`, `site.ts`, `projects.web.ts` só lidos):
+  - **Este Computador**: "specs" do autor em tom de brincadeira (CPU = stack, memória = anos de estrada etc.) usando fatos de `about.ts`; o que faltar vira `[TODO: ...]`, nunca texto inventado.
+  - **Terminal**: prompt `xkrules@os:~$`, comandos `help`, `whoami`, `projects`, `open <slug>` (abre a janela do projeto), `links`, `date`, `clear`, `neofetch` (arte ASCII + resumo), histórico com ↑/↓ e autocomplete com Tab. Nada de `eval`.
+  - **Jogo da Memória**: jogável, 4×4, cartas com glifos Phosphor, contador de jogadas e de tempo, botão reiniciar. Liga com o projeto `memory-game` (link para a versão completa).
+  - **Créditos**: inspirações com links (Bruno Simon, Henry Heffernan, Julien Quenneville), stack do portfólio e ícones (Phosphor).
+- **Desligar** no menu iniciar: sequência curta de desligamento (textos em `content/os.ts`), tela preta com botão de energia que religa (boot curto). Não altera nada fora do SO.
+- Aceite: **A** filtrado; **M** em `/dev/os` a 1280×720 e 640×360: abrir cada app, redimensionar, maximizar, jogar uma partida, rodar os comandos do terminal, desligar e religar.
+
+### V.2 Runtime baked, tema e pós (onda 2)
+Lê ARCHITECTURE §7 e §12.3, ASSET_PIPELINE §3 e §4, REFERENCES (Bruno Simon `Baked.js` e fragment; Julien `TextureMaterial`). Dono de `src/experience/scene/**` (menos `layout.ts`), `Experience.tsx`, `preload.ts`, `LoadingBridge.tsx`, os wrappers `hotspots/*/{Chair,Desk,Printer,Shelf}.tsx` (só para alternar grey-box e baked), `src/store/**` (tema), `ui/overlay/Hud.tsx` (botão de tema), `UI_TEXT` em `content/site.ts` e `PRELOAD_LIST` em `lib/constants.ts`.
+- `scene/baked/BakedMaterial.ts` (drei `shaderMaterial`), `BakedRoom.tsx` com o contexto `useRoomNode(name)`, materiais por categoria (emissivo `toneMapped:false` com a cor do glb, vidro, tela), `useSceneMode()` (`?greybox` ou erro de carregamento → grey-box), preload na tela de loading.
+- Store: `theme: 'night' | 'day'` (padrão `night`), `toggleTheme()`, com testes. Botão no HUD com ícone Phosphor (lua/sol).
+- Luzes de zona por foco: hover ou foco na mesa sobe mesa e PC; na zona de jogos sobe a TV. Damp, sem setState no frame.
+- Pós (`Effects.tsx`): `SMAA`, `Bloom` (mipmapBlur, só os emissivos estouram), `Noise` leve (soft-light ~0.1) e `Vignette`, `Outline` no hover (seleção = nós da zona do hotspot, mapeados em `scene/baked/zones.ts`), `DepthOfField` só em `focused` + `chair`. `PerformanceMonitor` + `AdaptiveDpr` alimentam `quality` (§7).
+- O grey-box continua funcionando igual (`?greybox`), com `Lights.tsx`.
+- Aceite: **A** completo; **M** cena baked em HOME e em cada hotspot, tema alternando sem tranco, contorno no hover, `r3f-perf` ≥ 55 fps e ≤ 60 draw calls.
+
+### V.3 Vida na cena (onda 3)
+Lê ARCHITECTURE §6 e §12.4, REFERENCES (Bruno: `CoffeeSteam`, `TopChair`, `Screen`, `GoogleLeds`, `BouncingLogo`; Henry: camadas do `MonitorScreen`). Usa `useRoomNode` do V.2; no grey-box, os mesmos efeitos nos placeholders quando fizer sentido.
+- Cadeira: balanço idle (`sin(t)`) somado ao giro elástico de ~190° no hover (antiga 3.1).
+- Telas: monitor vertical com editor de código rolando (canvas), TV com estática no hover da zona de jogos, tela de título tingida pelo jogo em `highlightBox` na vista `digital` e logo quicando quando ociosa (antiga 3.2 + §6.5).
+- Monitor do SO: camadas da Henry por cima do `Html` (sujeira aditiva ~0.12, sombra interna), sem bloquear o clique.
+- PC: fans girando, `pc_rgb` e `led_*` pulsando com fase por índice.
+- Impressora (antiga 3.3), caixas com spring (antiga 3.4), partículas na zona de jogos, relógio com hora real (`clock_*`), fumaça da caneca (`fx_mug_steam`, shader com ruído, `depthWrite:false`).
+- Aceite: **A**; **M** nada anima durante `transitioning`; `prefers-reduced-motion` desliga balanço, partículas e pulsos.
+
+### V.5 Som e acabamento (onda 3)
+- Áudio **sintetizado com WebAudio** (sem arquivos de terceiros): zumbido da ventoinha perto do PC, cliques de teclado e mouse ao interagir com o SO, estática da TV, ambiente noturno baixo. Mudo por padrão, toggle no HUD, volume por distância da câmera (Henry, `AudioManager`).
+- Tela de loading temática (boot curto estilo BIOS, Henry `LoadingScreen`), com progresso real do `useProgress`.
+- `prefers-reduced-motion` revisado de ponta a ponta; OpenGraph com captura do diorama; `<noscript>`.
+- Aceite: **A**; **M** som só depois do primeiro clique do usuário; loading mostra progresso real.
+
+### V.7 Bake final, calibração e medição (onda 4)
+- `npm run art` com `--quality final` (em segundo plano; pode levar até 1 h na CPU).
+- Recalibrar presets e `distanceFactor` do monitor com o glb real; medir draw calls, triângulos, fps e peso; anotar em `Scene.tsx`. Lighthouse desktop ≥ 80. Deploy.
+
+---
+
 ## Fase 5 — Polish e deploy
+
+> **Absorvida pela Fase V** (5.1, 5.3, 5.4 → V.5; 5.5 → V.7).
 
 ### 5.1 Áudio (`useAudio`, mudo por padrão, toggle no Hud, ventoinha no hover desk, estática na estante).
 ### 5.2 Touch: **adiado** (mobile fora do escopo por enquanto).
@@ -185,7 +275,7 @@ Verificação no browser: o painel costuma estar oculto e aí o canvas nem monta
 
 ## Ordem sugerida de execução com subagentes
 
-1. Fase 0 inteira num único subagente Sonnet (tarefas 0.1→0.5 são acopladas). Revisar no browser.
-2. Fase 1 e Fase 2.1 em paralelo (2 subagentes): não compartilham arquivos.
-3. Fase 2.2 e Fase 3 em sequência (tocam `desk/` e `Effects`).
-4. Fase 4 quando os glb existirem. Fase 5 ao final.
+1. Fase 0 inteira num único subagente Sonnet (tarefas 0.1→0.5 são acopladas). ✔
+2. Fase 1 e Fase 2.1 em paralelo. ✔
+3. Fase 2.2. ✔
+4. Fase V em ondas: V.1 ‖ V.4 ‖ V.6 → V.2 → V.3 ‖ V.5 → V.7. Cada onda é revisada, integrada e comitada antes da próxima.

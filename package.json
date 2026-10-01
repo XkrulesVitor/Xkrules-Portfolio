@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --experimental-strip-types src/store/__tests__/store.test.ts"
+    "test": "node --test --experimental-strip-types src/store/__tests__/store.test.ts",
+    "art:layout": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/art/register.mjs scripts/art/export-layout.ts",
+    "art:build": "node scripts/art/blender.mjs -b --factory-startup -P art/blender/main.py -- --layout art/build/layout.json --out art/build",
+    "art:optimize": "node scripts/art/optimize.mjs",
+    "art": "npm run art:layout && npm run art:build -- --quality final && npm run art:optimize"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -25,6 +29,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

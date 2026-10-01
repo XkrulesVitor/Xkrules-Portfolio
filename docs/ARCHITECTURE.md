@@ -21,7 +21,8 @@ Relacionados: [ASSET_PIPELINE.md](./ASSET_PIPELINE.md) · [BACKLOG.md](./BACKLOG
 | Animação UI 2D | `motion` (`motion/react`, sucessor do framer-motion) com `AnimatePresence` | Entrada/saída de painéis glassmorphism |
 | Pós-processamento | `@react-three/postprocessing`: `Bloom` sempre; `DepthOfField` só em `focused:chair` | DoF é caro; liga só quando a narrativa pede |
 | HTML dentro do 3D | **Apenas o monitor** usa `<Html transform>`, sem `occlude` (o SO só aparece com a câmera parada de frente para o monitor). Os painéis "Sobre", "Impressora" e "Games" são **DOM overlay fora do Canvas** | Overlay DOM é mais nítido, acessível e não sofre distorção de resize |
-| Iluminação | 100% **baked** (lightmap/AO na textura) + materiais **emissivos** para telas e LEDs. Zero luzes dinâmicas com sombra | 60 fps estáveis |
+| Iluminação | 100% **baked** no Blender por script (§12): `baked-night`, `baked-day` e `lightmap` RGB misturados no `BakedMaterial` + materiais **emissivos** para telas e LEDs. Zero luzes dinâmicas com sombra | É o que faz as referências serem bonitas, e roda a 60 fps |
+| Arte 3D | Cena **gerada por Python no Blender 4.4 (headless)** a partir do `layout.ts`; estilo diorama "quadradinho" detalhado, com bevel em tudo (§12) | Reprodutível, revisável em PR e executável por agentes; o grey-box vira fallback (`?greybox`) |
 | Loading | `useProgress` + `useGLTF.preload` de todos os `.glb` na tela de loading, depois voo de câmera de introdução | Cache completo antes da interação |
 | Estilo | Tailwind v4 (já instalado) + tokens CSS no `globals.css` | Glassmorphism via utilitários e variáveis |
 | Sub-vistas | Hotspot pode ter `views` no registry; `store.view` escolhe câmera e lado do painel sem sair do foco | A zona de jogos troca entre estante (Tabuleiro) e TV + console (Digital) pela aba do painel |
@@ -360,9 +361,9 @@ Atrás da TV vai uma fita de LED rosa emissiva (`tv_backlight`), como na referê
 | Modelos | soma dos .glb < 12 MB (draco/meshopt) |
 
 **Estratégias**
-- Room estático: **um material `MeshBasicMaterial` com `map` = atlas baked** (cor + luz + AO já no bake). Não usar `MeshStandardMaterial` no room. `toneMapped: true`.
+- Room: **um único `BakedMaterial`** (shader, §12.3) compartilhado por todos os nós baked; cor + luz + AO vêm do bake. Não usar `MeshStandardMaterial` no room. O AgX já vem aplicado na textura (o Blender aplica ao salvar o bake), então o `BakedMaterial` usa `toneMapped: false` e só converte para sRGB na saída.
 - Telas/LEDs: `MeshBasicMaterial` + `emissive`-like via `color` brilhante e `toneMapped: false` para estourar no Bloom (threshold 0.9).
-- Objetos animados (cadeira, cabeça da impressora, caixas) ficam em **glb separados** com bake próprio, para não quebrar o atlas do room.
+- Objetos animados (cadeira, partes da impressora, caixas, ponteiros) ficam no **mesmo `room.glb` e no mesmo atlas**, como nós separados: são baked na posição de repouso e movidos em runtime (ASSET_PIPELINE §3). O estático é unido em um mesh por zona (`zone_*`), o que mantém ~35 draw calls.
 - `<Canvas dpr={[1, 2]} gl={{ antialias: false, powerPreference: 'high-performance' }}>` + `<AdaptiveDpr pixelated />` + `<PerformanceMonitor onDecline={() => setQuality('medium')}>`. Antialias via `SMAA` no composer (mais barato que MSAA com Bloom).
 - `quality`: `high` = Bloom+DoF+dpr 2; `medium` = Bloom, dpr 1.5, sem DoF; `low` = sem composer, dpr 1.
 - `frameloop="always"` (há animações idle), mas parar o composer em `document.hidden`.
@@ -421,7 +422,8 @@ npm i @phosphor-icons/react
 | 1 UI 2D | tokens, GlassCard, painéis About/Printer/Games data-driven, conteúdo real em `content/*` | painéis abrem/fecham com motion |
 | 2 Monitor OS | `MonitorHtml` + `ui/os/*` com janelas de projetos | clicável só em focused; sem distorção em resize |
 | 3 Micro-interações 3D | cadeira spring, telas emissive, impressora eixos, caixas + partículas, Bloom/DoF, quality tiers | 60 fps desktop com composer ligado |
-| 4 Assets reais | pipeline Blender → glb → gltfjsx, substituir placeholders | draw calls e tris dentro do budget |
+| 4 Assets reais | **substituída pela Fase V** (visual v2, §12 e BACKLOG) | — |
+| V Visual v2 | cena gerada no Blender com bake, `BakedMaterial`, tema dia/noite, vida (telas, relógio, fumaça), câmera viva, XkrulesOS v2, áudio | competir visualmente com as referências (REFERENCES.md) |
 | 5 Polish | áudio, reduced-motion, deep-link `?focus`, SEO fallback, analytics, deploy Vercel | Lighthouse perf ≥ 80 desktop |
 
 ---
@@ -435,3 +437,39 @@ npm i @phosphor-icons/react
 - Nomes de nós do glb seguem `ASSET_PIPELINE.md` (ex.: `chair_root`, `printer_head`). Componentes gerados por gltfjsx vão para `experience/models/` e **não são editados**; a lógica fica no wrapper do hotspot.
 - Conteúdo (textos, links, imagens) só em `src/content/*`. Componentes não têm strings de conteúdo hardcoded.
 - Commits: `feat(scope): ...` (`scope` = fase ou hotspot: `camera`, `chair`, `os`, `ui`, `assets`).
+
+---
+
+## 12. Visual v2 — cena baked gerada por código (decisão de 2026-10-01)
+
+### 12.1 Por quê
+As referências (Bruno Simon, Henry Heffernan, Julien Quenneville) são bonitas por causa da **luz pré-calculada no Blender**, não por geometria complexa. Primitivas chanfradas com GI, AO e sombras macias já parecem um diorama premium. O Blender 4.4 está instalado, então a cena é gerada por script Python (headless), revisável e repetível por agentes. Detalhes do contrato em ASSET_PIPELINE.md.
+
+### 12.2 Direção de arte
+- **Estilo:** diorama isométrico "quadradinho" e detalhado. Proporções robustas, bevel de 1 a 3 cm (2 a 3 segmentos) em tudo, nada de textura realista: cores sólidas, e o acabamento vem da luz baked e do AO.
+- **Densidade:** de 60 a 90 objetos distintos. O quarto tem que parecer habitado.
+- **Clima padrão:** noite. Ambiente baixo e frio, janela com cidade noturna, e três luzes de zona coloridas: TV rosa `#ff115e`, mesa laranja `#ff6700`, PC azul `#0082ff` (as cores da Bruno Simon). O tema dia é um bake à parte, com luz de janela quente.
+- **Paleta:** piso de tábuas de madeira com frestas; paredes claras levemente tingidas; madeira quente nos móveis; plástico colorido nas caixas de jogos; borda da ilha escura.
+
+Objetos por zona (posições das âncoras do `layout.ts`; decoração livre sem invadir hitboxes):
+
+| Zona | Objetos |
+|---|---|
+| Quarto | piso em tábuas, rodapé, tomadas, janela com persiana ou cortina e cidade (`emit_window_city`), quadros e pôsteres, relógio de parede com ponteiros (`clock_*`), ar-condicionado, planta grande (costela-de-adão), tapete |
+| Mesa (`desk`) | dois monitores com moldura e suporte, teclado com teclas em grade, mouse e mousepad à direita, PC gamer com vidro e fans, headset no suporte, caneca com fumaça (`fx_mug_steam`), luminária ou light bar do monitor, caixas de som, suculenta, prateleira na parede com livros e figuras, fita de LED |
+| Jogos (`shelf`) | rack com portas, console e controle, capinhas (`box_*` digitais), TV fina com LED atrás (`tv_backlight`), soundbar; estante com caixas variadas em pé e deitadas, dados, miniaturas, meeples, caixas autorais (`box_*` tabuleiro) |
+| Maker (`printer`) | bancada, impressora detalhada (estrutura, mesa, cabeça, eixo, carretel de filamento no suporte), carretéis num pegboard, alicate e paquímetro, peças impressas expostas |
+| Cama | cama de casal com edredom dobrado, dois travesseiros, criado-mudo com abajur e celular, chinelos |
+| Cadeira (`chair`) | cadeira gamer com encosto alto, braços, base de 5 rodas (`chair_root`) |
+
+### 12.3 Runtime
+- `experience/scene/baked/BakedMaterial.ts`: `shaderMaterial` do drei portado da Bruno Simon (REFERENCES.md): `uBakedNight`, `uBakedDay`, `uLightMap`, `uNightMix`, e cor + força para TV, mesa e PC, com blend `lighten` (`mix(base, max(base, cor), canal × força)`). Sem tone mapping no runtime (o bake já sai do Blender com AgX); `#include <colorspace_fragment>` no fim. Valores iniciais da Bruno Simon: forças TV 1.47, mesa 1.9, PC 1.4.
+- `experience/scene/baked/BakedRoom.tsx`: carrega `room.glb` e as três texturas (`useGLTF`, `useTexture`, preload na tela de loading), aplica o `BakedMaterial` em todos os nós da categoria baked e os materiais próprios nas outras categorias. Expõe os nós por nome num contexto (`useRoomNode(name)`) para hotspots e animações.
+- **Tema:** `store.theme` (`'night' | 'day'`, padrão noite) e `toggleTheme()`. O `uNightMix` faz damp até o alvo. Botão no HUD.
+- **Luzes de zona reagem ao foco:** hover ou foco na mesa aumenta G e B; na zona de jogos aumenta R. Damp, sem setState no frame.
+- **Hitboxes e câmera não mudam:** continuam vindo do `layout.ts`. O glb tem que respeitar as mesmas posições.
+- **Fallback:** com `?greybox` na URL, ou se os assets falharem, renderiza a cena procedural atual (`scene/placeholders`).
+- **Luzes dinâmicas:** nenhuma na cena baked. O `Lights.tsx` só existe para o grey-box.
+
+### 12.4 Vida na cena (o que roda em cima do bake)
+Cadeira com balanço idle somado ao giro do hover, telas com conteúdo (vídeo ou canvas: editor de código rolando no monitor vertical, descanso de tela com logo quicando na TV), fans e fitas de LED pulsando, relógio com hora real, fumaça da caneca, impressora animada, caixas com spring e destaque, partículas na zona de jogos, contorno no hover dos hotspots. Monitor do XkrulesOS com camadas de sujeira e reflexo por cima do HTML (Henry Heffernan).

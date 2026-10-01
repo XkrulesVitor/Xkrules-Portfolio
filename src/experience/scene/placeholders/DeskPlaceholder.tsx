@@ -23,11 +23,7 @@ const DESK_PARTS = [
   box([0.08, 0.8, 0.08], [X1 - 0.05, 0.4, Z0 + 0.05], COLORS.woodLight),
   box([0.08, 0.8, 0.08], [X0 + 0.05, 0.4, Z1 - 0.05], COLORS.woodLight),
   box([0.08, 0.8, 0.08], [X1 - 0.05, 0.4, Z1 - 0.05], COLORS.woodLight),
-  // gaveteiro branco sob a ponta da frente (como na referência), puxadores voltados para +X
-  box([0.55, 0.72, 0.45], [X1 - 0.35, 0.36, Z1 - 0.3], COLORS.white),
-  box([0.01, 0.02, 0.2], [X1 - 0.07, 0.6, Z1 - 0.3], COLORS.darker),
-  box([0.01, 0.02, 0.2], [X1 - 0.07, 0.38, Z1 - 0.3], COLORS.darker),
-  box([0.01, 0.02, 0.2], [X1 - 0.07, 0.16, Z1 - 0.3], COLORS.darker),
+
   // monitor horizontal: base, haste, corpo
   box([0.3, 0.03, 0.3], [MAIN[0] - 0.031, TOP + 0.015, MAIN[2]], COLORS.darker),
   box([0.05, 0.36, 0.05], [MAIN[0] - 0.1, 1.07, MAIN[2]], COLORS.darker),

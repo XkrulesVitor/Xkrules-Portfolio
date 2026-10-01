@@ -1,0 +1,80 @@
+/* Alças de redimensionar: caixas invisíveis que passam um pouco da borda da janela (por fora, para
+   não cobrir a barra de rolagem) e seguram o ponteiro com setPointerCapture. Todas as medidas em
+   px de design (--px), então a área de pegar escala junto com o SO. */
+.handles {
+  display: contents;
+}
+
+/* Sem `pointer-events` próprio de propósito: as alças herdam o do host (o monitor desfocado desliga
+   o ponteiro de todo o SO, e um `auto` explícito aqui o reativaria). */
+.handle {
+  position: absolute;
+  z-index: 2;
+  touch-action: none;
+}
+
+/* Bordas: faixa de 10 px de design, 6 px para fora e 4 para dentro. */
+.handle[data-handle='n'],
+.handle[data-handle='s'] {
+  right: calc(var(--px) * 14);
+  left: calc(var(--px) * 14);
+  height: calc(var(--px) * 10);
+  cursor: ns-resize;
+}
+
+.handle[data-handle='e'],
+.handle[data-handle='w'] {
+  top: calc(var(--px) * 14);
+  bottom: calc(var(--px) * 14);
+  width: calc(var(--px) * 10);
+  cursor: ew-resize;
+}
+
+.handle[data-handle='n'] {
+  top: calc(var(--px) * -6);
+}
+
+.handle[data-handle='s'] {
+  bottom: calc(var(--px) * -6);
+}
+
+.handle[data-handle='e'] {
+  right: calc(var(--px) * -6);
+}
+
+.handle[data-handle='w'] {
+  left: calc(var(--px) * -6);
+}
+
+/* Cantos: quadrado de 20 px de design, por cima das bordas. */
+.handle[data-handle='ne'],
+.handle[data-handle='nw'],
+.handle[data-handle='se'],
+.handle[data-handle='sw'] {
+  width: calc(var(--px) * 20);
+  height: calc(var(--px) * 20);
+}
+
+.handle[data-handle='ne'] {
+  top: calc(var(--px) * -6);
+  right: calc(var(--px) * -6);
+  cursor: nesw-resize;
+}
+
+.handle[data-handle='nw'] {
+  top: calc(var(--px) * -6);
+  left: calc(var(--px) * -6);
+  cursor: nwse-resize;
+}
+
+.handle[data-handle='se'] {
+  right: calc(var(--px) * -6);
+  bottom: calc(var(--px) * -6);
+  cursor: nwse-resize;
+}
+
+.handle[data-handle='sw'] {
+  bottom: calc(var(--px) * -6);
+  left: calc(var(--px) * -6);
+  cursor: nesw-resize;
+}

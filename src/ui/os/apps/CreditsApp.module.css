@@ -1,0 +1,183 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-height: 100%;
+  padding: var(--sp-5);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(var(--px) * 56);
+  height: calc(var(--px) * 56);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: calc(var(--px) * 15);
+  background: linear-gradient(150deg, rgb(247 143 208 / 0.24), rgb(106 168 255 / 0.1));
+  color: #f78fd0;
+  font-size: calc(var(--px) * 32);
+  box-shadow:
+    0 calc(var(--px) * 8) calc(var(--px) * 18) rgb(0 0 0 / 0.32),
+    inset 0 1px 0 rgb(255 255 255 / 0.28);
+}
+
+.intro {
+  margin: 0;
+  color: var(--os-ink-dim);
+  font-size: var(--fs-sm);
+}
+
+.sectionLabel {
+  margin: 0 0 var(--sp-3);
+  color: var(--os-mint);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Inspirações: um cartão por pessoa. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--px) * 230)), 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-4);
+  border: 1px solid var(--os-line);
+  border-radius: var(--r-md);
+  background:
+    radial-gradient(85% 95% at 0% 0%, rgb(127 245 208 / 0.1), transparent 62%),
+    var(--os-glass);
+  transition:
+    border-color 0.18s,
+    transform 0.18s;
+}
+
+.card:hover {
+  border-color: rgb(127 245 208 / 0.4);
+  transform: translateY(-2px);
+}
+
+.name {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.work {
+  margin: calc(var(--px) * 2) 0 var(--sp-2);
+  color: var(--os-mint);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.description {
+  flex: 1 1 auto;
+  margin: 0 0 var(--sp-3);
+  color: var(--os-ink-dim);
+  font-size: var(--fs-xs);
+}
+
+.cardLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--os-blue);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgb(106 168 255 / 0.4);
+  text-underline-offset: calc(var(--px) * 3);
+  transition: color 0.14s;
+}
+
+.link:hover {
+  color: var(--os-mint);
+}
+
+.linkGlyph {
+  display: inline-flex;
+  font-size: calc(var(--px) * 16);
+}
+
+.linkArrow {
+  display: inline-flex;
+  font-size: calc(var(--px) * 13);
+  opacity: 0.8;
+}
+
+/* Stack e ícones: pílulas com nome + função. */
+.stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--os-line-strong);
+  border-radius: 999px;
+  background: var(--os-glass);
+  color: var(--os-ink);
+  text-decoration: none;
+  transition:
+    background-color 0.16s,
+    border-color 0.16s,
+    transform 0.16s;
+}
+
+.chip:hover {
+  border-color: rgb(127 245 208 / 0.6);
+  background: var(--os-glass-hover);
+  transform: translateY(-1px);
+}
+
+.chip .linkGlyph {
+  align-self: center;
+  color: var(--os-mint);
+}
+
+.chipName {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.chipRole {
+  color: var(--os-ink-soft);
+  font-size: var(--fs-2xs);
+}
+
+.heart {
+  display: flex;
+  justify-content: center;
+  margin: var(--sp-2) 0 0;
+  color: #f78fd0;
+  font-size: calc(var(--px) * 22);
+  opacity: 0.7;
+}

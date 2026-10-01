@@ -1,0 +1,353 @@
+/* Jogo da Memória: preenche a janela (data-fill) em coluna: cabeçalho, placar, tabuleiro (flexível)
+   e rodapé. O tamanho do tabuleiro (quadrado) vem inline, medido em MemoryGameApp. */
+.root {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+  padding: var(--sp-4);
+}
+
+.header {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.titles {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.hint {
+  margin: var(--sp-1) 0 0;
+  color: var(--os-ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.restart {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: calc(var(--px) * 36);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--os-line-strong);
+  border-radius: var(--r-md);
+  background: var(--os-glass);
+  color: var(--os-ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.16s,
+    border-color 0.16s;
+}
+
+.restart:hover {
+  border-color: rgb(127 245 208 / 0.6);
+  background: var(--os-glass-hover);
+}
+
+.restart:hover .restartGlyph {
+  transform: rotate(-120deg);
+}
+
+.restartGlyph {
+  display: inline-flex;
+  font-size: calc(var(--px) * 16);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Placar ---------------------------------------------------------------------------------------- */
+.stats {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--px) * 2);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--os-line);
+  border-radius: var(--r-md);
+  background: var(--os-glass);
+}
+
+.stat dt {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  color: var(--os-ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stat dd {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.statGlyph {
+  display: inline-flex;
+  font-size: calc(var(--px) * 14);
+  color: var(--os-mint);
+}
+
+/* Tabuleiro ------------------------------------------------------------------------------------- */
+.stage {
+  display: grid;
+  flex: 1 1 0;
+  place-items: center;
+  min-height: 0;
+}
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: var(--sp-2);
+  /* Enquanto o tamanho não foi medido, um quadrado mínimo evita um salto de layout. */
+  width: min(100%, calc(var(--px) * 360));
+  aspect-ratio: 1;
+}
+
+.card {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  perspective: calc(var(--px) * 700);
+  transition: transform 0.16s;
+}
+
+.card:hover:not([data-faceup='true']) {
+  transform: translateY(calc(var(--px) * -2));
+}
+
+.card[aria-disabled='true'] {
+  cursor: default;
+}
+
+.inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.46s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card[data-faceup='true'] .inner {
+  transform: rotateY(180deg);
+}
+
+.back,
+.front {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Verso: vidro escuro com um brilho discreto. */
+.back {
+  border: 1px solid var(--os-line-strong);
+  background:
+    radial-gradient(90% 90% at 20% 10%, rgb(127 245 208 / 0.18), transparent 65%),
+    linear-gradient(150deg, #1a2550, #101936);
+  color: rgb(234 240 255 / 0.4);
+  font-size: calc(var(--px) * 26);
+  box-shadow:
+    0 calc(var(--px) * 6) calc(var(--px) * 14) rgb(0 0 0 / 0.3),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+  transition:
+    border-color 0.16s,
+    color 0.16s;
+}
+
+.card:hover .back {
+  border-color: rgb(127 245 208 / 0.55);
+  color: var(--os-mint);
+}
+
+/* Frente: ladrilho na cor do símbolo. */
+.front {
+  transform: rotateY(180deg);
+  border: 1px solid color-mix(in srgb, var(--symbol) 60%, transparent);
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--symbol) 30%, #0e1630),
+    color-mix(in srgb, var(--symbol) 10%, #0b1226)
+  );
+  color: var(--symbol);
+  font-size: calc(var(--px) * 40);
+  box-shadow: 0 calc(var(--px) * 6) calc(var(--px) * 14) rgb(0 0 0 / 0.3);
+}
+
+/* Par encontrado: brilho na cor do símbolo e um "pulo" curto. */
+.card[data-matched='true'] .front {
+  border-color: var(--symbol);
+  box-shadow:
+    0 0 calc(var(--px) * 18) color-mix(in srgb, var(--symbol) 38%, transparent),
+    inset 0 0 calc(var(--px) * 14) color-mix(in srgb, var(--symbol) 18%, transparent);
+}
+
+.card[data-matched='true'] .inner {
+  animation: matchPop 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes matchPop {
+  0% {
+    transform: rotateY(180deg) scale(1);
+  }
+
+  45% {
+    transform: rotateY(180deg) scale(1.1);
+  }
+
+  100% {
+    transform: rotateY(180deg) scale(1);
+  }
+}
+
+/* Par errado: balança de leve antes de desvirar. */
+.card[data-miss='true'] .inner {
+  animation: miss 0.4s ease-in-out;
+}
+
+@keyframes miss {
+  0%,
+  100% {
+    transform: rotateY(180deg) translateX(0);
+  }
+
+  25% {
+    transform: rotateY(180deg) translateX(calc(var(--px) * -4));
+  }
+
+  75% {
+    transform: rotateY(180deg) translateX(calc(var(--px) * 4));
+  }
+}
+
+/* Teclado: o anel do .scope fica por fora da carta, onde não é cortado. */
+.card:focus-visible {
+  outline: 2px solid var(--os-mint);
+  outline-offset: calc(var(--px) * 3);
+}
+
+/* Vitória --------------------------------------------------------------------------------------- */
+.win {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border: 1px solid rgb(127 245 208 / 0.4);
+  border-radius: var(--r-lg);
+  background: rgb(8 13 28 / 0.88);
+  backdrop-filter: blur(calc(var(--px) * 6));
+  text-align: center;
+  animation: winIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes winIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.winGlyph {
+  display: inline-flex;
+  color: #ffd166;
+  font-size: calc(var(--px) * 56);
+  filter: drop-shadow(0 0 calc(var(--px) * 14) rgb(255 209 102 / 0.45));
+}
+
+.winTitle {
+  margin: 0;
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.winSummary {
+  margin: 0 0 var(--sp-2);
+  color: var(--os-ink-dim);
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rodapé ---------------------------------------------------------------------------------------- */
+.footer {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.status {
+  flex: 1 1 calc(var(--px) * 180);
+  min-width: 0;
+  margin: 0;
+  color: var(--os-ink-dim);
+  font-size: var(--fs-xs);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.links > * {
+  min-height: calc(var(--px) * 34);
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inner {
+    transition: none;
+  }
+}

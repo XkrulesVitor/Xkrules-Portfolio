@@ -3,16 +3,21 @@ import {
   BriefcaseIcon,
   CalculatorIcon,
   CardsIcon,
+  DesktopTowerIcon,
   EnvelopeSimpleIcon,
   FolderOpenIcon,
   GameControllerIcon,
   GithubLogoIcon,
   GlobeIcon,
+  HeartIcon,
   InstagramLogoIcon,
   LinkedinLogoIcon,
   LinkIcon,
+  PowerIcon,
+  PuzzlePieceIcon,
   RocketLaunchIcon,
   StorefrontIcon,
+  TerminalWindowIcon,
 } from '@phosphor-icons/react'
 import type { Icon, IconWeight } from '@phosphor-icons/react'
 import { OS_PROJECT_GLYPHS, type OsGlyphKey } from '@/content/os'
@@ -26,6 +31,11 @@ const GLYPHS: Record<OsGlyphKey, Icon> = {
   rocket: RocketLaunchIcon,
   cards: CardsIcon,
   envelope: EnvelopeSimpleIcon,
+  computer: DesktopTowerIcon,
+  terminal: TerminalWindowIcon,
+  puzzle: PuzzlePieceIcon,
+  heart: HeartIcon,
+  power: PowerIcon,
 }
 
 const LINK_GLYPHS: Record<LinkKind, Icon> = {

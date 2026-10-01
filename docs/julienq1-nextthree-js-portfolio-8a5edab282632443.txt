@@ -1,0 +1,2058 @@
+Directory structure:
+└── julienq1-nextthree-js-portfolio/
+    ├── README.md
+    ├── index.html
+    ├── package.json
+    ├── prettierignore
+    ├── vite.config.js
+    ├── .eslintrc.json
+    ├── .prettierrc
+    ├── public/
+    │   └── assets/
+    │       ├── azki.webp
+    │       ├── Backeframe.webp
+    │       ├── bakeFrameLightMapcmp.webp
+    │       ├── boardBakedLMAPcmp.webp
+    │       ├── clock.glb
+    │       ├── smartphoneWallpaper.webp
+    │       └── SpotifyClone.webp
+    └── src/
+        ├── Experience.jsx
+        ├── main.jsx
+        ├── style.css
+        ├── CameraManager/
+        │   └── CameraManager.jsx
+        ├── helper/
+        │   └── CameraStore.jsx
+        ├── RoomModel/
+        │   ├── clock.jsx
+        │   ├── DispFrame.jsx
+        │   ├── dispItem.jsx
+        │   ├── laptopDisp.jsx
+        │   ├── photoFrame.jsx
+        │   ├── roomModel.jsx
+        │   ├── Windows.jsx
+        │   ├── iframes/
+        │   │   ├── desktopiFrame.jsx
+        │   │   ├── smartphoneiFrame.jsx
+        │   │   └── tvEmulator.jsx
+        │   ├── shaders/
+        │   │   ├── partials/
+        │   │   │   ├── blend.glsl
+        │   │   │   └── perlin2d.glsl
+        │   │   └── Room/
+        │   │       ├── fragment.glsl
+        │   │       └── vertex.glsl
+        │   └── textures/
+        │       └── TextureMaterial.jsx
+        └── Switch/
+            └── TheamSwitch.jsx
+
+================================================
+FILE: README.md
+================================================
+# My Room Portfolio
+
+Welcome to my interactive 3D room portfolio! This project showcases a virtual room filled with numerous interactive objects. Click on these objects to engage with them—change the lighting and theme, play a game of Mario, listen to music, view my projects, and much more. Feel free to explore and interact with everything!
+
+## Technologies Used
+
+-   **React**: For building the user interface.
+-   **react-three/fiber**: For rendering 3D graphics. Learn more about [react-three/fiber (r3f)](https://docs.pmnd.rs/react-three-fiber/getting-started/introduction).
+-   **Three.js**: The underlying 3D engine powering React Three Fiber. Discover more about [Three.js](https://threejs.org/).
+-   **react-three/drei**: A collection of useful helpers. Find out more at [react-three/drei (drei)](https://github.com/pmndrs/drei#readme).
+-   **react-three/postprocessing**: A postprocessing wrapper for @react-three/fiber. Learn more about [react-postprocessing](https://docs.pmnd.rs/react-postprocessing/effect-composer).
+-   **leva**: Provides a control panel for interactive elements. See more about [leva](https://github.com/pmndrs/leva).
+-   **zustand**: A small, fast, and scalable state-management solution. Learn more at [zustand](https://docs.pmnd.rs/zustand/getting-started/introduction).
+- 
+-   **howler**: An audio library for the modern web. See more about [howler](https://github.com/goldfire/howler.js#documentation).
+-   **gsap**: A JavaScript animation library used for theme transitions. Learn more about [GSAP](https://gsap.com/docs/v3/GSAP/).
+-   **Blender**: Used for creating all 3D models. Discover more about [Blender](https://www.blender.org/).
+
+## Inspiration
+
+-   [My Room in 3D by Bruno Simon](https://my-room-in-3d.vercel.app/)
+-   [Henry Heffernan Portfolio Showcase by Henry Heffernan](https://henryheffernan.com/)
+-   [Jesse's Ramen Shop by Jesse Zhou](https://jesse-zhou.com/)
+
+## Setup
+
+To run this project locally, download [Node.js](https://nodejs.org/en/download) and follow these steps:
+
+```
+# Install dependencies
+npm install
+
+# Run the local server at localhost:5173
+npm run dev
+
+# Build for production in the dist/ directory
+npm run build
+```
+
+Feel free to explore and interact with everything in the 3D room. Enjoy your stay!
+
+
+
+================================================
+FILE: index.html
+================================================
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Julien Quenneville</title>
+        <link rel="icon" href="./at010303.ico" />
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.jsx"></script>
+    </body>
+</html>
+
+
+
+================================================
+FILE: package.json
+================================================
+{
+    "name": "portfolio",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite serve --host",
+        "build": "vite build",
+        "eslint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+        "preview": "vite preview --host",
+        "prettier": "prettier --write ."
+    },
+    "dependencies": {
+        "@gsap/react": "^2.1.0",
+        "@react-spring/three": "^9.7.3",
+        "@react-three/drei": "^9.99.0",
+        "@react-three/fiber": "^8.15.16",
+        "@react-three/postprocessing": "^2.16.2",
+        "@vercel/analytics": "^1.2.2",
+        "glsl-blend": "^1.0.3",
+        "gsap": "^3.12.5",
+        "howler": "^2.2.4",
+        "leva": "^0.9.35",
+        "postprocessing": "^6.35.0",
+        "r3f-perf": "^7.1.2",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-emulatorjs": "^2.2.6",
+        "three": "^0.164.1",
+        "vite-plugin-glsl": "^1.2.1",
+        "zustand": "^4.5.2"
+    },
+    "devDependencies": {
+        "@types/react": "^18.2.55",
+        "@types/react-dom": "^18.2.19",
+        "@vitejs/plugin-react": "^4.2.1",
+        "eslint": "^8.56.0",
+        "eslint-plugin-react": "^7.33.2",
+        "eslint-plugin-react-hooks": "^4.6.0",
+        "eslint-plugin-react-refresh": "^0.4.5",
+        "eslint-plugin-simple-import-sort": "^12.0.0",
+        "prettier": "^3.2.5",
+        "vite": "^5.1.0"
+    }
+}
+
+
+
+================================================
+FILE: prettierignore
+================================================
+/node_modules
+/out
+/public.json
+/dist
+
+
+
+================================================
+FILE: vite.config.js
+================================================
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import glsl from 'vite-plugin-glsl';
+
+// https://vitejs.dev/config/
+export default defineConfig({
+    plugins: [react(), glsl()]
+});
+
+
+
+================================================
+FILE: .eslintrc.json
+================================================
+{
+    "root": true,
+    "env": { "browser": true, "es2020": true },
+    "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended",
+        "plugin:react/jsx-runtime",
+        "plugin:react-hooks/recommended"
+    ],
+    "ignorePatterns": ["dist", ".eslintrc.cjs"],
+    "parserOptions": { "ecmaVersion": "latest", "sourceType": "module" },
+    "settings": { "react": { "version": "18.2" } },
+    "plugins": ["react-refresh", "simple-import-sort"],
+    "rules": {
+        "simple-import-sort/imports": "error",
+        "simple-import-sort/exports": "error",
+        "semi": ["error", "always"],
+        "react/jsx-no-target-blank": "off",
+        "react/no-unknown-property": ["off"],
+        "react-refresh/only-export-components": [
+            "warn",
+            { "allowConstantExport": true }
+        ]
+    }
+}
+
+
+
+================================================
+FILE: .prettierrc
+================================================
+{
+    "singleQuote": true,
+    "trailingComma": "none",
+    "tabWidth": 4
+}
+
+
+
+================================================
+FILE: public/assets/azki.webp
+================================================
+[Binary file]
+
+
+================================================
+FILE: public/assets/Backeframe.webp
+================================================
+[Binary file]
+
+
+================================================
+FILE: public/assets/bakeFrameLightMapcmp.webp
+================================================
+[Binary file]
+
+
+================================================
+FILE: public/assets/boardBakedLMAPcmp.webp
+================================================
+[Binary file]
+
+
+================================================
+FILE: public/assets/clock.glb
+================================================
+[Binary file]
+
+
+================================================
+FILE: public/assets/smartphoneWallpaper.webp
+================================================
+[Binary file]
+
+
+================================================
+FILE: public/assets/SpotifyClone.webp
+================================================
+[Binary file]
+
+
+================================================
+FILE: src/Experience.jsx
+================================================
+/* eslint-disable react/display-name */
+import { Loader } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
+import {
+    Bloom,
+    EffectComposer,
+    Outline,
+    Selection
+} from '@react-three/postprocessing';
+// import { Perf } from 'r3f-perf';
+import React, { Suspense } from 'react';
+
+import { CameraManager } from './CameraManager/CameraManager';
+import RoomModel from './RoomModel/roomModel';
+
+const Experience = React.memo(() => {
+    return (
+        <>
+            <Canvas
+                camera={{
+                    fov: 35,
+                    near: 0.1,
+                    far: 200,
+                    position: [24, 15, -24]
+                }}
+                gl={{
+                    antialias: true,
+                    alpha: true,
+                    powerPreference: 'high-performance'
+                }}
+            >
+                <Suspense fallback={null}>
+                    <Selection>
+                        <EffectComposer autoClear={false}>
+                            <Outline
+                                blur
+                                visibleEdgeColor="white"
+                                edgeStrength={60}
+                                width={2000}
+                            />
+                            <Bloom mipmapBlur intensity={0.9} />
+                        </EffectComposer>
+                        {/* <Perf position={'top-left'} /> */}
+                        <CameraManager />
+                        <RoomModel />
+                    </Selection>
+                </Suspense>
+            </Canvas>
+            <Loader />
+        </>
+    );
+});
+
+export default Experience;
+
+
+
+================================================
+FILE: src/main.jsx
+================================================
+import './style.css';
+
+import { Analytics } from '@vercel/analytics/react';
+import { Leva } from 'leva';
+import ReactDOM from 'react-dom/client';
+
+import Experience from './Experience.jsx';
+
+const root = ReactDOM.createRoot(document.querySelector('#root'));
+
+root.render(
+    <>
+        <Experience />
+        <Leva collapsed />
+        <Analytics mode={'production'} />
+    </>
+);
+
+
+
+================================================
+FILE: src/style.css
+================================================
+html,
+body,
+#root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1f1635;
+    background-image: linear-gradient(
+        177deg,
+        #1f1635 0%,
+        #180e2b 50%,
+        #100a1d 100%
+    );
+}
+
+
+
+================================================
+FILE: src/CameraManager/CameraManager.jsx
+================================================
+import { CameraControls } from '@react-three/drei';
+import { useRef } from 'react';
+import { useEffect } from 'react';
+
+import { useCameraStore } from '../helper/CameraStore';
+
+export const CameraManager = () => {
+    const cameraControle = useRef();
+
+    const cameraState = useCameraStore((state) => state.cameraState);
+
+    const maxDistancce = useCameraStore((state) => state.maxDistancce);
+    const minDistance = useCameraStore((state) => state.minDistance);
+    const maxAzimuthAngle = useCameraStore((state) => state.maxAzimuthAngle);
+    const minAzimuthAngle = useCameraStore((state) => state.minAzimuthAngle);
+    const minPolarAngle = useCameraStore((state) => state.minPolarAngle);
+    const maxPolarAngle = useCameraStore((state) => state.maxPolarAngle);
+    const truckSpeed = useCameraStore((state) => state.truckSpeed);
+    const dollyToCursor = useCameraStore((state) => state.dollyToCursor);
+    const enable = useCameraStore((state) => state.enable);
+
+    useEffect(() => {
+        if (cameraState === 'default') {
+            useCameraStore.setState({ truckSpeed: 0.5 });
+            useCameraStore.setState({ dollyToCursor: true });
+            useCameraStore.setState({ minDistance: 2 });
+            useCameraStore.setState({ maxDistancce: 25 });
+            useCameraStore.setState({ minPolarAngle: Math.PI * 0.1 });
+            useCameraStore.setState({ maxPolarAngle: Math.PI * 0.45 });
+            useCameraStore.setState({ minAzimuthAngle: Math.PI * 0.5 });
+            useCameraStore.setState({ maxAzimuthAngle: Math.PI });
+            cameraControle.current.setLookAt(14, 10, -14, 0, -1, 0, true);
+        }
+
+        if (cameraState === 'desktop') {
+            useCameraStore.setState({ truckSpeed: 0 });
+            useCameraStore.setState({ dollyToCursor: false });
+            useCameraStore.setState({ minDistance: 5.65 });
+            useCameraStore.setState({ maxDistancce: 7.1 });
+            useCameraStore.setState({ minPolarAngle: Math.PI * 0.5 });
+            useCameraStore.setState({ maxPolarAngle: Math.PI * 0.5 });
+            useCameraStore.setState({ minAzimuthAngle: Math.PI });
+            useCameraStore.setState({ maxAzimuthAngle: Math.PI });
+            cameraControle.current.setLookAt(2.1, 0.3, 2, 2.1, 0.3, 8, true);
+        }
+
+        if (cameraState === 'laptop') {
+            useCameraStore.setState({ truckSpeed: 0 });
+            useCameraStore.setState({ dollyToCursor: false });
+            useCameraStore.setState({ minDistance: 4.2 });
+            useCameraStore.setState({ maxDistancce: 6 });
+            useCameraStore.setState({ minPolarAngle: Math.PI * 0.435 });
+            useCameraStore.setState({ maxPolarAngle: Math.PI * 0.435 });
+            useCameraStore.setState({ minAzimuthAngle: Math.PI * 0.689 });
+            useCameraStore.setState({ maxAzimuthAngle: Math.PI * 0.689 });
+            cameraControle.current.setLookAt(2, 0, 2.5, -2, -1, 5.2, true);
+        }
+
+        if (cameraState === 'tv') {
+            useCameraStore.setState({ truckSpeed: 0 });
+            useCameraStore.setState({ dollyToCursor: false });
+            useCameraStore.setState({ minDistance: 5.6 });
+            useCameraStore.setState({ maxDistancce: 6.5 });
+            useCameraStore.setState({ minPolarAngle: Math.PI * 0.5 });
+            useCameraStore.setState({ maxPolarAngle: Math.PI * 0.5 });
+            useCameraStore.setState({ minAzimuthAngle: 0 });
+            useCameraStore.setState({ maxAzimuthAngle: 0 });
+            cameraControle.current.setLookAt(2.5, -0.1, 1, 2.5, -0.1, -5, true);
+        }
+
+        if (cameraState === 'smartphone') {
+            useCameraStore.setState({ truckSpeed: 0 });
+            useCameraStore.setState({ dollyToCursor: false });
+            useCameraStore.setState({ minDistance: 8.8 });
+            useCameraStore.setState({ maxDistancce: 9.2 });
+            useCameraStore.setState({ minPolarAngle: Math.PI * 0.03 });
+            useCameraStore.setState({ maxPolarAngle: Math.PI * 0.036 });
+            useCameraStore.setState({ minAzimuthAngle: Math.PI * 0.83 });
+            useCameraStore.setState({ maxAzimuthAngle: Math.PI * 0.845 });
+            cameraControle.current.setLookAt(
+                1.7,
+                -0.3,
+                -0.85,
+                1.25,
+                -9,
+                -0.1,
+                true
+            );
+        }
+
+        if (cameraState === 'displayBoard') {
+            useCameraStore.setState({ truckSpeed: 0 });
+            useCameraStore.setState({ dollyToCursor: true });
+            useCameraStore.setState({ minDistance: 4 });
+            useCameraStore.setState({ maxDistancce: 8 });
+            useCameraStore.setState({ minPolarAngle: Math.PI * 0.4999 });
+            useCameraStore.setState({ maxPolarAngle: Math.PI * 0.5 });
+            useCameraStore.setState({ minAzimuthAngle: Math.PI * 0.5 });
+            useCameraStore.setState({ maxAzimuthAngle: Math.PI * 0.50001 });
+            cameraControle.current.setLookAt(
+                -2,
+                0.12,
+                -1.5,
+                -8,
+                0.12,
+                -1.5,
+                true
+            );
+        }
+    });
+
+    return (
+        <CameraControls
+            makeDefault={true}
+            ref={cameraControle}
+            dollyToCursor={dollyToCursor}
+            dollySpeed={1.2}
+            truckSpeed={truckSpeed}
+            minDistance={minDistance}
+            maxDistance={maxDistancce}
+            smoothTime={0.8}
+            maxAzimuthAngle={maxAzimuthAngle}
+            minAzimuthAngle={minAzimuthAngle}
+            minPolarAngle={minPolarAngle}
+            maxPolarAngle={maxPolarAngle}
+            polarRotateSpeed={0.3}
+            azimuthRotateSpeed={0.3}
+            maxSpeed={20}
+            enableTransition={true}
+            boundaryFriction={0}
+            boundaryEnclosesCamera={true}
+            interactiveArea={[0.5, 0.5, 1, 1]}
+            enabled={enable}
+        />
+    );
+};
+
+
+
+================================================
+FILE: src/helper/CameraStore.jsx
+================================================
+/* eslint-disable react-refresh/only-export-components */
+import { create } from 'zustand';
+
+export const useCameraStore = create((set) => ({
+    // Camer State
+    cameraState: 'default',
+
+    default: () => {
+        set((state) => ({
+            cameraState: (state.cameraState = 'default')
+        }));
+    },
+    desktop: () => {
+        set((state) => ({
+            cameraState: (state.cameraState = 'desktop')
+        }));
+    },
+    laptop: () => {
+        set((state) => ({
+            cameraState: (state.cameraState = 'laptop')
+        }));
+    },
+    tv: () => {
+        set((state) => ({
+            cameraState: (state.cameraState = 'tv')
+        }));
+    },
+    smartphone: () => {
+        set((state) => ({
+            cameraState: (state.cameraState = 'smartphone')
+        }));
+    },
+   
+
+    // camera properties
+
+    maxDistancce: 25,
+    minDistance: 2,
+    maxAzimuthAngle: Math.PI,
+    minAzimuthAngle: Math.PI * 0.5,
+    minPolarAngle: Math.PI * 0.1,
+    maxPolarAngle: Math.PI * 0.45,
+    truckSpeed: 0.5,
+    dollyToCursor: true,
+    enable: true
+}));
+
+
+
+================================================
+FILE: src/RoomModel/clock.jsx
+================================================
+/* eslint-disable react/display-name */
+import { useGLTF } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import React, { useRef } from 'react';
+import * as THREE from 'three';
+
+const Clock = React.memo(() => {
+    const { nodes } = useGLTF('./assets/clock.glb');
+
+    const hourRef = useRef();
+    const minuteRef = useRef();
+    const secondRef = useRef();
+
+    useFrame(() => {
+        const date = new Date();
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+        const milliseconds = date.getMilliseconds();
+        const smoothSeconds = seconds + milliseconds / 1000;
+        const smoothMinutes = minutes + smoothSeconds / 60;
+        const smoothHours = hours + smoothMinutes / 60;
+
+        if (secondRef.current) {
+            secondRef.current.rotation.z = THREE.MathUtils.degToRad(
+                6 * smoothSeconds
+            );
+        }
+        if (minuteRef.current) {
+            minuteRef.current.rotation.z = THREE.MathUtils.degToRad(
+                6 * smoothMinutes
+            );
+        }
+        if (hourRef.current) {
+            hourRef.current.rotation.z = THREE.MathUtils.degToRad(
+                30 * smoothHours
+            );
+        }
+    });
+
+    return (
+        <>
+            <mesh
+                geometry={nodes.clockMinute.geometry}
+                position={nodes.clockMinute.position}
+                rotation={[0, 0, 0]}
+                ref={minuteRef}
+            >
+                <meshBasicMaterial color={'#000000'} />
+            </mesh>
+            <mesh
+                geometry={nodes.clockSecond.geometry}
+                position={nodes.clockSecond.position}
+                rotation={[0, 0, 0]}
+                ref={secondRef}
+            >
+                <meshBasicMaterial color={'#000000'} />
+            </mesh>
+            <mesh
+                geometry={nodes.clockHour.geometry}
+                position={nodes.clockHour.position}
+                rotation={[0, 0, 0]}
+                ref={hourRef}
+            >
+                <meshBasicMaterial color={'#000000'} />
+            </mesh>
+        </>
+    );
+});
+
+export default Clock;
+
+useGLTF.preload('./assets/clock.glb');
+
+
+
+================================================
+FILE: src/RoomModel/DispFrame.jsx
+================================================
+/* eslint-disable react/display-name */
+/* eslint-disable react/prop-types */
+import { useTexture, useVideoTexture } from '@react-three/drei';
+import { Select } from '@react-three/postprocessing';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { useCameraStore } from '../helper/CameraStore';
+import DesktopiFrame from './iframes/desktopiFrame';
+import SmartphoneiFrame from './iframes/smartphoneiFrame';
+
+import LaptopDisp from './laptopDisp';
+
+const DispFrame = React.memo(({ nodes }) => {
+    // Retrieve camera states from the store
+    const cameraState = useCameraStore((state) => state.cameraState);
+    const desktopState = useCameraStore((state) => state.desktop);
+    const laptopState = useCameraStore((state) => state.laptop);
+    const tvState = useCameraStore((state) => state.tv);
+    const smartphoneState = useCameraStore((state) => state.smartphone);
+ 
+
+    const [hovered, setHover] = useState(false);
+    const [hoveredMonitor, setHoveredMonitor] = useState(null);
+    const [hoveredLaptop, setHoveredLaptop] = useState(null);
+    const [hoveredTv, setHoveredTv] = useState(null);
+    const [hoveredSmartphone, setHoveredSmartphone] = useState(null);
+    const [hoveredDisplayBoard, setHoveredDisplayBoard] = useState(null);
+
+    // Change cursor style based on hover state
+    useEffect(() => {
+        document.body.style.cursor = hovered ? 'pointer' : 'auto';
+    }, [hovered]);
+
+    // Callbacks for hover events
+    const onPointerOver = useCallback(() => setHover(true), []);
+    const onPointerOut = useCallback(() => setHover(false), []);
+
+    // Load video and image textures
+    const desktopWallpaper = useVideoTexture('./assets/mylivewallpapers.com-Torii-Gate-Ninomae-Inanis.mp4');
+    const tvWallpaper = useVideoTexture('./assets/va-11.mp4');
+    const smartphoneWallpaper = useTexture('./assets/smartphoneWallpaper.webp');
+    const musicBg = useTexture('./assets/SpotifyClone.webp');
+
+    return (
+        <>
+            {/* Render various iFrames and display components */}
+            <LaptopDisp nodes={nodes} />
+            <SmartphoneiFrame />
+            <DesktopiFrame />
+            
+
+            {/* Desktop monitor */}
+            <Select enabled={hoveredMonitor}>
+                <mesh
+                    geometry={nodes.monitor.geometry}
+                    position={nodes.monitor.position}
+                    rotation={nodes.monitor.rotation}
+                    onClick={
+                        cameraState !== 'desktop'
+                            ? () => {
+                                  desktopState();
+                                  setHoveredMonitor(false);
+                                  onPointerOut();
+                              }
+                            : undefined
+                    }
+                    onPointerOver={
+                        cameraState === 'default'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredMonitor(true);
+                              }
+                            : undefined
+                    }
+                    onPointerOut={
+                        cameraState === 'default'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredMonitor(false);
+                              }
+                            : undefined
+                    }
+                >
+                    <meshBasicMaterial
+                        map={desktopWallpaper}
+                        toneMapped={false}
+                    />
+                </mesh>
+            </Select>
+
+            {/* Laptop display */}
+            <Select enabled={hoveredLaptop}>
+                <mesh
+                    geometry={nodes.laptop.geometry}
+                    position={nodes.laptop.position}
+                    rotation={nodes.laptop.rotation}
+                    onClick={
+                        cameraState !== 'laptop'
+                            ? () => {
+                                  laptopState();
+                                  setHoveredLaptop(false);
+                                  onPointerOut();
+                              }
+                            : undefined
+                    }
+                    onPointerOver={
+                        cameraState === 'default'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredLaptop(true);
+                              }
+                            : undefined
+                    }
+                    onPointerOut={
+                        cameraState === 'default'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredLaptop(false);
+                              }
+                            : undefined
+                    }
+                >
+                    <meshBasicMaterial map={musicBg} toneMapped={false} />
+                </mesh>
+            </Select>
+
+            {/* TV display */}
+            <Select enabled={hoveredTv}>
+                <mesh
+                    geometry={nodes.tvdisplay.geometry}
+                    position={nodes.tvdisplay.position}
+                    rotation={nodes.tvdisplay.rotation}
+                    onClick={
+                        cameraState !== 'tv'
+                            ? () => {
+                                  tvState();
+                                  setHoveredTv(false);
+                                  onPointerOut();
+                              }
+                            : undefined
+                    }
+                    onPointerOver={
+                        cameraState === 'default'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredTv(true);
+                              }
+                            : undefined
+                    }
+                    onPointerOut={
+                        cameraState === 'default'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredTv(false);
+                              }
+                            : undefined
+                    }
+                >
+                    <meshBasicMaterial map={tvWallpaper} toneMapped={false} />
+                </mesh>
+            </Select>
+
+            {/* Smartphone display */}
+            <Select enabled={hoveredSmartphone}>
+                <mesh
+                    geometry={nodes.smartphoneDisp.geometry}
+                    position={nodes.smartphoneDisp.position}
+                    rotation={nodes.smartphoneDisp.rotation}
+                    onClick={
+                        cameraState !== 'smartphone'
+                            ? () => {
+                                  smartphoneState();
+                                  setHoveredSmartphone(false);
+                                  onPointerOut();
+                              }
+                            : undefined
+                    }
+                    onPointerOver={
+                        cameraState === 'default'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredSmartphone(true);
+                              }
+                            : undefined
+                    }
+                    onPointerOut={
+                        cameraState === 'default'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredSmartphone(false);
+                              }
+                            : undefined
+                    }
+                >
+                    <meshBasicMaterial map={smartphoneWallpaper} />
+                </mesh>
+            </Select>
+
+           
+            
+        </>
+    );
+});
+
+export default DispFrame;
+
+// Preload textures
+useTexture.preload('./assets/smartphoneWallpaper.webp');
+useTexture.preload('./assets/SpotifyClone.webp');
+
+
+
+================================================
+FILE: src/RoomModel/dispItem.jsx
+================================================
+/* eslint-disable react/display-name */
+/* eslint-disable react/prop-types */
+import { useTexture } from '@react-three/drei';
+import { extend } from '@react-three/fiber';
+import { Select } from '@react-three/postprocessing';
+import { gsap } from 'gsap';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
+
+import { useCameraStore } from '../helper/CameraStore';
+import TextureMaterial from './textures/TextureMaterial';
+extend({ TextureMaterial });
+
+const DispItem = React.memo(({ toggle, nodes }) => {
+    // Refs for various display items
+    const dispItem = useRef();
+    const desktopdisp = useRef();
+    const musicdisp = useRef();
+    const homedisp = useRef();
+    const smartphonedisp = useRef();
+    const tvdisp = useRef();
+
+    // Update materials based on the toggle state using gsap
+    useEffect(() => {
+        gsap.to(dispItem.current.uniforms.NightMix, {
+            value: toggle ? 1 : 0,
+            duration: 1
+        });
+        gsap.to(desktopdisp.current.uniforms.NightMix, {
+            value: toggle ? 1 : 0,
+            duration: 1
+        });
+        gsap.to(musicdisp.current.uniforms.NightMix, {
+            value: toggle ? 1 : 0,
+            duration: 1
+        });
+        gsap.to(homedisp.current.uniforms.NightMix, {
+            value: toggle ? 1 : 0,
+            duration: 1
+        });
+        gsap.to(smartphonedisp.current.uniforms.NightMix, {
+            value: toggle ? 1 : 0,
+            duration: 1
+        });
+        gsap.to(tvdisp.current.uniforms.NightMix, {
+            value: toggle ? 1 : 0,
+            duration: 1
+        });
+    }, [toggle]);
+
+    // Load textures
+    const dBakeddisp = useTexture('./assets/rendercombined.webp');
+    dBakeddisp.flipY = false;
+    dBakeddisp.magFilter = THREE.LinearFilter;
+    dBakeddisp.minFilter = THREE.NearestFilter;
+    dBakeddisp.generateMipmaps = false;
+
+    const nBakeddisp = useTexture('./assets/rendercombined.webp');
+    nBakeddisp.flipY = false;
+    nBakeddisp.magFilter = THREE.LinearFilter;
+    nBakeddisp.minFilter = THREE.NearestFilter;
+    nBakeddisp.generateMipmaps = false;
+
+    const lightMapdisp = useTexture('./assets/boardBakedLMAPcmp.webp');
+    nBakeddisp.flipY = false;
+    nBakeddisp.magFilter = THREE.LinearFilter;
+    nBakeddisp.minFilter = THREE.NearestFilter;
+    nBakeddisp.generateMipmaps = false;
+
+    // Define material properties
+    const TextureMaterialDisps = {
+        dbakedm: dBakeddisp,
+        nbakedm: nBakeddisp,
+        lightMapm: lightMapdisp,
+        NightMix: 0,
+        lightBoardColor: '#fff',
+        lightBoardStrength: 0,
+        lightPcColor: '#fff',
+        lightPcStrength: 0,
+        lightDeskColor: '#fff',
+        lightDeskStrength: 0
+    };
+
+    const [hovered, setHover] = useState(false);
+    const [hoveredMonitor, setHoveredMonitor] = useState(null);
+    const [hoveredLaptop, setHoveredLaptop] = useState(null);
+    const [hoveredTv, setHoveredTv] = useState(null);
+    const [hoveredSmartphone, setHoveredSmartphone] = useState(null);
+    const [hoveredHome, setHoveredHome] = useState(null);
+
+    // Change cursor style based on hover state
+    useEffect(
+        () => void (document.body.style.cursor = hovered ? 'pointer' : 'auto'),
+        [hovered]
+    );
+
+    // Callbacks for hover events
+    const onPointerOver = useCallback(() => setHover(true), []);
+    const onPointerOut = useCallback(() => setHover(false), []);
+
+    // Retrieve camera states from the store
+    const cameraState = useCameraStore((state) => state.cameraState);
+    const defaultState = useCameraStore((state) => state.default);
+    const desktopState = useCameraStore((state) => state.desktop);
+    const laptopState = useCameraStore((state) => state.laptop);
+    const tvState = useCameraStore((state) => state.tv);
+    const smartphoneState = useCameraStore((state) => state.smartphone);
+
+    return (
+        <>
+            {/* Main display item */}
+            <mesh
+                geometry={nodes.dispItem.geometry}
+                position={nodes.dispItem.position}
+                rotation={nodes.dispItem.rotation}
+                onPointerover={
+                    cameraState === 'displayBoard' ? onPointerOut : null
+                }
+                onPointerOut={
+                    cameraState === 'displayBoard' ? onPointerOut : null
+                }
+                onClick={
+                    cameraState === 'displayBoard' ? defaultState : undefined
+                }
+            >
+                <textureMaterial {...TextureMaterialDisps} ref={dispItem} />
+            </mesh>
+
+            {/* Rope mesh */}
+            <mesh
+                geometry={nodes.rope.geometry}
+                position={nodes.rope.position}
+                rotation={nodes.rope.rotation}
+            >
+                <meshBasicMaterial color={'#160000'} />
+            </mesh>
+
+            {/* Desktop display */}
+            <Select enabled={hoveredMonitor}>
+                <mesh
+                    geometry={nodes.desktop.geometry}
+                    position={nodes.desktop.position}
+                    rotation={nodes.desktop.rotation}
+                    onClick={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  desktopState();
+                                  setHoveredMonitor(false);
+                                  onPointerOut();
+                              }
+                            : undefined
+                    }
+                    onPointerOver={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredMonitor(true);
+                              }
+                            : null
+                    }
+                    onPointerOut={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredMonitor(false);
+                              }
+                            : null
+                    }
+                >
+                    <textureMaterial
+                        {...TextureMaterialDisps}
+                        ref={desktopdisp}
+                    />
+                </mesh>
+            </Select>
+
+            {/* Music display */}
+            <Select enabled={hoveredLaptop}>
+                <mesh
+                    geometry={nodes.music.geometry}
+                    position={nodes.music.position}
+                    rotation={nodes.music.rotation}
+                    onClick={
+                        cameraState === 'displayBoard'
+                            ? cameraState === 'laptop'
+                                ? undefined
+                                : () => {
+                                      laptopState();
+                                      setHoveredLaptop(false);
+                                      onPointerOut();
+                                  }
+                            : null
+                    }
+                    onPointerOver={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredLaptop(true);
+                              }
+                            : null
+                    }
+                    onPointerOut={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredLaptop(false);
+                              }
+                            : null
+                    }
+                >
+                    <textureMaterial
+                        {...TextureMaterialDisps}
+                        ref={musicdisp}
+                    />
+                </mesh>
+            </Select>
+
+            {/* Home display */}
+            <Select enabled={hoveredHome}>
+                <mesh
+                    geometry={nodes.home.geometry}
+                    position={nodes.home.position}
+                    rotation={nodes.home.rotation}
+                    onClick={
+                        cameraState === 'displayBoard'
+                            ? cameraState === 'default'
+                                ? undefined
+                                : () => {
+                                      defaultState();
+                                      setHoveredHome(false);
+                                      onPointerOut();
+                                  }
+                            : null
+                    }
+                    onPointerOver={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredHome(true);
+                              }
+                            : null
+                    }
+                    onPointerOut={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredHome(false);
+                              }
+                            : null
+                    }
+                >
+                    <textureMaterial {...TextureMaterialDisps} ref={homedisp} />
+                </mesh>
+            </Select>
+
+            {/* Smartphone display */}
+            <Select enabled={hoveredSmartphone}>
+                <mesh
+                    geometry={nodes.smartphone.geometry}
+                    position={nodes.smartphone.position}
+                    rotation={nodes.smartphone.rotation}
+                    onClick={
+                        cameraState === 'displayBoard'
+                            ? cameraState === 'smartphone'
+                                ? undefined
+                                : () => {
+                                      smartphoneState();
+                                      setHoveredSmartphone(false);
+                                      onPointerOut();
+                                  }
+                            : null
+                    }
+                    onPointerOver={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredSmartphone(true);
+                              }
+                            : null
+                    }
+                    onPointerOut={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredSmartphone(false);
+                              }
+                            : null
+                    }
+                >
+                    <textureMaterial
+                        {...TextureMaterialDisps}
+                        ref={smartphonedisp}
+                    />
+                </mesh>
+            </Select>
+
+            {/* TV display */}
+            <Select enabled={hoveredTv}>
+                <mesh
+                    geometry={nodes.tv.geometry}
+                    position={nodes.tv.position}
+                    rotation={nodes.tv.rotation}
+                    onClick={
+                        cameraState === 'displayBoard'
+                            ? cameraState === 'tv'
+                                ? undefined
+                                : () => {
+                                      tvState();
+                                      setHoveredTv(false);
+                                      onPointerOut();
+                                  }
+                            : null
+                    }
+                    onPointerOver={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOver();
+                                  setHoveredTv(true);
+                              }
+                            : null
+                    }
+                    onPointerOut={
+                        cameraState === 'displayBoard'
+                            ? () => {
+                                  onPointerOut();
+                                  setHoveredTv(false);
+                              }
+                            : null
+                    }
+                >
+                    <textureMaterial {...TextureMaterialDisps} ref={tvdisp} />
+                </mesh>
+            </Select>
+        </>
+    );
+});
+
+export default DispItem;
+
+// Preload textures
+useTexture.preload('./assets/shelf.webp');
+useTexture.preload('./assets/shelf.webp');
+useTexture.preload('./assets/boardBakedLMAPcmp.webp');
+
+
+
+================================================
+FILE: src/RoomModel/laptopDisp.jsx
+================================================
+/* eslint-disable react/display-name */
+/* eslint-disable react/prop-types */
+import { useTexture } from '@react-three/drei';
+import { Howl } from 'howler';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+
+import { useCameraStore } from '../helper/CameraStore';
+
+const LaptopDisp = React.memo(({ nodes }) => {
+    const autumn = useRef();
+    const christmas = useRef();
+    const clarity = useRef();
+    const comeAndGet = useRef();
+    const sunflower = useRef();
+
+    const AutumnPause = useTexture('./assets/laptopDisp/AutumnPaus.jpg');
+    const AutumnPlay = useTexture('./assets/laptopDisp/AutumnPlay.jpg');
+
+    const christmasPause = useTexture(
+        './assets/laptopDisp/christmasLightPaus.jpg'
+    );
+    const christmasPlay = useTexture(
+        './assets/laptopDisp/christmasLightPlay.jpg'
+    );
+
+    const clarityPause = useTexture('./assets/laptopDisp/clarityPaus.jpg');
+    const clarityPlay = useTexture('./assets/laptopDisp/clarityPlay.jpg');
+
+    const comeAndGetPause = useTexture(
+        './assets/laptopDisp/comeAndGetYourLovePause.jpg'
+    );
+    const comeAndGetPlay = useTexture(
+        './assets/laptopDisp/comeAndGetYourLovePlay.jpg'
+    );
+
+    const sunflowerPause = useTexture('./assets/laptopDisp/sunflowerPaus.jpg');
+    const sunflowerPlay = useTexture('./assets/laptopDisp/sunflowerPlay.jpg');
+
+    const [hovered, setHover] = useState(false);
+
+    // State to manage the currently playing mesh
+    const [playingMesh, setPlayingMesh] = useState(null);
+
+    // Ref for the Howl instances
+    const sounds = useRef({});
+
+    // Audio files
+    const audioFiles = useRef({
+        Autumn: './assets/laptopDisp/audio/AutumnLeavesCover.mp3',
+        Christmas: './assets/laptopDisp/audio/ChristmasLights.mp3',
+        Clarity: './assets/laptopDisp/audio/Clarity.mp3',
+        ComeAndGet: './assets/laptopDisp/audio/ComeAndGetYourLove.mp3',
+        Sunflower: './assets/laptopDisp/audio/Sunflower.mp3'
+    }).current;
+
+    useEffect(() => {
+        // Initialize Howl instances for each audio file
+        sounds.current = {
+            Autumn: new Howl({ src: [audioFiles.Autumn] }),
+            Christmas: new Howl({ src: [audioFiles.Christmas] }),
+            Clarity: new Howl({ src: [audioFiles.Clarity] }),
+            ComeAndGet: new Howl({ src: [audioFiles.ComeAndGet] }),
+            Sunflower: new Howl({ src: [audioFiles.Sunflower] })
+        };
+
+        // Cleanup Howl instances on component unmount
+        return () => {
+            Object.values(sounds.current).forEach((sound) => sound.unload());
+        };
+    }, [audioFiles]);
+
+    useEffect(() => {
+        document.body.style.cursor = hovered ? 'pointer' : 'auto';
+    }, [hovered]);
+
+    const onPointerOver = useCallback(() => setHover(true), []);
+    const onPointerOut = useCallback(() => setHover(false), []);
+
+    const cameraState = useCameraStore((state) => state.cameraState);
+
+    const handleMeshClick = (mesh) => {
+        // Stop all sounds
+        Object.values(sounds.current).forEach((sound) => sound.stop());
+
+        if (playingMesh !== mesh) {
+            // Play the selected sound
+            sounds.current[mesh].play();
+            setPlayingMesh(mesh);
+        } else {
+            // If the same mesh is clicked again, stop the sound
+            setPlayingMesh(null);
+        }
+    };
+
+    return (
+        <>
+            <mesh
+                geometry={nodes.music1.geometry}
+                position={nodes.music1.position}
+                rotation={nodes.music1.rotation}
+                scale={nodes.music1.scale}
+                ref={autumn}
+                onPointerOver={cameraState === 'laptop' ? onPointerOver : null}
+                onPointerOut={cameraState === 'laptop' ? onPointerOut : null}
+                onClick={() => handleMeshClick('Autumn')}
+            >
+                <meshBasicMaterial
+                    map={playingMesh === 'Autumn' ? AutumnPlay : AutumnPause}
+                    toneMapped={false}
+                />
+            </mesh>
+            <mesh
+                geometry={nodes.music2.geometry}
+                position={nodes.music2.position}
+                rotation={nodes.music2.rotation}
+                scale={nodes.music2.scale}
+                ref={christmas}
+                onPointerOver={cameraState === 'laptop' ? onPointerOver : null}
+                onPointerOut={cameraState === 'laptop' ? onPointerOut : null}
+                onClick={() => handleMeshClick('Christmas')}
+            >
+                <meshBasicMaterial
+                    map={
+                        playingMesh === 'Christmas'
+                            ? christmasPlay
+                            : christmasPause
+                    }
+                    toneMapped={false}
+                />
+            </mesh>
+            <mesh
+                geometry={nodes.music3.geometry}
+                position={nodes.music3.position}
+                rotation={nodes.music3.rotation}
+                scale={nodes.music3.scale}
+                ref={clarity}
+                onPointerOver={cameraState === 'laptop' ? onPointerOver : null}
+                onPointerOut={cameraState === 'laptop' ? onPointerOut : null}
+                onClick={() => handleMeshClick('Clarity')}
+            >
+                <meshBasicMaterial
+                    map={playingMesh === 'Clarity' ? clarityPlay : clarityPause}
+                    toneMapped={false}
+                />
+            </mesh>
+            <mesh
+                geometry={nodes.music4.geometry}
+                position={nodes.music4.position}
+                rotation={nodes.music4.rotation}
+                scale={nodes.music4.scale}
+                ref={comeAndGet}
+                onPointerOver={cameraState === 'laptop' ? onPointerOver : null}
+                onPointerOut={cameraState === 'laptop' ? onPointerOut : null}
+                onClick={() => handleMeshClick('ComeAndGet')}
+            >
+                <meshBasicMaterial
+                    map={
+                        playingMesh === 'ComeAndGet'
+                            ? comeAndGetPlay
+                            : comeAndGetPause
+                    }
+                    toneMapped={false}
+                />
+            </mesh>
+            <mesh
+                geometry={nodes.music5.geometry}
+                position={nodes.music5.position}
+                rotation={nodes.music5.rotation}
+                scale={nodes.music5.scale}
+                ref={sunflower}
+                onPointerOver={cameraState === 'laptop' ? onPointerOver : null}
+                onPointerOut={cameraState === 'laptop' ? onPointerOut : null}
+                onClick={() => handleMeshClick('Sunflower')}
+            >
+                <meshBasicMaterial
+                    map={
+                        playingMesh === 'Sunflower'
+                            ? sunflowerPlay
+                            : sunflowerPause
+                    }
+                    toneMapped={false}
+                />
+            </mesh>
+        </>
+    );
+});
+
+export default LaptopDisp;
+
+useTexture.preload('./assets/laptopDisp/AutumnPaus.jpg');
+useTexture.preload('./assets/laptopDisp/AutumnPlay.jpg');
+useTexture.preload('./assets/laptopDisp/christmasLightPaus.jpg');
+useTexture.preload('./assets/laptopDisp/christmasLightPlay.jpg');
+useTexture.preload('./assets/laptopDisp/clarityPaus.jpg');
+useTexture.preload('./assets/laptopDisp/clarityPlay.jpg');
+useTexture.preload('./assets/laptopDisp/comeAndGetYourLovePause.jpg');
+useTexture.preload('./assets/laptopDisp/comeAndGetYourLovePlay.jpg');
+useTexture.preload('./assets/laptopDisp/sunflowerPaus.jpg');
+useTexture.preload('./assets/laptopDisp/sunflowerPlay.jpg');
+
+
+
+================================================
+FILE: src/RoomModel/photoFrame.jsx
+================================================
+/* eslint-disable react/display-name */
+/* eslint-disable react/prop-types */
+import { useTexture } from '@react-three/drei';
+import { extend } from '@react-three/fiber';
+import { gsap } from 'gsap';
+import React, { useEffect, useMemo, useRef } from 'react';
+import * as THREE from 'three';
+
+import TextureMaterial from './textures/TextureMaterial';
+extend({ TextureMaterial });
+
+const PhotoFrame = React.memo(({ toggle, nodes }) => {
+    const frame = useRef();
+
+    const dayFrame = useTexture('./assets/azki.webp');
+    const nightFrame = useTexture('./assets/azki.webp');
+    const lightMapFrame = useTexture('./assets/shelf.webp');
+
+    const textureProps = useMemo(() => {
+        dayFrame.flipY = false;
+        dayFrame.magFilter = THREE.LinearFilter;
+        dayFrame.minFilter = THREE.NearestFilter;
+        dayFrame.generateMipmaps = false;
+
+        nightFrame.flipY = false;
+        nightFrame.magFilter = THREE.LinearFilter;
+        nightFrame.minFilter = THREE.NearestFilter;
+        nightFrame.generateMipmaps = false;
+
+        lightMapFrame.flipY = false;
+        lightMapFrame.magFilter = THREE.LinearFilter;
+        lightMapFrame.minFilter = THREE.NearestFilter;
+        lightMapFrame.generateMipmaps = false;
+
+        return {
+            dbakedm: dayFrame,
+            nbakedm: nightFrame,
+            lightMapm: lightMapFrame,
+            NightMix: 0
+        };
+    }, [dayFrame, nightFrame, lightMapFrame]);
+
+    useEffect(() => {
+        gsap.to(frame.current.uniforms.NightMix, {
+            value: toggle ? 1 : 0,
+            duration: 1
+        });
+    }, [toggle]);
+
+    return (
+        <mesh
+            geometry={nodes.frame.geometry}
+            position={nodes.frame.position}
+            rotation={nodes.frame.rotation}
+        >
+            <textureMaterial {...textureProps} ref={frame} />
+        </mesh>
+    );
+});
+
+export default PhotoFrame;
+
+useTexture.preload('./assets/bakeFrameDaycmp.webp');
+useTexture.preload('./assets/bakeFrameNightcmp.webp');
+useTexture.preload('./assets/bakeFrameLightMapcmp.webp');
+
+
+
+================================================
+FILE: src/RoomModel/roomModel.jsx
+================================================
+/* eslint-disable react/display-name */
+import { useSpring } from '@react-spring/core';
+import { Center, useGLTF, useTexture } from '@react-three/drei';
+import { extend, useFrame } from '@react-three/fiber';
+import { gsap } from 'gsap';
+import { useControls } from 'leva';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import * as THREE from 'three';
+
+import { useCameraStore } from '../helper/CameraStore';
+import TheamSwitch from '../Switch/TheamSwitch';
+import Clock from './clock';
+import DispFrame from './DispFrame';
+import DispItem from './dispItem';
+import PhotoFrame from './photoFrame';
+import TextureMaterial from './textures/TextureMaterial';
+import Windows from './Windows';
+
+extend({ TextureMaterial });
+
+const RoomModel = React.memo(() => {
+    const chairTop = useRef();
+    const textureMatFur = useRef();
+    const textureMatDes = useRef();
+    const textureMatChaorTop = useRef();
+
+    const [toggle, setToggle] = useState(0);
+
+    useEffect(() => {
+        const nightMix = toggle ? 1 : 0;
+        gsap.to(textureMatFur.current.uniforms.NightMix, {
+            value: nightMix,
+            duration: 1
+        });
+        gsap.to(textureMatDes.current.uniforms.NightMix, {
+            value: nightMix,
+            duration: 1
+        });
+        gsap.to(textureMatChaorTop.current.uniforms.NightMix, {
+            value: nightMix,
+            duration: 1
+        });
+    }, [toggle]);
+
+    const [{ x }] = useSpring(
+        {
+            x: toggle,
+            config: { mass: 4, tension: 800, friction: 35, precision: 0.001 }
+        },
+        [toggle]
+    );
+
+    useFrame(({ clock }) => {
+        if (chairTop.current) {
+            chairTop.current.rotation.y = Math.sin(
+                clock.getElapsedTime() * 0.3
+            );
+        }
+    });
+
+    const controls = useControls({
+        boardColor: { value: '#ff2d88', label: 'Board Color' },
+        boardStrength: { value: 1.35, min: 0, max: 3, step: 0.01 },
+        pcColor: { value: '#4b7eff', label: 'PC-Color' },
+        pcColorStrength: { value: 1.2, min: 0, max: 3, step: 0.01 },
+        deskColors: { value: '#ff7236', label: 'Desk Color' },
+        deskColorStrngth: { value: 1.55, min: 0, max: 3, step: 0.01 }
+    });
+
+    const roomModel = useGLTF('./assets/RoomModel.glb');
+    const chair = useGLTF('./assets/chairtopDraco.glb');
+
+    const dBaked = useTexture('./assets/bakedTextureDaycmp.webp');
+    dBaked.flipY = false;
+    dBaked.magFilter = THREE.LinearFilter;
+    dBaked.minFilter = THREE.NearestFilter;
+    dBaked.generateMipmaps = false;
+
+    const nBaked = useTexture('./assets/roomTextureNightcmp.webp');
+    nBaked.flipY = false;
+    nBaked.magFilter = THREE.LinearFilter;
+    nBaked.minFilter = THREE.NearestFilter;
+    nBaked.generateMipmaps = false;
+
+    const lightMap = useTexture('./assets/roomTextureLightMapcmp.webp');
+    lightMap.flipY = false;
+    lightMap.magFilter = THREE.LinearFilter;
+    lightMap.minFilter = THREE.NearestFilter;
+    lightMap.generateMipmaps = false;
+
+    const textureMaterialProps = useMemo(
+        () => ({
+            dbakedm: dBaked,
+            nbakedm: nBaked,
+            lightMapm: lightMap,
+            NightMix: 0,
+            lightBoardColor: controls.boardColor,
+            lightBoardStrength: controls.boardStrength,
+            lightPcColor: controls.pcColor,
+            lightPcStrength: controls.pcColorStrength,
+            lightDeskColor: controls.deskColors,
+            lightDeskStrength: controls.deskColorStrngth
+        }),
+        [dBaked, nBaked, lightMap, controls]
+    );
+
+    const cameraState = useCameraStore((state) => state.cameraState);
+    const defaultState = useCameraStore((state) => state.default);
+
+    return (
+        <group>
+            <Center>
+                <mesh
+                    geometry={roomModel.nodes.roomFurniture.geometry}
+                    position={roomModel.nodes.roomFurniture.position}
+                    rotation={roomModel.nodes.roomFurniture.rotation}
+                    onClick={
+                        cameraState === 'default'
+                            ? undefined
+                            : cameraState === 'displayBoard'
+                              ? undefined
+                              : cameraState === 'laptop'
+                                ? undefined
+                                : defaultState
+                    }
+                >
+                    <textureMaterial
+                        {...textureMaterialProps}
+                        ref={textureMatFur}
+                    />
+                </mesh>
+
+                <mesh
+                    geometry={roomModel.nodes.deskShelfStuf.geometry}
+                    position={roomModel.nodes.deskShelfStuf.position}
+                    rotation={roomModel.nodes.deskShelfStuf.rotation}
+                    onClick={
+                        cameraState === 'default' ? undefined : defaultState
+                    }
+                >
+                    <textureMaterial
+                        {...textureMaterialProps}
+                        ref={textureMatDes}
+                    />
+                </mesh>
+
+                <mesh
+                    ref={chairTop}
+                    geometry={chair.nodes.chairTop.geometry}
+                    position={chair.nodes.chairTop.position}
+                    rotation={chair.nodes.chairTop.rotation}
+                    onClick={
+                        cameraState === 'default' ? undefined : defaultState
+                    }
+                >
+                    <textureMaterial
+                        {...textureMaterialProps}
+                        ref={textureMatChaorTop}
+                    />
+                </mesh>
+                <PhotoFrame toggle={toggle} nodes={roomModel.nodes} />
+                <DispFrame nodes={roomModel.nodes} />
+                <DispItem toggle={toggle} nodes={roomModel.nodes} />
+                <Clock />
+                <Windows toggle={toggle} nodes={roomModel.nodes} />
+                <TheamSwitch x={x} set={setToggle} nodes={roomModel.nodes} />
+            </Center>
+        </group>
+    );
+});
+
+export default RoomModel;
+
+useGLTF.preload('./assets/RoomModel.glb');
+useGLTF.preload('./assets/chairtopDraco.glb');
+useTexture.preload('./assets/bakedTextureDaycmp.webp');
+useTexture.preload('./assets/roomTextureNightcmp.webp');
+useTexture.preload('./assets/roomTextureLightMapcmp.webp');
+
+
+
+================================================
+FILE: src/RoomModel/Windows.jsx
+================================================
+/* eslint-disable react/display-name */
+/* eslint-disable react/prop-types */
+
+import React from 'react';
+
+const Windows = React.memo(({ toggle, nodes }) => {
+    let color = !toggle ? [2, 0.8, 0.5] : [0.6, 0.8, 3];
+
+    return (
+        <>
+            <mesh
+                geometry={nodes.window.geometry}
+                position={nodes.window.position}
+                rotation={nodes.window.rotation}
+            >
+                <meshBasicMaterial toneMapped={false} color={color} />
+            </mesh>
+        </>
+    );
+});
+
+export default Windows;
+
+
+
+================================================
+FILE: src/RoomModel/iframes/desktopiFrame.jsx
+================================================
+/* eslint-disable react/display-name */
+import { Html } from '@react-three/drei';
+import React, { useMemo, useRef } from 'react';
+
+import { useCameraStore } from '../../helper/CameraStore';
+
+const DesktopiFrame = React.memo(() => {
+    const cameraState = useCameraStore((state) => state.cameraState);
+    const iframeRef = useRef(null);
+
+    const isDesktop = useMemo(() => cameraState === 'desktop', [cameraState]);
+
+    return (
+        <group>
+            {isDesktop && (
+                <Html
+                    rotation-y={Math.PI}
+                    transform
+                    wrapperClass="htmlScreen"
+                    distanceFactor={0.52}
+                    occlude="blending"
+                    position={[2.125, 3.03, 3.69]}
+                    zIndexRange={[2, 1]}
+                >
+                    <iframe
+                        width={1511}
+                        height={852}
+                        title="embed"
+                        src="https://porfoliojulienquenneville.netlify.app"
+                        style={{ border: 'none' }}
+                        ref={iframeRef}
+                    />
+                </Html>
+            )}
+        </group>
+    );
+});
+
+export default DesktopiFrame;
+
+
+
+================================================
+FILE: src/RoomModel/iframes/smartphoneiFrame.jsx
+================================================
+/* eslint-disable react/display-name */
+import { Html } from '@react-three/drei';
+import React, { useMemo, useRef } from 'react';
+
+import { useCameraStore } from '../../helper/CameraStore';
+
+const SmartphoneiFrame = React.memo(() => {
+    const cameraState = useCameraStore((state) => state.cameraState);
+    const iframeRef = useRef(null);
+
+    const isSmartphone = useMemo(
+        () => cameraState === 'smartphone',
+        [cameraState]
+    );
+
+    return (
+        <group>
+            {isSmartphone && (
+                <Html
+                    occlude="blending"
+                    rotation-y={Math.PI}
+                    rotation-x={Math.PI / 2}
+                    rotation-z={-Math.PI / 6}
+                    transform
+                    wrapperClass="htmlPhoneScreen"
+                    distanceFactor={0.285}
+                    position={[1.6395, 1.125, -1.373]}
+                    zIndexRange={[2, 1]}
+                >
+                    <iframe
+                        width={392}
+                        height={809}
+                        title="embed"
+                        src="https://porfoliojulienquenneville.netlify.app"
+                        style={{ border: 'none', borderRadius: '22px' }}
+                        ref={iframeRef}
+                    />
+                </Html>
+            )}
+        </group>
+    );
+});
+
+export default SmartphoneiFrame;
+
+
+
+================================================
+FILE: src/RoomModel/iframes/tvEmulator.jsx
+================================================
+[Empty file]
+
+
+================================================
+FILE: src/RoomModel/shaders/partials/blend.glsl
+================================================
+//Lighten
+
+float blendLighten(float base, float blend) {
+	return max(blend,base);
+}
+
+vec3 blendLighten(vec3 base, vec3 blend) {
+	return vec3(blendLighten(base.r,blend.r),blendLighten(base.g,blend.g),blendLighten(base.b,blend.b));
+}
+
+vec3 blendLighten(vec3 base, vec3 blend, float opacity) {
+	return (blendLighten(base, blend) * opacity + base * (1.0 - opacity));
+}
+
+//SoftLight
+float blendSoftLight(float base, float blend) {
+	return (blend<0.5)?(2.0*base*blend+base*base*(1.0-2.0*blend)):(sqrt(base)*(2.0*blend-1.0)+2.0*base*(1.0-blend));
+}
+
+vec3 blendSoftLight(vec3 base, vec3 blend) {
+	return vec3(blendSoftLight(base.r,blend.r),blendSoftLight(base.g,blend.g),blendSoftLight(base.b,blend.b));
+}
+
+vec3 blendSoftLight(vec3 base, vec3 blend, float opacity) {
+	return (blendSoftLight(base, blend) * opacity + base * (1.0 - opacity));
+}
+
+//screen
+float blendScreen(float base, float blend) {
+	return 1.0-((1.0-base)*(1.0-blend));
+}
+
+vec3 blendScreen(vec3 base, vec3 blend) {
+	return vec3(blendScreen(base.r,blend.r),blendScreen(base.g,blend.g),blendScreen(base.b,blend.b));
+}
+
+vec3 blendScreen(vec3 base, vec3 blend, float opacity) {
+	return (blendScreen(base, blend) * opacity + base * (1.0 - opacity));
+}
+
+//overlay
+
+float blendOverlay(float base, float blend) {
+	return base<0.5?(2.0*base*blend):(1.0-2.0*(1.0-base)*(1.0-blend));
+}
+
+vec3 blendOverlay(vec3 base, vec3 blend) {
+	return vec3(blendOverlay(base.r,blend.r),blendOverlay(base.g,blend.g),blendOverlay(base.b,blend.b));
+}
+
+vec3 blendOverlay(vec3 base, vec3 blend, float opacity) {
+	return (blendOverlay(base, blend) * opacity + base * (1.0 - opacity));
+}
+
+
+================================================
+FILE: src/RoomModel/shaders/partials/perlin2d.glsl
+================================================
+vec2 fade(vec2 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}
+vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+
+float perlin2d(vec2 P){
+  vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
+  vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
+  Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
+  vec4 ix = Pi.xzxz;
+  vec4 iy = Pi.yyww;
+  vec4 fx = Pf.xzxz;
+  vec4 fy = Pf.yyww;
+  vec4 i = permute(permute(ix) + iy);
+  vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
+  vec4 gy = abs(gx) - 0.5;
+  vec4 tx = floor(gx + 0.5);
+  gx = gx - tx;
+  vec2 g00 = vec2(gx.x,gy.x);
+  vec2 g10 = vec2(gx.y,gy.y);
+  vec2 g01 = vec2(gx.z,gy.z);
+  vec2 g11 = vec2(gx.w,gy.w);
+  vec4 norm = 1.79284291400159 - 0.85373472095314 * 
+    vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
+  g00 *= norm.x;
+  g01 *= norm.y;
+  g10 *= norm.z;
+  g11 *= norm.w;
+  float n00 = dot(g00, vec2(fx.x, fy.x));
+  float n10 = dot(g10, vec2(fx.y, fy.y));
+  float n01 = dot(g01, vec2(fx.z, fy.z));
+  float n11 = dot(g11, vec2(fx.w, fy.w));
+  vec2 fade_xy = fade(Pf.xy);
+  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
+  float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+  return 2.3 * n_xy;
+}
+
+
+
+================================================
+FILE: src/RoomModel/shaders/Room/fragment.glsl
+================================================
+uniform sampler2D nbakedm;
+uniform sampler2D dbakedm;
+uniform sampler2D lightMapm;
+
+uniform float NightMix;
+
+uniform vec3 lightBoardColor;
+uniform float lightBoardStrength;
+
+uniform vec3 lightPcColor;
+uniform float lightPcStrength;
+
+uniform vec3 lightDeskColor;
+uniform float lightDeskStrength;
+
+varying vec2 vUv;
+
+#include "../partials/blend.glsl"
+
+void main(){
+
+    vec3 bakedNightColor = texture2D(nbakedm, vUv).rgb;
+    vec3 bakedDayColor = texture2D(dbakedm, vUv).rgb;
+    vec3 bakedColor = mix(bakedDayColor, bakedNightColor, NightMix);
+    vec3 lightMapColor = texture2D(lightMapm, vUv).rgb;
+
+
+    float boardLightS = lightMapColor.r * lightBoardStrength;
+    bakedColor = blendLighten(bakedColor, lightBoardColor, boardLightS);
+
+    float deskLightS = lightMapColor.g * lightDeskStrength;
+    bakedColor = blendLighten(bakedColor, lightDeskColor, deskLightS);
+
+    float pcLightS = lightMapColor.b * lightPcStrength;
+    bakedColor = blendLighten(bakedColor, lightPcColor, pcLightS);
+
+
+    gl_FragColor = vec4(bakedColor, 1.0);
+
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
+}
+
+
+================================================
+FILE: src/RoomModel/shaders/Room/vertex.glsl
+================================================
+precision mediump float;
+varying vec2 vUv;
+
+void main()
+{
+    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    vec4 viewPosition = viewMatrix * modelPosition;
+    vec4 projectionPosition = projectionMatrix * viewPosition;
+    gl_Position = projectionPosition;
+
+    vUv = uv;
+}
+
+
+================================================
+FILE: src/RoomModel/textures/TextureMaterial.jsx
+================================================
+import { shaderMaterial } from '@react-three/drei';
+import * as THREE from 'three';
+
+import fragmentShader from '../shaders/Room/fragment.glsl';
+import vertexShader from '../shaders/Room/vertex.glsl';
+
+const TextureMaterial = shaderMaterial(
+    {
+        nbakedm: new THREE.Texture(),
+        dbakedm: new THREE.Texture(),
+        lightMapm: new THREE.Texture(),
+
+        NightMix: 0,
+
+        lightBoardColor: new THREE.Color('#ff2d88'),
+        lightBoardStrength: 1.35,
+
+        lightPcColor: new THREE.Color('#4b7eff'),
+        lightPcStrength: 1.2,
+
+        lightDeskColor: new THREE.Color('#ff7236'),
+        lightDeskStrength: 1.55
+    },
+    vertexShader,
+    fragmentShader
+);
+
+export default TextureMaterial;
+
+
+
+================================================
+FILE: src/Switch/TheamSwitch.jsx
+================================================
+/* eslint-disable react/prop-types */
+import { a } from '@react-spring/three';
+import { meshBounds } from '@react-three/drei';
+import { useCallback, useEffect, useState } from 'react';
+
+export default function TheamSwitch({ x, set, nodes }) {
+    const [hovered, setHover] = useState(false);
+
+    useEffect(
+        () => void (document.body.style.cursor = hovered ? 'pointer' : 'auto'),
+        [hovered]
+    );
+
+    const onClick = useCallback(() => set((toggle) => Number(!toggle)), [set]);
+    const onPointerOver = useCallback(() => setHover(true), []);
+    const onPointerOut = useCallback(() => setHover(false), []);
+
+    const pZ = x.to([0, 1], [0.1, 0.6]);
+    const rX = x.to([0, 1], [0, Math.PI * 1.3]);
+
+    return (
+        <>
+            <a.group position-z={pZ}>
+                <a.mesh
+                    geometry={nodes.Sphere.geometry}
+                    position={nodes.Sphere.position}
+                    rotation={nodes.Sphere.rotation}
+                    raycast={meshBounds}
+                    onClick={onClick}
+                    rotation-x={rX}
+                    onPointerOver={onPointerOver}
+                    onPointerOut={onPointerOut}
+                    castShadow={true}
+                    receiveShadow={true}
+                >
+                    <meshBasicMaterial color={'#e8f8ff'} />
+                </a.mesh>
+            </a.group>
+
+            <mesh
+                geometry={nodes.switchBound.geometry}
+                position={nodes.switchBound.position}
+                rotation={nodes.switchBound.rotation}
+                castShadow={true}
+                receiveShadow={true}
+            >
+                <meshBasicMaterial color={'#131313'} />
+            </mesh>
+        </>
+    );
+}
+
+

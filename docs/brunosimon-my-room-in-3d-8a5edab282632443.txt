@@ -1,0 +1,3165 @@
+Directory structure:
+└── brunosimon-my-room-in-3d/
+    ├── readme.md
+    ├── package.json
+    ├── bundler/
+    │   ├── webpack.common.js
+    │   ├── webpack.dev.js
+    │   └── webpack.prod.js
+    ├── src/
+    │   ├── index.html
+    │   ├── script.js
+    │   ├── style.css
+    │   └── Experience/
+    │       ├── assets.js
+    │       ├── Baked.js
+    │       ├── BouncingLogo.js
+    │       ├── Camera.js
+    │       ├── CoffeeSteam.js
+    │       ├── ElgatoLight.js
+    │       ├── Experience.js
+    │       ├── GoogleLeds.js
+    │       ├── LoupedeckButtons.js
+    │       ├── Navigation.js
+    │       ├── Renderer.js
+    │       ├── Resources.js
+    │       ├── Screen.js
+    │       ├── TopChair.js
+    │       ├── World.js
+    │       ├── shaders/
+    │       │   ├── baked/
+    │       │   │   ├── fragment.glsl
+    │       │   │   └── vertex.glsl
+    │       │   ├── coffeeSteam/
+    │       │   │   ├── fragment.glsl
+    │       │   │   └── vertex.glsl
+    │       │   └── partials/
+    │       │       └── perlin2d.glsl
+    │       └── Utils/
+    │           ├── EventEmitter.js
+    │           ├── Loader.js
+    │           ├── Sizes.js
+    │           ├── Stats.js
+    │           └── Time.js
+    └── static/
+        ├── .gitkeep
+        ├── assets/
+        │   ├── coffeeSteamModel.glb
+        │   ├── elgatoLightModel.glb
+        │   ├── googleHomeLedsModel.glb
+        │   ├── loupedeckButtonsModel.glb
+        │   ├── macScreenModel.glb
+        │   ├── pcScreenModel.glb
+        │   └── topChairModel.glb
+        ├── basis/
+        │   └── README.md
+        └── draco/
+            └── README.md
+
+================================================
+FILE: readme.md
+================================================
+# My Room in 3D
+
+## Links
+
+- [GitHub](https://github.com/brunosimon/my-room-in-3d)
+- [Live](https://my-room-in-3d.vercel.app)
+
+## Setup
+
+Download [Node.js](https://nodejs.org/en/download/).
+Run this followed commands:
+
+``` bash
+# Install dependencies (only the first time)
+npm install
+
+# Run the local server at localhost:8080
+npm run dev
+
+# Build for production in the dist/ directory
+npm run build
+```
+
+
+
+================================================
+FILE: package.json
+================================================
+{
+  "repository": "#",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "webpack --config ./bundler/webpack.prod.js",
+    "dev": "webpack serve --config ./bundler/webpack.dev.js",
+    "prod": "git switch prod; git merge main; git push; git switch main"
+  },
+  "dependencies": {
+    "@babel/core": "^7.14.6",
+    "@babel/preset-env": "^7.14.7",
+    "babel-loader": "^8.2.2",
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^9.0.1",
+    "css-loader": "^5.2.6",
+    "file-loader": "^6.2.0",
+    "glsl-blend": "^1.0.3",
+    "glslify-loader": "^2.0.0",
+    "gsap": "^3.7.1",
+    "html-loader": "^2.1.2",
+    "html-webpack-plugin": "^5.3.2",
+    "mini-css-extract-plugin": "^2.1.0",
+    "normalize-wheel": "^1.0.1",
+    "portfinder-sync": "0.0.2",
+    "raw-loader": "^4.0.2",
+    "stats.js": "^0.17.0",
+    "style-loader": "^3.0.0",
+    "three": "^0.130.1",
+    "tweakpane": "^3.0.5",
+    "webpack": "^5.42.1",
+    "webpack-cli": "^4.7.2",
+    "webpack-dev-server": "^3.11.2",
+    "webpack-merge": "^5.8.0"
+  }
+}
+
+
+
+================================================
+FILE: bundler/webpack.common.js
+================================================
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const MiniCSSExtractPlugin = require('mini-css-extract-plugin')
+const path = require('path')
+
+module.exports = {
+    entry: path.resolve(__dirname, '../src/script.js'),
+    output:
+    {
+        filename: 'bundle.[contenthash].js',
+        path: path.resolve(__dirname, '../dist')
+    },
+    devtool: 'source-map',
+    plugins:
+    [
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: path.resolve(__dirname, '../static') }
+            ]
+        }),
+        new HtmlWebpackPlugin({
+            template: path.resolve(__dirname, '../src/index.html'),
+            minify: true
+        }),
+        new MiniCSSExtractPlugin()
+    ],
+    module:
+    {
+        rules:
+        [
+            // HTML
+            {
+                test: /\.(html)$/,
+                use: ['html-loader']
+            },
+
+            // JS
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use:
+                [
+                    'babel-loader'
+                ]
+            },
+
+            // CSS
+            {
+                test: /\.css$/,
+                use:
+                [
+                    MiniCSSExtractPlugin.loader,
+                    'css-loader'
+                ]
+            },
+
+            // Images
+            {
+                test: /\.(jpg|png|gif|svg)$/,
+                use:
+                [
+                    {
+                        loader: 'file-loader',
+                        options:
+                        {
+                            outputPath: 'assets/images/'
+                        }
+                    }
+                ]
+            },
+
+            // Fonts
+            {
+                test: /\.(ttf|eot|woff|woff2)$/,
+                use:
+                [
+                    {
+                        loader: 'file-loader',
+                        options:
+                        {
+                            outputPath: 'assets/fonts/'
+                        }
+                    }
+                ]
+            },
+
+            // Shaders
+            {
+                test: /\.(glsl|vs|fs|vert|frag)$/,
+                exclude: /node_modules/,
+                use: [
+                    'raw-loader',
+                    'glslify-loader'
+                ]
+            }
+        ]
+    }
+}
+
+
+
+================================================
+FILE: bundler/webpack.dev.js
+================================================
+const { merge } = require('webpack-merge')
+const commonConfiguration = require('./webpack.common.js')
+const ip = require('internal-ip')
+const portFinderSync = require('portfinder-sync')
+
+const infoColor = (_message) =>
+{
+    return `\u001b[1m\u001b[34m${_message}\u001b[39m\u001b[22m`
+}
+
+module.exports = merge(
+    commonConfiguration,
+    {
+        mode: 'development',
+        devServer:
+        {
+            host: '0.0.0.0',
+            port: portFinderSync.getPort(8080),
+            contentBase: './dist',
+            watchContentBase: true,
+            open: true,
+            https: false,
+            useLocalIp: true,
+            disableHostCheck: true,
+            overlay: true,
+            noInfo: true,
+            after: function(app, server, compiler)
+            {
+                const port = server.options.port
+                const https = server.options.https ? 's' : ''
+                const localIp = ip.v4.sync()
+                const domain1 = `http${https}://${localIp}:${port}`
+                const domain2 = `http${https}://localhost:${port}`
+                
+                console.log(`Project running at:\n  - ${infoColor(domain1)}\n  - ${infoColor(domain2)}`)
+            }
+        }
+    }
+)
+
+
+
+================================================
+FILE: bundler/webpack.prod.js
+================================================
+const { merge } = require('webpack-merge')
+const commonConfiguration = require('./webpack.common.js')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+
+module.exports = merge(
+    commonConfiguration,
+    {
+        mode: 'production',
+        plugins:
+        [
+            new CleanWebpackPlugin()
+        ]
+    }
+)
+
+
+
+================================================
+FILE: src/index.html
+================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Room in 3D</title>
+
+    <meta itemprop="name" content="My Room in 3D — Experiment">
+    <meta itemprop="description" content="Creative WebGL experiment with Three.js">
+    <meta itemprop="image" content="https://my-room-in-3d.vercel.app/social/share-1200x630.png">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="My Room in 3D — Experiment">
+    <meta name="twitter:description" content="Creative WebGL experiment with Three.js">
+    <meta name="twitter:image" content="https://my-room-in-3d.vercel.app/social/share-1200x630.png">
+
+    <meta property="og:site_name" content="My Room in 3D — Experiment">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://my-room-in-3d.vercel.app">
+    <meta property="og:title" content="My Room in 3D — Experiment">
+    <meta property="og:description" content="Creative WebGL experiment with Three.js">
+    <meta property="og:image" content="https://my-room-in-3d.vercel.app/social/share-1200x630.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="experience"></div>
+    <div class="credits">
+        My Room in 3D by <a href="https://bruno-simon.com" target="_blank">Bruno Simon</a> (<a href="https://github.com/brunosimon/my-room-in-3d" target="_blank">Source code</a>)
+    </div>
+</body>
+</html>
+
+
+================================================
+FILE: src/script.js
+================================================
+import './style.css'
+import Experience from './Experience/Experience.js'
+
+window.experience = new Experience({
+    targetElement: document.querySelector('.experience')
+})
+
+
+
+
+================================================
+FILE: src/style.css
+================================================
+*
+{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body
+{
+    overflow: hidden;
+}
+
+.experience
+{
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+}
+
+.credits
+{
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: #ffffff;
+    text-align: right;
+    font-family: 'Roboto', sans-serif;
+}
+
+.credits a
+{
+    color: inherit;
+}
+
+
+================================================
+FILE: src/Experience/assets.js
+================================================
+export default [
+    {
+        name: 'base',
+        data: {},
+        items:
+        [
+            { name: 'googleHomeLedMaskTexture', source: '/assets/googleHomeLedMask.png', type: 'texture' },
+            { name: 'googleHomeLedsModel', source: '/assets/googleHomeLedsModel.glb', type: 'model' },
+            
+            { name: 'loupedeckButtonsModel', source: '/assets/loupedeckButtonsModel.glb', type: 'model' },
+            
+            { name: 'topChairModel', source: '/assets/topChairModel.glb', type: 'model' },
+            
+            { name: 'coffeeSteamModel', source: '/assets/coffeeSteamModel.glb', type: 'model' },
+            
+            { name: 'elgatoLightModel', source: '/assets/elgatoLightModel.glb', type: 'model' },
+            
+            { name: 'threejsJourneyLogoTexture', source: '/assets/threejsJourneyLogo.png', type: 'texture' },
+            
+            { name: 'pcScreenModel', source: '/assets/pcScreenModel.glb', type: 'model' },
+            
+            { name: 'macScreenModel', source: '/assets/macScreenModel.glb', type: 'model' },
+            
+            { name: 'bakedDayTexture', source: '/assets/bakedDay.jpg', type: 'texture' },
+            { name: 'bakedNightTexture', source: '/assets/bakedNight.jpg', type: 'texture' },
+            { name: 'bakedNeutralTexture', source: '/assets/bakedNeutral.jpg', type: 'texture' },
+            { name: 'lightMapTexture', source: '/assets/lightMap.jpg', type: 'texture' },
+            { name: 'roomModel', source: '/assets/roomModel.glb' },
+        ]
+    }
+]
+
+
+================================================
+FILE: src/Experience/Baked.js
+================================================
+import * as THREE from 'three'
+
+import Experience from './Experience.js'
+import vertexShader from './shaders/baked/vertex.glsl'
+import fragmentShader from './shaders/baked/fragment.glsl'
+
+export default class CoffeeSteam
+{
+    constructor()
+    {
+        this.experience = new Experience()
+        this.resources = this.experience.resources
+        this.debug = this.experience.debug
+        this.scene = this.experience.scene
+        this.time = this.experience.time
+
+        // Debug
+        if(this.debug)
+        {
+            this.debugFolder = this.debug.addFolder({
+                title: 'baked',
+                expanded: true
+            })
+        }
+
+        this.setModel()
+    }
+
+    setModel()
+    {
+        this.model = {}
+        
+        this.model.mesh = this.resources.items.roomModel.scene.children[0]
+
+        this.model.bakedDayTexture = this.resources.items.bakedDayTexture
+        this.model.bakedDayTexture.encoding = THREE.sRGBEncoding
+        this.model.bakedDayTexture.flipY = false
+
+        this.model.bakedNightTexture = this.resources.items.bakedNightTexture
+        this.model.bakedNightTexture.encoding = THREE.sRGBEncoding
+        this.model.bakedNightTexture.flipY = false
+
+        this.model.bakedNeutralTexture = this.resources.items.bakedNeutralTexture
+        this.model.bakedNeutralTexture.encoding = THREE.sRGBEncoding
+        this.model.bakedNeutralTexture.flipY = false
+
+        this.model.lightMapTexture = this.resources.items.lightMapTexture
+        this.model.lightMapTexture.flipY = false
+
+        this.colors = {}
+        this.colors.tv = '#ff115e'
+        this.colors.desk = '#ff6700'
+        this.colors.pc = '#0082ff'
+
+        this.model.material = new THREE.ShaderMaterial({
+            uniforms:
+            {
+                uBakedDayTexture: { value: this.model.bakedDayTexture },
+                uBakedNightTexture: { value: this.model.bakedNightTexture },
+                uBakedNeutralTexture: { value: this.model.bakedNeutralTexture },
+                uLightMapTexture: { value: this.model.lightMapTexture },
+
+                uNightMix: { value: 1 },
+                uNeutralMix: { value: 0 },
+
+                uLightTvColor: { value: new THREE.Color(this.colors.tv) },
+                uLightTvStrength: { value: 1.47 },
+
+                uLightDeskColor: { value: new THREE.Color(this.colors.desk) },
+                uLightDeskStrength: { value: 1.9 },
+
+                uLightPcColor: { value: new THREE.Color(this.colors.pc) },
+                uLightPcStrength: { value: 1.4 }
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader
+        })
+
+        this.model.mesh.traverse((_child) =>
+        {
+            if(_child instanceof THREE.Mesh)
+            {
+                _child.material = this.model.material
+            }
+        })
+
+        this.scene.add(this.model.mesh)
+        
+        // Debug
+        if(this.debug)
+        {
+            this.debugFolder
+                .addInput(
+                    this.model.material.uniforms.uNightMix,
+                    'value',
+                    { label: 'uNightMix', min: 0, max: 1 }
+                )
+
+            this.debugFolder
+                .addInput(
+                    this.model.material.uniforms.uNeutralMix,
+                    'value',
+                    { label: 'uNeutralMix', min: 0, max: 1 }
+                )
+
+            this.debugFolder
+                .addInput(
+                    this.colors,
+                    'tv',
+                    { view: 'color' }
+                )
+                .on('change', () =>
+                {
+                    this.model.material.uniforms.uLightTvColor.value.set(this.colors.tv)
+                })
+
+            this.debugFolder
+                .addInput(
+                    this.model.material.uniforms.uLightTvStrength,
+                    'value',
+                    { label: 'uLightTvStrength', min: 0, max: 3 }
+                )
+
+            this.debugFolder
+                .addInput(
+                    this.colors,
+                    'desk',
+                    { view: 'color' }
+                )
+                .on('change', () =>
+                {
+                    this.model.material.uniforms.uLightDeskColor.value.set(this.colors.desk)
+                })
+
+            this.debugFolder
+                .addInput(
+                    this.model.material.uniforms.uLightDeskStrength,
+                    'value',
+                    { label: 'uLightDeskStrength', min: 0, max: 3 }
+                )
+
+            this.debugFolder
+                .addInput(
+                    this.colors,
+                    'pc',
+                    { view: 'color' }
+                )
+                .on('change', () =>
+                {
+                    this.model.material.uniforms.uLightPcColor.value.set(this.colors.pc)
+                })
+
+            this.debugFolder
+                .addInput(
+                    this.model.material.uniforms.uLightPcStrength,
+                    'value',
+                    { label: 'uLightPcStrength', min: 0, max: 3 }
+                )
+        }
+    }
+}
+
+
+================================================
+FILE: src/Experience/BouncingLogo.js
+================================================
+import * as THREE from 'three'
+
+import Experience from './Experience.js'
+
+export default class BouncingLogo
+{
+    constructor()
+    {
+        this.experience = new Experience()
+        this.resources = this.experience.resources
+        this.debug = this.experience.debug
+        this.scene = this.experience.scene
+        this.world = this.experience.world
+        this.time = this.experience.time
+
+        // Debug
+        if(this.debug)
+        {
+            this.debugFolder = this.debug.addFolder({
+                title: 'bouncingLogo',
+                expanded: false
+            })
+        }
+
+        this.setModel()
+        this.setAnimation()
+    }
+
+    setModel()
+    {
+        this.model = {}
+
+        this.model.group = new THREE.Group()
+        this.model.group.position.x = 4.2
+        this.model.group.position.y = 2.717
+        this.model.group.position.z = 1.630
+        this.scene.add(this.model.group)
+
+        this.model.texture = this.resources.items.threejsJourneyLogoTexture
+        this.model.texture.encoding = THREE.sRGBEncoding
+
+        this.model.geometry = new THREE.PlaneGeometry(4, 1, 1, 1)
+        this.model.geometry.rotateY(- Math.PI * 0.5)
+
+        this.model.material = new THREE.MeshBasicMaterial({
+            transparent: true,
+            premultipliedAlpha: true,
+            map: this.model.texture
+        })
+
+        this.model.mesh = new THREE.Mesh(this.model.geometry, this.model.material)
+        this.model.mesh.scale.y = 0.359
+        this.model.mesh.scale.z = 0.424
+        this.model.group.add(this.model.mesh)
+
+        // Debug
+        if(this.debug)
+        {
+            this.debugFolder.addInput(
+                this.model.group.position,
+                'x',
+                {
+                    label: 'positionX', min: - 5, max: 5, step: 0.001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.model.group.position,
+                'y',
+                {
+                    label: 'positionY', min: - 5, max: 5, step: 0.001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.model.group.position,
+                'z',
+                {
+                    label: 'positionZ', min: - 5, max: 5, step: 0.001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.model.mesh.scale,
+                'z',
+                {
+                    label: 'scaleZ', min: 0.001, max: 1, step: 0.001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.model.mesh.scale,
+                'y',
+                {
+                    label: 'scaleY', min: 0.001, max: 1, step: 0.001
+                }
+            )
+        }
+    }
+
+    setAnimation()
+    {
+        this.animations = {}
+
+        this.animations.z = 0
+        this.animations.y = 0
+
+        this.animations.limits = {}
+        this.animations.limits.z = { min: -1.076, max: 1.454 }
+        this.animations.limits.y = { min: -1.055, max: 0.947 }
+
+        this.animations.speed = {}
+        this.animations.speed.z = 0.00061
+        this.animations.speed.y = 0.00037
+
+        if(this.debug)
+        {
+            this.debugFolder.addInput(
+                this.animations.limits.z,
+                'min',
+                {
+                    label: 'limitZMin', min: - 3, max: 0, step: 0.001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.animations.limits.z,
+                'max',
+                {
+                    label: 'limitZMax', min: 0, max: 3, step: 0.001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.animations.limits.y,
+                'min',
+                {
+                    label: 'limitYMin', min: - 3, max: 0, step: 0.001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.animations.limits.y,
+                'max',
+                {
+                    label: 'limitYMax', min: 0, max: 3, step: 0.001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.animations.speed,
+                'z',
+                {
+                    label: 'speedZ', min: 0, max: 0.001, step: 0.00001
+                }
+            )
+
+            this.debugFolder.addInput(
+                this.animations.speed,
+                'y',
+                {
+                    label: 'speedY', min: 0, max: 0.001, step: 0.00001
+                }
+            )
+        }
+    }
+
+    update()
+    {
+        this.animations.z += this.animations.speed.z * this.time.delta
+        this.animations.y += this.animations.speed.y * this.time.delta
+
+        if(this.animations.z > this.animations.limits.z.max)
+        {
+            this.animations.z = this.animations.limits.z.max
+            this.animations.speed.z *= -1
+        }
+        if(this.animations.z < this.animations.limits.z.min)
+        {
+            this.animations.z = this.animations.limits.z.min
+            this.animations.speed.z *= -1
+        }
+        if(this.animations.y > this.animations.limits.y.max)
+        {
+            this.animations.y = this.animations.limits.y.max
+            this.animations.speed.y *= -1
+        }
+        if(this.animations.y < this.animations.limits.y.min)
+        {
+            this.animations.y = this.animations.limits.y.min
+            this.animations.speed.y *= -1
+        }
+
+        this.model.mesh.position.z = this.animations.z
+        this.model.mesh.position.y = this.animations.y
+    }
+}
+
+
+================================================
+FILE: src/Experience/Camera.js
+================================================
+import * as THREE from 'three'
+import Experience from './Experience.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+
+export default class Camera
+{
+    constructor(_options)
+    {
+        // Options
+        this.experience = new Experience()
+        this.config = this.experience.config
+        this.debug = this.experience.debug
+        this.time = this.experience.time
+        this.sizes = this.experience.sizes
+        this.targetElement = this.experience.targetElement
+        this.scene = this.experience.scene
+
+        // Set up
+        this.mode = 'default' // default \ debug
+
+        this.setInstance()
+        this.setModes()
+    }
+
+    setInstance()
+    {
+        // Set up
+        this.instance = new THREE.PerspectiveCamera(20, this.config.width / this.config.height, 0.1, 150)
+        this.instance.rotation.reorder('YXZ')
+
+        this.scene.add(this.instance)
+    }
+
+    setModes()
+    {
+        this.modes = {}
+
+        // Default
+        this.modes.default = {}
+        this.modes.default.instance = this.instance.clone()
+        this.modes.default.instance.rotation.reorder('YXZ')
+
+        // Debug
+        this.modes.debug = {}
+        this.modes.debug.instance = this.instance.clone()
+        this.modes.debug.instance.rotation.reorder('YXZ')
+        this.modes.debug.instance.position.set(- 15, 15, 15)
+        
+        this.modes.debug.orbitControls = new OrbitControls(this.modes.debug.instance, this.targetElement)
+        this.modes.debug.orbitControls.enabled = false
+        this.modes.debug.orbitControls.screenSpacePanning = true
+        this.modes.debug.orbitControls.enableKeys = false
+        this.modes.debug.orbitControls.zoomSpeed = 0.25
+        this.modes.debug.orbitControls.enableDamping = true
+        this.modes.debug.orbitControls.update()
+    }
+
+
+    resize()
+    {
+        this.instance.aspect = this.config.width / this.config.height
+        this.instance.updateProjectionMatrix()
+
+        this.modes.default.instance.aspect = this.config.width / this.config.height
+        this.modes.default.instance.updateProjectionMatrix()
+
+        this.modes.debug.instance.aspect = this.config.width / this.config.height
+        this.modes.debug.instance.updateProjectionMatrix()
+    }
+
+    update()
+    {
+        // Update debug orbit controls
+        this.modes.debug.orbitControls.update()
+
+        // Apply coordinates
+        this.instance.position.copy(this.modes[this.mode].instance.position)
+        this.instance.quaternion.copy(this.modes[this.mode].instance.quaternion)
+        this.instance.updateMatrixWorld() // To be used in projection
+    }
+
+    destroy()
+    {
+        this.modes.debug.orbitControls.destroy()
+    }
+}
+
+
+
+================================================
+FILE: src/Experience/CoffeeSteam.js
+================================================
+import * as THREE from 'three'
+
+import Experience from './Experience.js'
+import vertexShader from './shaders/coffeeSteam/vertex.glsl'
+import fragmentShader from './shaders/coffeeSteam/fragment.glsl'
+
+export default class CoffeeSteam
+{
+    constructor()
+    {
+        this.experience = new Experience()
+        this.resources = this.experience.resources
+        this.debug = this.experience.debug
+        this.scene = this.experience.scene
+        this.time = this.experience.time
+
+        // Debug
+        if(this.debug)
+        {
+            this.debugFolder = this.debug.addFolder({
+                title: 'coffeeSteam',
+                expanded: false
+            })
+        }
+
+        this.setModel()
+    }
+
+    setModel()
+    {
+        this.model = {}
+        
+        this.model.color = '#d2958a'
+
+        // Material
+        this.model.material = new THREE.ShaderMaterial({
+            transparent: true,
+            depthWrite: false,
+            vertexShader,
+            fragmentShader,
+            uniforms:
+            {
+                uTime: { value: 0 },
+                uTimeFrequency: { value: 0.0004 },
+                uUvFrequency: { value: new THREE.Vector2(4, 5) },
+                uColor: { value: new THREE.Color(this.model.color) }
+            }
+        })
+
+        // Mesh
+        this.model.mesh = this.resources.items.coffeeSteamModel.scene.children[0]
+        this.model.mesh.material = this.model.material
+        this.scene.add(this.model.mesh)
+
+        if(this.debug)
+        {
+            this.debugFolder.addInput(
+                this.model,
+                'color',
+                {
+                    view: 'color'
+                }
+            )
+            .on('change', () =>
+            {
+                this.model.material.uniforms.uColor.value.set(this.model.color)
+            })
+            
+            
+            this.debugFolder.addInput(
+                this.model.material.uniforms.uTimeFrequency,
+                'value',
+                {
+                    label: 'uTimeFrequency', min: 0.0001, max: 0.001, step: 0.0001
+                }
+            )
+            
+            this.debugFolder.addInput(
+                this.model.material.uniforms.uUvFrequency.value,
+                'x',
+                {
+                    min: 0.001, max: 20, step: 0.001
+                }
+            )
+            
+            this.debugFolder.addInput(
+                this.model.material.uniforms.uUvFrequency.value,
+                'y',
+                {
+                    min: 0.001, max: 20, step: 0.001
+                }
+            )
+        }
+    }
+
+    update()
+    {
+        this.model.material.uniforms.uTime.value = this.time.elapsed
+    }
+}
+
+
+================================================
+FILE: src/Experience/ElgatoLight.js
+================================================
+import * as THREE from 'three'
+
+import Experience from './Experience.js'
+
+export default class ElgatoLight
+{
+    constructor()
+    {
+        this.experience = new Experience()
+        this.resources = this.experience.resources
+        this.scene = this.experience.scene
+
+        this.setModel()
+    }
+
+    setModel()
+    {
+        this.model = {}
+
+        this.model.mesh = this.resources.items.elgatoLightModel.scene.children[0]
+        this.scene.add(this.model.mesh)
+
+        this.model.mesh.material = new THREE.MeshBasicMaterial({
+            color: 0xffffff
+        })
+    }
+}
+
+
+================================================
+FILE: src/Experience/Experience.js
+================================================
+import * as THREE from 'three'
+import { Pane } from 'tweakpane'
+
+import Time from './Utils/Time.js'
+import Sizes from './Utils/Sizes.js'
+import Stats from './Utils/Stats.js'
+
+import Resources from './Resources.js'
+import Renderer from './Renderer.js'
+import Camera from './Camera.js'
+import World from './World.js'
+import Navigation from './Navigation.js'
+
+import assets from './assets.js'
+
+export default class Experience
+{
+    static instance
+
+    constructor(_options = {})
+    {
+        if(Experience.instance)
+        {
+            return Experience.instance
+        }
+        Experience.instance = this
+
+        // Options
+        this.targetElement = _options.targetElement
+
+        if(!this.targetElement)
+        {
+            console.warn('Missing \'targetElement\' property')
+            return
+        }
+
+        this.time = new Time()
+        this.sizes = new Sizes()
+        this.setConfig()
+        this.setStats()
+        this.setDebug()
+        this.setScene()
+        this.setCamera()
+        this.setRenderer()
+        this.setResources()
+        this.setWorld()
+        this.setNavigation()
+        
+        this.sizes.on('resize', () =>
+        {
+            this.resize()
+        })
+
+        this.update()
+    }
+
+    // static getInstance(_options = {})
+    // {
+    //     console.log(Experience.instance)
+    //     if(Experience.instance)
+    //     {
+    //         return Experience.instance
+    //     }
+        
+    //     console.log('create')
+    //     Experience.instance = new Experience(_options)
+        
+    //     return Experience.instance
+    // }
+
+    setConfig()
+    {
+        this.config = {}
+    
+        // Pixel ratio
+        this.config.pixelRatio = Math.min(Math.max(window.devicePixelRatio, 1), 2)
+
+        // Width and height
+        const boundings = this.targetElement.getBoundingClientRect()
+        this.config.width = boundings.width
+        this.config.height = boundings.height || window.innerHeight
+        this.config.smallestSide = Math.min(this.config.width, this.config.height)
+        this.config.largestSide = Math.max(this.config.width, this.config.height)
+        
+        // Debug
+        // this.config.debug = window.location.hash === '#debug'
+        this.config.debug = this.config.width > 420
+    }
+
+    setStats()
+    {
+        if(this.config.debug)
+        {
+            this.stats = new Stats(true)
+        }
+    }
+
+    setDebug()
+    {
+        if(this.config.debug)
+        {
+            this.debug = new Pane()
+            this.debug.containerElem_.style.width = '320px'
+        }
+    }
+    
+    setScene()
+    {
+        this.scene = new THREE.Scene()
+    }
+
+    setCamera()
+    {
+        this.camera = new Camera()
+    }
+
+    setRenderer()
+    {
+        this.renderer = new Renderer({ rendererInstance: this.rendererInstance })
+
+        this.targetElement.appendChild(this.renderer.instance.domElement)
+    }
+
+    setResources()
+    {
+        this.resources = new Resources(assets)
+    }
+
+    setWorld()
+    {
+        this.world = new World()
+    }
+
+    setNavigation()
+    {
+        this.navigation = new Navigation()
+    }
+
+    update()
+    {
+        if(this.stats)
+            this.stats.update()
+        
+        this.camera.update()
+        
+        if(this.renderer)
+            this.renderer.update()
+
+        if(this.world)
+            this.world.update()
+
+        if(this.navigation)
+            this.navigation.update()
+
+        window.requestAnimationFrame(() =>
+        {
+            this.update()
+        })
+    }
+
+    resize()
+    {
+        // Config
+        const boundings = this.targetElement.getBoundingClientRect()
+        this.config.width = boundings.width
+        this.config.height = boundings.height
+        this.config.smallestSide = Math.min(this.config.width, this.config.height)
+        this.config.largestSide = Math.max(this.config.width, this.config.height)
+
+        this.config.pixelRatio = Math.min(Math.max(window.devicePixelRatio, 1), 2)
+
+        if(this.camera)
+            this.camera.resize()
+
+        if(this.renderer)
+            this.renderer.resize()
+
+        if(this.world)
+            this.world.resize()
+    }
+
+    destroy()
+    {
+        
+    }
+}
+
+
+
+================================================
+FILE: src/Experience/GoogleLeds.js
+================================================
+import Experience from './Experience.js'
+
+import * as THREE from 'three'
+
+export default class GoogleLeds
+{
+    constructor()
+    {
+        this.experience = new Experience()
+        this.resources = this.experience.resources
+        this.debug = this.experience.debug
+        this.scene = this.experience.scene
+        this.time = this.experience.time
+
+        // Debug
+        if(this.debug)
+        {
+            this.debugFolder = this.debug.addFolder({
+                title: 'googleLeds',
+                expanded: false
+            })
+        }
+
+        this.setModel()
+    }
+
+    setModel()
+    {
+        this.model = {}
+
+        this.model.items = []
+
+        const colors = ['#196aff', '#ff0000', '#ff5d00', '#7db81b']
+
+        // Texture
+        this.model.texture = this.resources.items.googleHomeLedMaskTexture
+
+        // Children
+        const children = [...this.resources.items.googleHomeLedsModel.scene.children]
+        children.sort((_a, _b) =>
+        {
+            if(_a.name < _b.name)
+                return -1
+
+            if(_a.name > _b.name)
+                return 1
+
+            return 0
+        })
+        
+        let i = 0
+        for(const _child of children)
+        {
+            const item = {}
+
+            item.index = i
+
+            item.color = colors[item.index]
+
+            item.material = new THREE.MeshBasicMaterial({
+                color: item.color,
+                transparent: true,
+                alphaMap: this.model.texture
+            })
+
+            item.mesh = _child
+            item.mesh.material = item.material
+            this.scene.add(item.mesh)
+
+            this.model.items.push(item)
+
+            // Debug
+            if(this.debug)
+            {
+                this.debugFolder
+                    .addInput(
+                        item,
+                        'color',
+                        { view: 'color' }
+                    )
+                    .on('change', () =>
+                    {
+                        item.material.color.set(item.color)
+                    })
+            }
+
+            i++
+        }
+    }
+
+    update()
+    {
+        for(const _item of this.model.items)
+        {
+            _item.material.opacity = Math.sin(this.time.elapsed * 0.002 - _item.index * 0.5) * 0.5 + 0.5
+        }
+    }
+}
+
+
+================================================
+FILE: src/Experience/LoupedeckButtons.js
+================================================
+import * as THREE from 'three'
+import { gsap } from 'gsap'
+
+import Experience from './Experience.js'
+
+export default class LoupedeckButtons
+{
+    constructor()
+    {
+        this.experience = new Experience()
+        this.resources = this.experience.resources
+        this.debug = this.experience.debug
+        this.scene = this.experience.scene
+        this.time = this.experience.time
+
+        // Debug
+        if(this.debug)
+        {
+            this.debugFolder = this.debug.addFolder({
+                title: 'loupedeckButtons',
+                expanded: false
+            })
+        }
+
+        this.setModel()
+        this.setAnimation()
+    }
+
+    setModel()
+    {
+        this.model = {}
+
+        this.model.items = []
+
+        // Children
+        const children = [...this.resources.items.loupedeckButtonsModel.scene.children]
+        children.sort((_a, _b) =>
+        {
+            if(_a.name < _b.name)
+                return -1
+
+            if(_a.name > _b.name)
+                return 1
+
+            return 0
+        })
+        
+        let i = 0
+        for(const _child of children)
+        {
+            const item = {}
+
+            item.index = i
+
+            item.material = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true
+            })
+
+            item.mesh = _child
+            item.mesh.material = item.material
+            this.scene.add(item.mesh)
+
+            this.model.items.push(item)
+
+            // // Debug
+            // if(this.debug)
+            // {
+            //     this.debugFolder
+            //         .addInput(
+            //             item,
+            //             'color',
+            //             { view: 'color' }
+            //         )
+            //         .on('change', () =>
+            //         {
+            //             item.material.color.set(item.color)
+            //         })
+            // }
+
+            i++
+        }
+    }
+
+    setAnimation()
+    {
+        this.animation = {}
+
+        this.animation.colors = ['#af55cf', '#dbd85d', '#e86b24', '#b81b54']
+
+        for(const _colorIndex in this.animation.colors)
+        {
+            // Debug
+            if(this.debug)
+            {
+                this.debugFolder
+                    .addInput(
+                        this.animation.colors,
+                        _colorIndex,
+                        { view: 'color' }
+                    )
+                    // .on('change', () =>
+                    // {
+                    //     item.material.color.set(item.color)
+                    // })
+            }
+        }
+
+        this.animation.play = () =>
+        {
+            const buttons = []
+            const outButtons = []
+
+            for(const _button of this.model.items)
+            {
+                if(Math.random() < 0.5)
+                {
+                    buttons.push(_button)
+                }
+                else
+                {
+                    outButtons.push(_button)
+                }
+            }
+
+            for(const _button of outButtons)
+            {
+                _button.material.opacity = 0
+            }
+
+            let i = 0
+            for(const _button of buttons)
+            {
+                _button.material.color.set(this.animation.colors[Math.floor(Math.random() * this.animation.colors.length)])
+                gsap.to(
+                    _button.material,
+                    {
+                        delay: i * 0.05,
+                        duration: 0.2,
+                        opacity: 1,
+                        onComplete: () =>
+                        {
+                            gsap.to(
+                                _button.material,
+                                {
+                                    delay: 3,
+                                    duration: 0.5,
+                                    opacity: 0
+                                }
+                            )
+                        }
+                    }
+                )
+
+                i++
+            }
+        }
+
+        this.animation.play()
+        window.setInterval(this.animation.play, 5000)
+    }
+
+    update()
+    {
+        // for(const _item of this.model.items)
+        // {
+        //     _item.material.opacity = Math.sin(this.time.elapsed * 0.002 - _item.index * 0.5) * 0.5 + 0.5
+        // }
+    }
+}
+
+
+================================================
+FILE: src/Experience/Navigation.js
+================================================
+import * as THREE from 'three'
+import Experience from './Experience.js'
+import normalizeWheel from 'normalize-wheel'
+
+export default class Navigation
+{
+    constructor()
+    {
+        this.experience = new Experience()
+        this.targetElement = this.experience.targetElement
+        this.camera = this.experience.camera
+        this.config = this.experience.config
+        this.time = this.experience.time
+
+        this.setView()
+    }
+
+    setView()
+    {
+        this.view = {}
+
+        this.view.spherical = {}
+        this.view.spherical.value = new THREE.Spherical(30, Math.PI * 0.35, - Math.PI * 0.25)
+        // this.view.spherical.value.radius = 5
+        this.view.spherical.smoothed = this.view.spherical.value.clone()
+        this.view.spherical.smoothing = 0.005
+        this.view.spherical.limits = {}
+        this.view.spherical.limits.radius = { min: 10, max: 50 }
+        this.view.spherical.limits.phi = { min: 0.01, max: Math.PI * 0.5 }
+        this.view.spherical.limits.theta = { min: - Math.PI * 0.5, max: 0 }
+
+        this.view.target = {}
+        this.view.target.value = new THREE.Vector3(0, 2, 0)
+        // this.view.target.value.set(0, 3, -3)
+        this.view.target.smoothed = this.view.target.value.clone()
+        this.view.target.smoothing = 0.005
+        this.view.target.limits = {}
+        this.view.target.limits.x = { min: - 4, max: 4 }
+        this.view.target.limits.y = { min: 1, max: 6 }
+        this.view.target.limits.z = { min: - 4, max: 4 }
+
+        this.view.drag = {}
+        this.view.drag.delta = {}
+        this.view.drag.delta.x = 0
+        this.view.drag.delta.y = 0
+        this.view.drag.previous = {}
+        this.view.drag.previous.x = 0
+        this.view.drag.previous.y = 0
+        this.view.drag.sensitivity = 1
+        this.view.drag.alternative = false
+
+        this.view.zoom = {}
+        this.view.zoom.sensitivity = 0.01
+        this.view.zoom.delta = 0
+
+        /**
+         * Methods
+         */
+        this.view.down = (_x, _y) =>
+        {
+            this.view.drag.previous.x = _x
+            this.view.drag.previous.y = _y
+        }
+
+        this.view.move = (_x, _y) =>
+        {
+            this.view.drag.delta.x += _x - this.view.drag.previous.x
+            this.view.drag.delta.y += _y - this.view.drag.previous.y
+
+            this.view.drag.previous.x = _x
+            this.view.drag.previous.y = _y
+        }
+
+        this.view.up = () =>
+        {
+
+        }
+
+        this.view.zoomIn = (_delta) =>
+        {
+            this.view.zoom.delta += _delta
+        }
+
+        /**
+         * Mouse events
+         */
+        this.view.onMouseDown = (_event) =>
+        {
+            _event.preventDefault()
+
+            this.view.drag.alternative = _event.button === 2 || _event.button === 1 || _event.ctrlKey || _event.shiftKey
+
+            this.view.down(_event.clientX, _event.clientY)
+
+            window.addEventListener('mouseup', this.view.onMouseUp)
+            window.addEventListener('mousemove', this.view.onMouseMove)
+        }
+
+        this.view.onMouseMove = (_event) =>
+        {
+            _event.preventDefault()
+            
+            this.view.move(_event.clientX, _event.clientY)
+        }
+
+        this.view.onMouseUp = (_event) =>
+        {
+            _event.preventDefault()
+            
+            this.view.up()
+
+            window.removeEventListener('mouseup', this.view.onMouseUp)
+            window.removeEventListener('mousemove', this.view.onMouseMove)
+        }
+
+        this.targetElement.addEventListener('mousedown', this.view.onMouseDown)
+        
+        /**
+         * Touch events
+         */
+        this.view.onTouchStart = (_event) =>
+        {
+            _event.preventDefault()
+
+            this.view.drag.alternative = _event.touches.length > 1
+
+            this.view.down(_event.touches[0].clientX, _event.touches[0].clientY)
+
+            window.addEventListener('touchend', this.view.onTouchEnd)
+            window.addEventListener('touchmove', this.view.onTouchMove)
+        }
+
+        this.view.onTouchMove = (_event) =>
+        {
+            _event.preventDefault()
+            
+            this.view.move(_event.touches[0].clientX, _event.touches[0].clientY)
+        }
+
+        this.view.onTouchEnd = (_event) =>
+        {
+            _event.preventDefault()
+            
+            this.view.up()
+
+            window.removeEventListener('touchend', this.view.onTouchEnd)
+            window.removeEventListener('touchmove', this.view.onTouchMove)
+        }
+
+        window.addEventListener('touchstart', this.view.onTouchStart)
+
+        /**
+         * Context menu
+         */
+        this.view.onContextMenu = (_event) =>
+        {
+            _event.preventDefault()
+        }
+        
+        window.addEventListener('contextmenu', this.view.onContextMenu)
+
+        /**
+         * Wheel
+         */
+        this.view.onWheel = (_event) =>
+        {
+            _event.preventDefault()
+
+            const normalized = normalizeWheel(_event)
+            this.view.zoomIn(normalized.pixelY)
+        }
+        
+        window.addEventListener('mousewheel', this.view.onWheel, { passive: false })
+        window.addEventListener('wheel', this.view.onWheel, { passive: false })
+    }
+
+    update()
+    {
+        /**
+         * View
+         */
+        // Zoom
+        this.view.spherical.value.radius += this.view.zoom.delta * this.view.zoom.sensitivity
+
+        // Apply limits
+        this.view.spherical.value.radius = Math.min(Math.max(this.view.spherical.value.radius, this.view.spherical.limits.radius.min), this.view.spherical.limits.radius.max)
+
+        // Drag
+        if(this.view.drag.alternative)
+        {
+            const up = new THREE.Vector3(0, 1, 0)
+            const right = new THREE.Vector3(- 1, 0, 0)
+
+            up.applyQuaternion(this.camera.modes.default.instance.quaternion)
+            right.applyQuaternion(this.camera.modes.default.instance.quaternion)
+
+            up.multiplyScalar(this.view.drag.delta.y * 0.01)
+            right.multiplyScalar(this.view.drag.delta.x * 0.01)
+
+            this.view.target.value.add(up)
+            this.view.target.value.add(right)
+
+            // Apply limits
+            this.view.target.value.x = Math.min(Math.max(this.view.target.value.x, this.view.target.limits.x.min), this.view.target.limits.x.max)
+            this.view.target.value.y = Math.min(Math.max(this.view.target.value.y, this.view.target.limits.y.min), this.view.target.limits.y.max)
+            this.view.target.value.z = Math.min(Math.max(this.view.target.value.z, this.view.target.limits.z.min), this.view.target.limits.z.max)
+        }
+        else
+        {
+            this.view.spherical.value.theta -= this.view.drag.delta.x * this.view.drag.sensitivity / this.config.smallestSide
+            this.view.spherical.value.phi -= this.view.drag.delta.y * this.view.drag.sensitivity / this.config.smallestSide    
+        
+            // Apply limits
+            this.view.spherical.value.theta = Math.min(Math.max(this.view.spherical.value.theta, this.view.spherical.limits.theta.min), this.view.spherical.limits.theta.max)
+            this.view.spherical.value.phi = Math.min(Math.max(this.view.spherical.value.phi, this.view.spherical.limits.phi.min), this.view.spherical.limits.phi.max)
+        }
+
+        this.view.drag.delta.x = 0
+        this.view.drag.delta.y = 0
+        this.view.zoom.delta = 0
+
+        // Smoothing
+        this.view.spherical.smoothed.radius += (this.view.spherical.value.radius - this.view.spherical.smoothed.radius) * this.view.spherical.smoothing * this.time.delta
+        this.view.spherical.smoothed.phi += (this.view.spherical.value.phi - this.view.spherical.smoothed.phi) * this.view.spherical.smoothing * this.time.delta
+        this.view.spherical.smoothed.theta += (this.view.spherical.value.theta - this.view.spherical.smoothed.theta) * this.view.spherical.smoothing * this.time.delta
+
+        this.view.target.smoothed.x += (this.view.target.value.x - this.view.target.smoothed.x) * this.view.target.smoothing * this.time.delta
+        this.view.target.smoothed.y += (this.view.target.value.y - this.view.target.smoothed.y) * this.view.target.smoothing * this.time.delta
+        this.view.target.smoothed.z += (this.view.target.value.z - this.view.target.smoothed.z) * this.view.target.smoothing * this.time.delta
+
+        const viewPosition = new THREE.Vector3()
+        viewPosition.setFromSpherical(this.view.spherical.smoothed)
+        viewPosition.add(this.view.target.smoothed)
+
+        this.camera.modes.default.instance.position.copy(viewPosition)
+        this.camera.modes.default.instance.lookAt(this.view.target.smoothed)
+    }
+}
+
+
+================================================
+FILE: src/Experience/Renderer.js
+================================================
+import * as THREE from 'three'
+import Experience from './Experience.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+
+export default class Renderer
+{
+    constructor(_options = {})
+    {
+        this.experience = new Experience()
+        this.config = this.experience.config
+        this.debug = this.experience.debug
+        this.stats = this.experience.stats
+        this.time = this.experience.time
+        this.sizes = this.experience.sizes
+        this.scene = this.experience.scene
+        this.camera = this.experience.camera
+        
+        this.usePostprocess = false
+
+        this.setInstance()
+        this.setPostProcess()
+    }
+
+    setInstance()
+    {
+        this.clearColor = '#010101'
+
+        // Renderer
+        this.instance = new THREE.WebGLRenderer({
+            alpha: false,
+            antialias: true
+        })
+        this.instance.domElement.style.position = 'absolute'
+        this.instance.domElement.style.top = 0
+        this.instance.domElement.style.left = 0
+        this.instance.domElement.style.width = '100%'
+        this.instance.domElement.style.height = '100%'
+
+        // this.instance.setClearColor(0x414141, 1)
+        this.instance.setClearColor(this.clearColor, 1)
+        this.instance.setSize(this.config.width, this.config.height)
+        this.instance.setPixelRatio(this.config.pixelRatio)
+
+        // this.instance.physicallyCorrectLights = true
+        // this.instance.gammaOutPut = true
+        this.instance.outputEncoding = THREE.sRGBEncoding
+        // this.instance.shadowMap.type = THREE.PCFSoftShadowMap
+        // this.instance.shadowMap.enabled = false
+        // this.instance.toneMapping = THREE.ReinhardToneMapping
+        // this.instance.toneMappingExposure = 1.3
+
+        this.context = this.instance.getContext()
+
+        // Add stats panel
+        if(this.stats)
+        {
+            this.stats.setRenderPanel(this.context)
+        }
+    }
+
+    setPostProcess()
+    {
+        this.postProcess = {}
+
+        /**
+         * Render pass
+         */
+        this.postProcess.renderPass = new RenderPass(this.scene, this.camera.instance)
+
+        /**
+         * Effect composer
+         */
+        const RenderTargetClass = this.config.pixelRatio >= 2 ? THREE.WebGLRenderTarget : THREE.WebGLMultisampleRenderTarget
+        // const RenderTargetClass = THREE.WebGLRenderTarget
+        this.renderTarget = new RenderTargetClass(
+            this.config.width,
+            this.config.height,
+            {
+                generateMipmaps: false,
+                minFilter: THREE.LinearFilter,
+                magFilter: THREE.LinearFilter,
+                format: THREE.RGBFormat,
+                encoding: THREE.sRGBEncoding
+            }
+        )
+        this.postProcess.composer = new EffectComposer(this.instance, this.renderTarget)
+        this.postProcess.composer.setSize(this.config.width, this.config.height)
+        this.postProcess.composer.setPixelRatio(this.config.pixelRatio)
+
+        this.postProcess.composer.addPass(this.postProcess.renderPass)
+    }
+
+    resize()
+    {
+        // Instance
+        this.instance.setSize(this.config.width, this.config.height)
+        this.instance.setPixelRatio(this.config.pixelRatio)
+
+        // Post process
+        this.postProcess.composer.setSize(this.config.width, this.config.height)
+        this.postProcess.composer.setPixelRatio(this.config.pixelRatio)
+    }
+
+    update()
+    {
+        if(this.stats)
+        {
+            this.stats.beforeRender()
+        }
+
+        if(this.usePostprocess)
+        {
+            this.postProcess.composer.render()
+        }
+        else
+        {
+            this.instance.render(this.scene, this.camera.instance)
+        }
+
+        if(this.stats)
+        {
+            this.stats.afterRender()
+        }
+    }
+
+    destroy()
+    {
+        this.instance.renderLists.dispose()
+        this.instance.dispose()
+        this.renderTarget.dispose()
+        this.postProcess.composer.renderTarget1.dispose()
+        this.postProcess.composer.renderTarget2.dispose()
+    }
+}
+
+
+================================================
+FILE: src/Experience/Resources.js
+================================================
+import * as THREE from 'three'
+import EventEmitter from './Utils/EventEmitter.js'
+import Loader from './Utils/Loader.js'
+
+export default class Resources extends EventEmitter
+{
+    constructor(_assets)
+    {
+        super()
+
+        // Items (will contain every resources)
+        this.items = {}
+
+        // Loader
+        this.loader = new Loader({ renderer: this.renderer })
+
+        this.groups = {}
+        this.groups.assets = [..._assets]
+        this.groups.loaded = []
+        this.groups.current = null
+        this.loadNextGroup()
+
+        // Loader file end event
+        this.loader.on('fileEnd', (_resource, _data) =>
+        {
+            let data = _data
+
+            // Convert to texture
+            if(_resource.type === 'texture')
+            {
+                if(!(data instanceof THREE.Texture))
+                {
+                    data = new THREE.Texture(_data)
+                }
+                data.needsUpdate = true
+            }
+
+            this.items[_resource.name] = data
+
+            // Progress and event
+            this.groups.current.loaded++
+            this.trigger('progress', [this.groups.current, _resource, data])
+        })
+
+        // Loader all end event
+        this.loader.on('end', () =>
+        {
+            this.groups.loaded.push(this.groups.current)
+            
+            // Trigger
+            this.trigger('groupEnd', [this.groups.current])
+
+            if(this.groups.assets.length > 0)
+            {
+                this.loadNextGroup()
+            }
+            else
+            {
+                this.trigger('end')
+            }
+        })
+    }
+
+    loadNextGroup()
+    {
+        this.groups.current = this.groups.assets.shift()
+        this.groups.current.toLoad = this.groups.current.items.length
+        this.groups.current.loaded = 0
+
+        this.loader.load(this.groups.current.items)
+    }
+
+    createInstancedMeshes(_children, _groups)
+    {
+        // Groups
+        const groups = []
+
+        for(const _group of _groups)
+        {
+            groups.push({
+                name: _group.name,
+                regex: _group.regex,
+                meshesGroups: [],
+                instancedMeshes: []
+            })
+        }
+
+        // Result
+        const result = {}
+
+        for(const _group of groups)
+        {
+            result[_group.name] = _group.instancedMeshes
+        }
+
+        return result
+    }
+
+    destroy()
+    {
+        for(const _itemKey in this.items)
+        {
+            const item = this.items[_itemKey]
+            if(item instanceof THREE.Texture)
+            {
+                item.dispose()
+            }
+        }
+    }
+}
+
+
+
+================================================
+FILE: src/Experience/Screen.js
+================================================
+import * as THREE from 'three'
+
+import Experience from './Experience.js'
+
+export default class Screen
+{
+    constructor(_mesh, _sourcePath)
+    {
+        this.experience = new Experience()
+        this.resources = this.experience.resources
+        this.debug = this.experience.debug
+        this.scene = this.experience.scene
+        this.world = this.experience.world
+
+        this.mesh = _mesh
+        this.sourcePath = _sourcePath
+
+        this.setModel()
+    }
+
+    setModel()
+    {
+        this.model = {}
+
+        // Element
+        this.model.element = document.createElement('video')
+        this.model.element.muted = true
+        this.model.element.loop = true
+        this.model.element.controls = true
+        this.model.element.playsInline = true
+        this.model.element.autoplay = true
+        this.model.element.src = this.sourcePath
+        this.model.element.play()
+
+        // Texture
+        this.model.texture = new THREE.VideoTexture(this.model.element)
+        this.model.texture.encoding = THREE.sRGBEncoding
+
+        // Material
+        this.model.material = new THREE.MeshBasicMaterial({
+            map: this.model.texture
+        })
+
+        // Mesh
+        this.model.mesh = this.mesh
+        this.model.mesh.material = this.model.material
+        this.scene.add(this.model.mesh)
+    }
+
+    update()
+    {
+        // this.model.group.rotation.y = Math.sin(this.time.elapsed * 0.0005) * 0.5
+    }
+}
+
+
+================================================
+FILE: src/Experience/TopChair.js
+================================================
+import * as THREE from 'three'
+
+import Experience from './Experience.js'
+
+export default class TopChair
+{
+    constructor()
+    {
+        this.experience = new Experience()
+        this.resources = this.experience.resources
+        this.debug = this.experience.debug
+        this.scene = this.experience.scene
+        this.world = this.experience.world
+        this.time = this.experience.time
+
+        this.setModel()
+    }
+
+    setModel()
+    {
+        this.model = {}
+
+        this.model.group = this.resources.items.topChairModel.scene.children[0]
+        this.scene.add(this.model.group)
+        
+        this.model.group.traverse((_child) =>
+        {
+            if(_child instanceof THREE.Mesh)
+            {
+                _child.material = this.world.baked.model.material
+            }
+        })
+    }
+
+    update()
+    {
+        this.model.group.rotation.y = Math.sin(this.time.elapsed * 0.0005) * 0.5
+    }
+}
+
+
+================================================
+FILE: src/Experience/World.js
+================================================
+import * as THREE from 'three'
+import Experience from './Experience.js'
+import Baked from './Baked.js'
+import GoogleLeds from './GoogleLeds.js'
+import LoupedeckButtons from './LoupedeckButtons.js'
+import CoffeeSteam from './CoffeeSteam.js'
+import TopChair from './TopChair.js'
+import ElgatoLight from './ElgatoLight.js'
+import BouncingLogo from './BouncingLogo.js'
+import Screen from './Screen.js'
+
+export default class World
+{
+    constructor(_options)
+    {
+        this.experience = new Experience()
+        this.config = this.experience.config
+        this.scene = this.experience.scene
+        this.resources = this.experience.resources
+        
+        this.resources.on('groupEnd', (_group) =>
+        {
+            if(_group.name === 'base')
+            {
+                this.setBaked()
+                this.setGoogleLeds()
+                this.setLoupedeckButtons()
+                this.setCoffeeSteam()
+                this.setTopChair()
+                this.setElgatoLight()
+                this.setBouncingLogo()
+                this.setScreens()
+            }
+        })
+    }
+
+    setBaked()
+    {
+        this.baked = new Baked()
+    }
+
+    setGoogleLeds()
+    {
+        this.googleLeds = new GoogleLeds()
+    }
+
+    setLoupedeckButtons()
+    {
+        this.loupedeckButtons = new LoupedeckButtons()
+    }
+
+    setCoffeeSteam()
+    {
+        this.coffeeSteam = new CoffeeSteam()
+    }
+
+    setTopChair()
+    {
+        this.topChair = new TopChair()
+    }
+
+    setElgatoLight()
+    {
+        this.elgatoLight = new ElgatoLight()
+    }
+
+    setBouncingLogo()
+    {
+        this.bouncingLogo = new BouncingLogo()
+    }
+
+    setScreens()
+    {
+        this.pcScreen = new Screen(
+            this.resources.items.pcScreenModel.scene.children[0],
+            '/assets/videoPortfolio.mp4'
+        )
+        this.macScreen = new Screen(
+            this.resources.items.macScreenModel.scene.children[0],
+            '/assets/videoStream.mp4'
+        )
+    }
+
+    resize()
+    {
+    }
+
+    update()
+    {
+        if(this.googleLeds)
+            this.googleLeds.update()
+
+        if(this.loupedeckButtons)
+            this.loupedeckButtons.update()
+
+        if(this.coffeeSteam)
+            this.coffeeSteam.update()
+
+        if(this.topChair)
+            this.topChair.update()
+
+        if(this.bouncingLogo)
+            this.bouncingLogo.update()
+    }
+
+    destroy()
+    {
+    }
+}
+
+
+================================================
+FILE: src/Experience/shaders/baked/fragment.glsl
+================================================
+uniform sampler2D uBakedDayTexture;
+uniform sampler2D uBakedNightTexture;
+uniform sampler2D uBakedNeutralTexture;
+uniform sampler2D uLightMapTexture;
+
+uniform float uNightMix;
+uniform float uNeutralMix;
+
+uniform vec3 uLightTvColor;
+uniform float uLightTvStrength;
+
+uniform vec3 uLightDeskColor;
+uniform float uLightDeskStrength;
+
+uniform vec3 uLightPcColor;
+uniform float uLightPcStrength;
+
+varying vec2 vUv;
+
+// #pragma glslify: blend = require(glsl-blend/add)
+#pragma glslify: blend = require(glsl-blend/lighten)
+// #pragma glslify: blend = require(glsl-blend/normal)
+// #pragma glslify: blend = require(glsl-blend/screen)
+
+void main()
+{
+    vec3 bakedDayColor = texture2D(uBakedDayTexture, vUv).rgb;
+    vec3 bakedNightColor = texture2D(uBakedNightTexture, vUv).rgb;
+    vec3 bakedNeutralColor = texture2D(uBakedNeutralTexture, vUv).rgb;
+    vec3 bakedColor = mix(mix(bakedDayColor, bakedNightColor, uNightMix), bakedNeutralColor, uNeutralMix);
+    vec3 lightMapColor = texture2D(uLightMapTexture, vUv).rgb;
+
+    float lightTvStrength = lightMapColor.r * uLightTvStrength;
+    bakedColor = blend(bakedColor, uLightTvColor, lightTvStrength);
+
+    float lightPcStrength = lightMapColor.b * uLightPcStrength;
+    bakedColor = blend(bakedColor, uLightPcColor, lightPcStrength);
+
+    float lightDeskStrength = lightMapColor.g * uLightDeskStrength;
+    bakedColor = blend(bakedColor, uLightDeskColor, lightDeskStrength);
+
+    gl_FragColor = vec4(bakedColor, 1.0);
+}
+
+
+================================================
+FILE: src/Experience/shaders/baked/vertex.glsl
+================================================
+varying vec2 vUv;
+
+void main()
+{
+    vec4 modelPosition = modelMatrix * vec4(position, 1.0);
+    vec4 viewPosition = viewMatrix * modelPosition;
+    vec4 projectionPosition = projectionMatrix * viewPosition;
+    gl_Position = projectionPosition;
+
+    vUv = uv;
+}
+
+
+================================================
+FILE: src/Experience/shaders/coffeeSteam/fragment.glsl
+================================================
+uniform float uTime;
+uniform float uTimeFrequency;
+uniform vec2 uUvFrequency;
+uniform vec3 uColor;
+
+varying vec2 vUv;
+
+#pragma glslify: perlin2d = require('../partials/perlin2d.glsl')
+
+void main()
+{
+    vec2 uv = vUv * uUvFrequency;
+    uv.y -= uTime * uTimeFrequency;
+
+    float borderAlpha = min(vUv.x * 4.0, (1.0 - vUv.x) * 4.0);
+    borderAlpha = borderAlpha * (1.0 - vUv.y);
+
+    float perlin = perlin2d(uv);
+    perlin *= borderAlpha;
+    perlin *= 0.6;
+    perlin = min(perlin, 1.0);
+
+    gl_FragColor = vec4(uColor, perlin);
+}
+
+
+================================================
+FILE: src/Experience/shaders/coffeeSteam/vertex.glsl
+================================================
+uniform float uTime;
+
+varying vec2 vUv;
+
+#pragma glslify: perlin2d = require('../partials/perlin2d.glsl')
+
+void main()
+{
+    vec3 newPosition = position;
+    vec2 displacementUv = uv;
+    displacementUv *= 5.0;
+    displacementUv.y -= uTime * 0.0002;
+
+    float displacementStrength = pow(uv.y * 3.0, 2.0);
+    float perlin = perlin2d(displacementUv) * displacementStrength;
+
+    newPosition.y += perlin * 0.1;
+
+    vec4 modelPosition = modelMatrix * vec4(newPosition, 1.0);
+    vec4 viewPosition = viewMatrix * modelPosition;
+    vec4 projectionPosition = projectionMatrix * viewPosition;
+    gl_Position = projectionPosition;
+
+    vUv = uv;
+}
+
+
+================================================
+FILE: src/Experience/shaders/partials/perlin2d.glsl
+================================================
+vec2 fade(vec2 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}
+vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+
+float perlin2d(vec2 P){
+  vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
+  vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
+  Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
+  vec4 ix = Pi.xzxz;
+  vec4 iy = Pi.yyww;
+  vec4 fx = Pf.xzxz;
+  vec4 fy = Pf.yyww;
+  vec4 i = permute(permute(ix) + iy);
+  vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
+  vec4 gy = abs(gx) - 0.5;
+  vec4 tx = floor(gx + 0.5);
+  gx = gx - tx;
+  vec2 g00 = vec2(gx.x,gy.x);
+  vec2 g10 = vec2(gx.y,gy.y);
+  vec2 g01 = vec2(gx.z,gy.z);
+  vec2 g11 = vec2(gx.w,gy.w);
+  vec4 norm = 1.79284291400159 - 0.85373472095314 * 
+    vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
+  g00 *= norm.x;
+  g01 *= norm.y;
+  g10 *= norm.z;
+  g11 *= norm.w;
+  float n00 = dot(g00, vec2(fx.x, fy.x));
+  float n10 = dot(g10, vec2(fx.y, fy.y));
+  float n01 = dot(g01, vec2(fx.z, fy.z));
+  float n11 = dot(g11, vec2(fx.w, fy.w));
+  vec2 fade_xy = fade(Pf.xy);
+  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
+  float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+  return 2.3 * n_xy;
+}
+
+#pragma glslify: export(perlin2d)
+
+
+================================================
+FILE: src/Experience/Utils/EventEmitter.js
+================================================
+export default class
+{
+    /**
+     * Constructor
+     */
+    constructor()
+    {
+        this.callbacks = {}
+        this.callbacks.base = {}
+    }
+
+    /**
+     * On
+     */
+    on(_names, callback)
+    {
+        const that = this
+
+        // Errors
+        if(typeof _names === 'undefined' || _names === '')
+        {
+            console.warn('wrong names')
+            return false
+        }
+
+        if(typeof callback === 'undefined')
+        {
+            console.warn('wrong callback')
+            return false
+        }
+
+        // Resolve names
+        const names = this.resolveNames(_names)
+
+        // Each name
+        names.forEach(function(_name)
+        {
+            // Resolve name
+            const name = that.resolveName(_name)
+
+            // Create namespace if not exist
+            if(!(that.callbacks[ name.namespace ] instanceof Object))
+                that.callbacks[ name.namespace ] = {}
+
+            // Create callback if not exist
+            if(!(that.callbacks[ name.namespace ][ name.value ] instanceof Array))
+                that.callbacks[ name.namespace ][ name.value ] = []
+
+            // Add callback
+            that.callbacks[ name.namespace ][ name.value ].push(callback)
+        })
+
+        return this
+    }
+
+    /**
+     * Off
+     */
+    off(_names)
+    {
+        const that = this
+
+        // Errors
+        if(typeof _names === 'undefined' || _names === '')
+        {
+            console.warn('wrong name')
+            return false
+        }
+
+        // Resolve names
+        const names = this.resolveNames(_names)
+
+        // Each name
+        names.forEach(function(_name)
+        {
+            // Resolve name
+            const name = that.resolveName(_name)
+
+            // Remove namespace
+            if(name.namespace !== 'base' && name.value === '')
+            {
+                delete that.callbacks[ name.namespace ]
+            }
+
+            // Remove specific callback in namespace
+            else
+            {
+                // Default
+                if(name.namespace === 'base')
+                {
+                    // Try to remove from each namespace
+                    for(const namespace in that.callbacks)
+                    {
+                        if(that.callbacks[ namespace ] instanceof Object && that.callbacks[ namespace ][ name.value ] instanceof Array)
+                        {
+                            delete that.callbacks[ namespace ][ name.value ]
+
+                            // Remove namespace if empty
+                            if(Object.keys(that.callbacks[ namespace ]).length === 0)
+                                delete that.callbacks[ namespace ]
+                        }
+                    }
+                }
+
+                // Specified namespace
+                else if(that.callbacks[ name.namespace ] instanceof Object && that.callbacks[ name.namespace ][ name.value ] instanceof Array)
+                {
+                    delete that.callbacks[ name.namespace ][ name.value ]
+
+                    // Remove namespace if empty
+                    if(Object.keys(that.callbacks[ name.namespace ]).length === 0)
+                        delete that.callbacks[ name.namespace ]
+                }
+            }
+        })
+
+        return this
+    }
+
+    /**
+     * Trigger
+     */
+    trigger(_name, _args)
+    {
+        // Errors
+        if(typeof _name === 'undefined' || _name === '')
+        {
+            console.warn('wrong name')
+            return false
+        }
+
+        const that = this
+        let finalResult = null
+        let result = null
+
+        // Default args
+        const args = !(_args instanceof Array) ? [] : _args
+
+        // Resolve names (should on have one event)
+        let name = this.resolveNames(_name)
+
+        // Resolve name
+        name = this.resolveName(name[ 0 ])
+
+        // Default namespace
+        if(name.namespace === 'base')
+        {
+            // Try to find callback in each namespace
+            for(const namespace in that.callbacks)
+            {
+                if(that.callbacks[ namespace ] instanceof Object && that.callbacks[ namespace ][ name.value ] instanceof Array)
+                {
+                    that.callbacks[ namespace ][ name.value ].forEach(function(callback)
+                    {
+                        result = callback.apply(that, args)
+
+                        if(typeof finalResult === 'undefined')
+                        {
+                            finalResult = result
+                        }
+                    })
+                }
+            }
+        }
+
+        // Specified namespace
+        else if(this.callbacks[ name.namespace ] instanceof Object)
+        {
+            if(name.value === '')
+            {
+                console.warn('wrong name')
+                return this
+            }
+
+            that.callbacks[ name.namespace ][ name.value ].forEach(function(callback)
+            {
+                result = callback.apply(that, args)
+
+                if(typeof finalResult === 'undefined')
+                    finalResult = result
+            })
+        }
+
+        return finalResult
+    }
+
+    /**
+     * Resolve names
+     */
+    resolveNames(_names)
+    {
+        let names = _names
+        names = names.replace(/[^a-zA-Z0-9 ,/.]/g, '')
+        names = names.replace(/[,/]+/g, ' ')
+        names = names.split(' ')
+
+        return names
+    }
+
+    /**
+     * Resolve name
+     */
+    resolveName(name)
+    {
+        const newName = {}
+        const parts = name.split('.')
+
+        newName.original  = name
+        newName.value     = parts[ 0 ]
+        newName.namespace = 'base' // Base namespace
+
+        // Specified namespace
+        if(parts.length > 1 && parts[ 1 ] !== '')
+        {
+            newName.namespace = parts[ 1 ]
+        }
+
+        return newName
+    }
+}
+
+
+
+================================================
+FILE: src/Experience/Utils/Loader.js
+================================================
+import EventEmitter from './EventEmitter.js'
+import Experience from '../Experience.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { BasisTextureLoader } from 'three/examples/jsm/loaders/BasisTextureLoader.js'
+
+export default class Resources extends EventEmitter
+{
+    /**
+     * Constructor
+     */
+    constructor()
+    {
+        super()
+
+        this.experience = new Experience()
+        this.renderer = this.experience.renderer.instance
+
+        this.setLoaders()
+
+        this.toLoad = 0
+        this.loaded = 0
+        this.items = {}
+    }
+
+    /**
+     * Set loaders
+     */
+    setLoaders()
+    {
+        this.loaders = []
+
+        // Images
+        this.loaders.push({
+            extensions: ['jpg', 'png'],
+            action: (_resource) =>
+            {
+                const image = new Image()
+
+                image.addEventListener('load', () =>
+                {
+                    this.fileLoadEnd(_resource, image)
+                })
+
+                image.addEventListener('error', () =>
+                {
+                    this.fileLoadEnd(_resource, image)
+                })
+
+                image.src = _resource.source
+            }
+        })
+
+        // Basis images
+        const basisLoader = new BasisTextureLoader()
+        basisLoader.setTranscoderPath('basis')
+        basisLoader.detectSupport(this.renderer)
+
+        this.loaders.push({
+            extensions: ['basis'],
+            action: (_resource) =>
+            {
+                basisLoader.load(_resource.source, (_data) =>
+                {
+                    this.fileLoadEnd(_resource, _data)
+                })
+            }
+        })
+
+        // Draco
+        const dracoLoader = new DRACOLoader()
+        dracoLoader.setDecoderPath('draco/')
+        dracoLoader.setDecoderConfig({ type: 'js' })
+
+        this.loaders.push({
+            extensions: ['drc'],
+            action: (_resource) =>
+            {
+                dracoLoader.load(_resource.source, (_data) =>
+                {
+                    this.fileLoadEnd(_resource, _data)
+
+                    DRACOLoader.releaseDecoderModule()
+                })
+            }
+        })
+
+        // GLTF
+        const gltfLoader = new GLTFLoader()
+        gltfLoader.setDRACOLoader(dracoLoader)
+
+        this.loaders.push({
+            extensions: ['glb', 'gltf'],
+            action: (_resource) =>
+            {
+                gltfLoader.load(_resource.source, (_data) =>
+                {
+                    this.fileLoadEnd(_resource, _data)
+                })
+            }
+        })
+
+        // FBX
+        const fbxLoader = new FBXLoader()
+
+        this.loaders.push({
+            extensions: ['fbx'],
+            action: (_resource) =>
+            {
+                fbxLoader.load(_resource.source, (_data) =>
+                {
+                    this.fileLoadEnd(_resource, _data)
+                })
+            }
+        })
+
+        // RGBE | HDR
+        const rgbeLoader = new RGBELoader()
+
+        this.loaders.push({
+            extensions: ['hdr'],
+            action: (_resource) =>
+            {
+                rgbeLoader.load(_resource.source, (_data) =>
+                {
+                    this.fileLoadEnd(_resource, _data)
+                })
+            }
+        })
+    }
+
+    /**
+     * Load
+     */
+    load(_resources = [])
+    {
+        for(const _resource of _resources)
+        {
+            this.toLoad++
+            const extensionMatch = _resource.source.match(/\.([a-z]+)$/)
+
+            if(typeof extensionMatch[1] !== 'undefined')
+            {
+                const extension = extensionMatch[1]
+                const loader = this.loaders.find((_loader) => _loader.extensions.find((_extension) => _extension === extension))
+
+                if(loader)
+                {
+                    loader.action(_resource)
+                }
+                else
+                {
+                    console.warn(`Cannot found loader for ${_resource}`)
+                }
+            }
+            else
+            {
+                console.warn(`Cannot found extension of ${_resource}`)
+            }
+        }
+    }
+
+    /**
+     * File load end
+     */
+    fileLoadEnd(_resource, _data)
+    {
+        this.loaded++
+        this.items[_resource.name] = _data
+
+        this.trigger('fileEnd', [_resource, _data])
+
+        if(this.loaded === this.toLoad)
+        {
+            this.trigger('end')
+        }
+    }
+}
+
+
+
+================================================
+FILE: src/Experience/Utils/Sizes.js
+================================================
+import EventEmitter from './EventEmitter.js'
+
+export default class Sizes extends EventEmitter
+{
+    /**
+     * Constructor
+     */
+    constructor()
+    {
+        super()
+
+        // Viewport size
+        this.viewport = {}
+        this.$sizeViewport = document.createElement('div')
+        this.$sizeViewport.style.width = '100vw'
+        this.$sizeViewport.style.height = '100vh'
+        this.$sizeViewport.style.position = 'absolute'
+        this.$sizeViewport.style.top = 0
+        this.$sizeViewport.style.left = 0
+        this.$sizeViewport.style.pointerEvents = 'none'
+
+        // Resize event
+        this.resize = this.resize.bind(this)
+        window.addEventListener('resize', this.resize)
+
+        this.resize()
+    }
+
+    /**
+     * Resize
+     */
+    resize()
+    {
+        document.body.appendChild(this.$sizeViewport)
+        this.viewport.width = this.$sizeViewport.offsetWidth
+        this.viewport.height = this.$sizeViewport.offsetHeight
+        document.body.removeChild(this.$sizeViewport)
+
+        this.width = window.innerWidth
+        this.height = window.innerHeight
+
+        this.trigger('resize')
+    }
+}
+
+
+
+================================================
+FILE: src/Experience/Utils/Stats.js
+================================================
+import StatsJs from 'stats.js'
+
+export default class Stats
+{
+    constructor(_active)
+    {
+        this.instance = new StatsJs()
+        this.instance.showPanel(3)
+
+        this.active = false
+        this.max = 40
+        this.ignoreMaxed = true
+
+        if(_active)
+        {
+            this.activate()
+        }
+    }
+
+    activate()
+    {
+        this.active = true
+
+        document.body.appendChild(this.instance.dom)
+    }
+
+    deactivate()
+    {
+        this.active = false
+
+        document.body.removeChild(this.instance.dom)
+    }
+
+    setRenderPanel(_context)
+    {
+        this.render = {}
+        this.render.context = _context
+        this.render.extension = this.render.context.getExtension('EXT_disjoint_timer_query_webgl2')
+        this.render.panel = this.instance.addPanel(new StatsJs.Panel('Render (ms)', '#f8f', '#212'))
+
+        const webGL2 = typeof WebGL2RenderingContext !== 'undefined' && _context instanceof WebGL2RenderingContext
+
+        if(!webGL2 || !this.render.extension)
+        {
+            this.deactivate()
+        }
+    }
+
+    beforeRender()
+    {
+        if(!this.active)
+        {
+            return
+        }
+
+        // Setup
+        this.queryCreated = false
+        let queryResultAvailable = false
+
+        // Test if query result available
+        if(this.render.query)
+        {
+            queryResultAvailable = this.render.context.getQueryParameter(this.render.query, this.render.context.QUERY_RESULT_AVAILABLE)
+            const disjoint = this.render.context.getParameter(this.render.extension.GPU_DISJOINT_EXT)
+                
+            if(queryResultAvailable && !disjoint)
+            {
+                const elapsedNanos = this.render.context.getQueryParameter(this.render.query, this.render.context.QUERY_RESULT)
+                const panelValue = Math.min(elapsedNanos / 1000 / 1000, this.max)
+
+                if(panelValue === this.max && this.ignoreMaxed)
+                {
+                    
+                }
+                else
+                {
+                    this.render.panel.update(panelValue, this.max)
+                }
+            }
+        }
+
+        // If query result available or no query yet
+        if(queryResultAvailable || !this.render.query)
+        {
+            // Create new query
+            this.queryCreated = true
+            this.render.query = this.render.context.createQuery()
+            this.render.context.beginQuery(this.render.extension.TIME_ELAPSED_EXT, this.render.query)
+        }
+
+    }
+
+    afterRender()
+    {
+        if(!this.active)
+        {
+            return
+        }
+        
+        // End the query (result will be available "later")
+        if(this.queryCreated)
+        {
+            this.render.context.endQuery(this.render.extension.TIME_ELAPSED_EXT)
+        }
+    }
+
+    update()
+    {
+        if(!this.active)
+        {
+            return
+        }
+
+        this.instance.update()
+    }
+
+    destroy()
+    {
+        this.deactivate()
+    }
+}
+
+
+================================================
+FILE: src/Experience/Utils/Time.js
+================================================
+import EventEmitter from './EventEmitter.js'
+
+export default class Time extends EventEmitter
+{
+    /**
+     * Constructor
+     */
+    constructor()
+    {
+        super()
+
+        this.start = Date.now()
+        this.current = this.start
+        this.elapsed = 0
+        this.delta = 16
+        this.playing = true
+
+        this.tick = this.tick.bind(this)
+        this.tick()
+    }
+
+    play()
+    {
+        this.playing = true
+    }
+
+    pause()
+    {
+        this.playing = false
+    }
+
+    /**
+     * Tick
+     */
+    tick()
+    {
+        this.ticker = window.requestAnimationFrame(this.tick)
+
+        const current = Date.now()
+
+        this.delta = current - this.current
+        this.elapsed += this.playing ? this.delta : 0
+        this.current = current
+
+        if(this.delta > 60)
+        {
+            this.delta = 60
+        }
+
+        if(this.playing)
+        {
+            this.trigger('tick')
+        }
+    }
+
+    /**
+     * Stop
+     */
+    stop()
+    {
+        window.cancelAnimationFrame(this.ticker)
+    }
+}
+
+
+
+================================================
+FILE: static/.gitkeep
+================================================
+[Empty file]
+
+
+================================================
+FILE: static/assets/coffeeSteamModel.glb
+================================================
+[Binary file]
+
+
+================================================
+FILE: static/assets/elgatoLightModel.glb
+================================================
+[Binary file]
+
+
+================================================
+FILE: static/assets/googleHomeLedsModel.glb
+================================================
+[Binary file]
+
+
+================================================
+FILE: static/assets/loupedeckButtonsModel.glb
+================================================
+[Binary file]
+
+
+================================================
+FILE: static/assets/macScreenModel.glb
+================================================
+[Binary file]
+
+
+================================================
+FILE: static/assets/pcScreenModel.glb
+================================================
+[Binary file]
+
+
+================================================
+FILE: static/assets/topChairModel.glb
+================================================
+[Binary file]
+
+
+================================================
+FILE: static/basis/README.md
+================================================
+# Basis Universal GPU Texture Compression
+
+Basis Universal is a "[supercompressed](http://gamma.cs.unc.edu/GST/gst.pdf)"
+GPU texture and texture video compression system that outputs a highly
+compressed intermediate file format (.basis) that can be quickly transcoded to
+a wide variety of GPU texture compression formats.
+
+[GitHub](https://github.com/BinomialLLC/basis_universal)
+
+## Transcoders
+
+Basis Universal texture data may be used in two different file formats:
+`.basis` and `.ktx2`, where `ktx2` is a standardized wrapper around basis texture data.
+
+For further documentation about the Basis compressor and transcoder, refer to
+the [Basis GitHub repository](https://github.com/BinomialLLC/basis_universal).
+
+The folder contains two files required for transcoding `.basis` or `.ktx2` textures:
+
+* `basis_transcoder.js` — JavaScript wrapper for the WebAssembly transcoder.
+* `basis_transcoder.wasm` — WebAssembly transcoder.
+
+Both are dependencies of `THREE.KTX2Loader` and `THREE.BasisTextureLoader`:
+
+```js
+var ktx2Loader = new THREE.KTX2Loader();
+ktx2Loader.setTranscoderPath( 'examples/js/libs/basis/' );
+ktx2Loader.detectSupport( renderer );
+ktx2Loader.load( 'diffuse.ktx2', function ( texture ) {
+
+	var material = new THREE.MeshStandardMaterial( { map: texture } );
+
+}, function () {
+
+	console.log( 'onProgress' );
+
+}, function ( e ) {
+
+	console.error( e );
+
+} );
+```
+
+## License
+
+[Apache License 2.0](https://github.com/BinomialLLC/basis_universal/blob/master/LICENSE)
+
+
+
+================================================
+FILE: static/draco/README.md
+================================================
+# Draco 3D Data Compression
+
+Draco is an open-source library for compressing and decompressing 3D geometric meshes and point clouds. It is intended to improve the storage and transmission of 3D graphics.
+
+[Website](https://google.github.io/draco/) | [GitHub](https://github.com/google/draco)
+
+## Contents
+
+This folder contains three utilities:
+
+* `draco_decoder.js` — Emscripten-compiled decoder, compatible with any modern browser.
+* `draco_decoder.wasm` — WebAssembly decoder, compatible with newer browsers and devices.
+* `draco_wasm_wrapper.js` — JavaScript wrapper for the WASM decoder.
+
+Each file is provided in two variations:
+
+* **Default:** Latest stable builds, tracking the project's [master branch](https://github.com/google/draco).
+* **glTF:** Builds targeted by the [glTF mesh compression extension](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_draco_mesh_compression), tracking the [corresponding Draco branch](https://github.com/google/draco/tree/gltf_2.0_draco_extension).
+
+Either variation may be used with `THREE.DRACOLoader`:
+
+```js
+var dracoLoader = new THREE.DRACOLoader();
+dracoLoader.setDecoderPath('path/to/decoders/');
+dracoLoader.setDecoderConfig({type: 'js'}); // (Optional) Override detection of WASM support.
+```
+
+Further [documentation on GitHub](https://github.com/google/draco/tree/master/javascript/example#static-loading-javascript-decoder).
+
+## License
+
+[Apache License 2.0](https://github.com/google/draco/blob/master/LICENSE)
+
+

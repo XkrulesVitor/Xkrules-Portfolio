@@ -1,7 +1,18 @@
 /* left/top/width/height/z-index chegam inline, em % do desktop (cqw/cqh, ver Window.tsx).
-   Sem `pointer-events: auto` aqui de propósito: o host controla o ponteiro por herança. */
+   Sem `pointer-events: auto` aqui de propósito: o host controla o ponteiro por herança.
+   Maximizar e restaurar animam a geometria; durante arraste e resize (data-interacting) ela segue
+   o ponteiro sem transição. */
 .positioner {
   position: absolute;
+  transition:
+    left 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    top 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.positioner[data-interacting='true'] {
+  transition: none;
 }
 
 .positioner[data-state='minimized'],
@@ -13,6 +24,13 @@
 .positioner[data-minimized='true'] {
   visibility: hidden;
   transition: visibility 0s linear 0.32s;
+}
+
+/* Maximizada: encosta nas bordas da área de trabalho, sem cantos arredondados. */
+.positioner[data-maximized='true'] .window {
+  border-radius: 0;
+  border-right-width: 0;
+  border-left-width: 0;
 }
 
 .window {
@@ -57,6 +75,10 @@
 
 .titlebar[data-dragging='true'] {
   cursor: grabbing;
+}
+
+.titlebar[data-maximized='true'] {
+  cursor: default;
 }
 
 .titleGlyph {
@@ -126,4 +148,38 @@
   scrollbar-width: thin;
   user-select: text;
   -webkit-user-select: text;
+}
+
+/* Apps que preenchem a janela (terminal, jogo): o corpo não rola e vira uma coluna de altura
+   definida; o app decide o que rola. */
+.body[data-fill='true'] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Marca de três riscos no canto inferior direito: avisa que a janela redimensiona. */
+.grip {
+  position: absolute;
+  right: calc(var(--px) * 3);
+  bottom: calc(var(--px) * 3);
+  width: calc(var(--px) * 12);
+  height: calc(var(--px) * 12);
+  background: linear-gradient(
+    135deg,
+    transparent 0 46%,
+    rgb(255 255 255 / 0.3) 46% 54%,
+    transparent 54% 66%,
+    rgb(255 255 255 / 0.3) 66% 74%,
+    transparent 74% 86%,
+    rgb(255 255 255 / 0.3) 86% 94%,
+    transparent 94%
+  );
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.16s;
+}
+
+.positioner:has([data-handle='se']:hover) .grip {
+  opacity: 1;
 }
