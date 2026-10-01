@@ -1,0 +1,178 @@
+/* Terminal: preenche a janela (a Window usa data-fill) e rola por dentro. */
+.root {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  background:
+    radial-gradient(90% 70% at 0% 0%, rgb(127 245 208 / 0.06), transparent 70%),
+    #060a14;
+  font-family: var(--font-geist-mono), ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  cursor: text;
+}
+
+.screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--sp-4);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgb(255 255 255 / 0.28) transparent;
+  scrollbar-width: thin;
+}
+
+.line {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.prompt {
+  color: var(--os-mint);
+  font-weight: 600;
+}
+
+.typed {
+  color: var(--os-ink);
+}
+
+.toneNormal {
+  color: var(--os-ink);
+}
+
+.toneDim {
+  color: var(--os-ink-soft);
+}
+
+.toneOk {
+  color: var(--os-mint);
+}
+
+.toneError {
+  color: #ff8a8f;
+}
+
+.toneAccent {
+  color: var(--os-blue);
+  font-weight: 600;
+}
+
+/* Linha de entrada: o prompt e o campo na mesma linha. */
+.inputLine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--os-ink);
+  caret-color: var(--os-mint);
+  font: inherit;
+  outline: none;
+}
+
+/* O foco do campo é o próprio cursor; o anel do .scope ficaria estranho dentro do terminal. */
+.input:focus-visible {
+  outline: none;
+}
+
+/* help e projects: duas colunas alinhadas. */
+.pair {
+  display: grid;
+  grid-template-columns: calc(var(--px) * 150) 1fr;
+  column-gap: var(--sp-3);
+}
+
+.pairName {
+  color: var(--os-blue);
+}
+
+.link {
+  color: var(--os-blue);
+  text-decoration: underline;
+  text-decoration-color: rgb(106 168 255 / 0.4);
+  text-underline-offset: calc(var(--px) * 3);
+  transition: color 0.14s;
+}
+
+.link:hover {
+  color: var(--os-mint);
+}
+
+.linkButton {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--os-blue);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgb(106 168 255 / 0.4);
+  text-underline-offset: calc(var(--px) * 3);
+  cursor: pointer;
+  transition: color 0.14s;
+}
+
+.linkButton:hover {
+  color: var(--os-mint);
+}
+
+/* neofetch: arte ASCII à esquerda, resumo à direita. */
+.neofetch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-2) var(--sp-5);
+  margin: var(--sp-2) 0;
+}
+
+.art {
+  margin: 0;
+  color: var(--os-mint);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: pre;
+}
+
+.rows {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  margin: 0;
+}
+
+.rowHead {
+  margin-bottom: var(--sp-1);
+  padding-bottom: var(--sp-1);
+  border-bottom: 1px solid var(--os-line);
+}
+
+.row {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.rowKey {
+  flex: none;
+  min-width: calc(var(--px) * 76);
+  margin: 0;
+  color: var(--os-mint);
+  font-weight: 600;
+}
+
+.rowValue {
+  min-width: 0;
+  margin: 0;
+  color: var(--os-ink);
+  overflow-wrap: anywhere;
+}

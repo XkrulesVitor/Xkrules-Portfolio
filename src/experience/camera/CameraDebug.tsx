@@ -17,6 +17,12 @@ declare global {
   interface Window {
     /** Só em dev: afinar presets pelo console, ex. `__cameraControls.setLookAt(px, py, pz, tx, ty, tz, false)`. */
     __cameraControls?: CameraControlsImpl
+    /**
+     * Só em dev: roda `seconds` de cena em passos de `dt` segundos de TEMPO SIMULADO (clock do R3F),
+     * sem depender do requestAnimationFrame. Com o painel do browser oculto o rAF não roda; isto
+     * deixa testar voo, idle e parallax pelo console. Ex.: `__stepFrames(4)`.
+     */
+    __stepFrames?: (seconds: number, dt?: number) => void
   }
 }
 
@@ -36,6 +42,7 @@ interface ChangeContext {
 export default function CameraDebug() {
   const controls = useThree((s) => s.controls) as CameraControlsImpl | null
   const controlsRef = useRef<CameraControlsImpl | null>(null)
+  const get = useThree((s) => s.get)
 
   useEffect(() => {
     controlsRef.current = controls
@@ -45,6 +52,23 @@ export default function CameraDebug() {
       delete window.__cameraControls
     }
   }, [controls])
+
+  useEffect(() => {
+    window.__stepFrames = (seconds, dt = 1 / 30) => {
+      const state = get()
+      const previous = state.frameloop
+      state.setFrameloop('never')
+      let t = 0
+      for (let i = 0, n = Math.ceil(seconds / dt); i < n; i++) {
+        t += dt
+        get().advance(t)
+      }
+      get().setFrameloop(previous)
+    }
+    return () => {
+      delete window.__stepFrames
+    }
+  }, [get])
 
   useControls(
     'Camera',

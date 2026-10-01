@@ -7,6 +7,7 @@ import { ProjectsApp } from '@/ui/os/apps/ProjectsApp'
 import { ProjectWindow } from '@/ui/os/apps/ProjectWindow'
 import { Desktop } from '@/ui/os/Desktop'
 import { MonitorScreen } from '@/ui/os/MonitorScreen'
+import type { AppRef } from '@/ui/os/windowManager'
 
 // Página de desenvolvimento: os rótulos abaixo não são conteúdo do site.
 
@@ -83,6 +84,9 @@ function Frame({ title, note, width, height, children, frameClassName, actions }
   )
 }
 
+/** O Desktop de 640x360 já abre com Projetos e o Terminal: confere o SO a meia escala. */
+const SMALL_DESKTOP_WINDOWS: readonly AppRef[] = [{ kind: 'projects' }, { kind: 'terminal' }]
+
 const SCALE = 0.6
 const SCALED_STYLE: CSSProperties = {
   width: 1280,
@@ -100,12 +104,14 @@ export function Preview() {
   return (
     <main className="mx-auto max-w-[1360px] space-y-14 p-6 pb-24">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold">SO do monitor (Fases 2.1 e 2.2)</h1>
+        <h1 className="text-2xl font-bold">SO do monitor (XKrules OS v2)</h1>
         <p className="max-w-3xl text-sm text-ink/70">
           O wrapper do monitor (1280×720, janela Projetos já aberta, fade e inert), o mesmo Desktop em
           outra moldura (o layout escala pelo container, sem vw/vh), o Desktop sob um transform CSS
-          (simula o matrix3d do drei: o arraste tem de continuar certo), o ProjectsApp sozinho num
-          painel estreito e o detalhe com mídia sintética.
+          (simula o matrix3d do drei: arraste e resize têm de continuar certos), o ProjectsApp sozinho
+          num painel estreito e o detalhe com mídia sintética. Apps: Projetos, Este Computador,
+          Terminal, Memória 4×4 e Créditos; janelas redimensionam pelas bordas e cantos, maximizam
+          (botão ou duplo clique na barra) e o menu iniciar desliga e religa o SO.
         </p>
       </header>
 
@@ -130,11 +136,11 @@ export function Preview() {
 
       <Frame
         title="Desktop 640×360"
-        note="Mesmo componente, metade do tamanho: tem de parecer a mesma tela."
+        note="Mesmo componente, metade do tamanho: tem de parecer a mesma tela. Abre com Projetos e o Terminal."
         width={640}
         height={360}
       >
-        <Desktop />
+        <Desktop initialWindows={SMALL_DESKTOP_WINDOWS} />
       </Frame>
 
       <Frame

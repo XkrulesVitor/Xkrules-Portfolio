@@ -89,3 +89,14 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* Marcador [TODO: ...] de conteúdo pendente: chip âmbar tracejado (ver OsTodoText). */
+.todo {
+  padding: 0 calc(var(--px) * 4);
+  border: 1px dashed rgb(255 201 92 / 0.5);
+  border-radius: calc(var(--px) * 4);
+  background: rgb(255 201 92 / 0.1);
+  color: #ffc95c;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 0.88em;
+}

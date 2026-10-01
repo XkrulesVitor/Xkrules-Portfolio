@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import type { PointerEvent as ReactPointerEvent, ReactNode, RefObject } from 'react'
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode, RefObject } from 'react'
 import { motion, useIsPresent } from 'motion/react'
-import { MinusIcon, XIcon } from '@phosphor-icons/react'
+import { CopyIcon, MinusIcon, SquareIcon, XIcon } from '@phosphor-icons/react'
 import { OS_TEXT, type OsGlyphKey } from '@/content/os'
 import type { CssVars } from './cssVars'
+import { pointerDeltaPct } from './desktopPointer'
 import { OsGlyph } from './OsGlyph'
+import { ResizeHandles } from './ResizeHandles'
 import { useOsMotion } from './useOsMotion'
-import { TASKBAR_HEIGHT_PCT, type WindowGeometry } from './windowManager'
+import { TASKBAR_HEIGHT_PCT, type ResizeEdges, type WindowGeometry } from './windowManager'
 import styles from './Window.module.css'
 
 interface WindowProps {
@@ -19,13 +21,21 @@ interface WindowProps {
   geometry: WindowGeometry
   z: number
   minimized: boolean
+  maximized: boolean
   active: boolean
-  /** Raiz do Desktop: o arraste mede o tamanho RENDERIZADO dela (ver handlePointerMove). */
+  /**
+   * O corpo vira uma coluna de altura definida e sem rolagem própria: o app preenche a janela e
+   * decide o que rola (terminal, jogo). Sem isto o corpo rola e o app tem a altura do conteúdo.
+   */
+  fill?: boolean
+  /** Raiz do Desktop: o arraste e o resize medem o tamanho RENDERIZADO dela (ver pointerDeltaPct). */
   desktopRef: RefObject<HTMLElement | null>
   onFocus: (id: string) => void
   onMinimize: (id: string) => void
+  onToggleMaximize: (id: string) => void
   onClose: (id: string) => void
   onMove: (id: string, x: number, y: number) => void
+  onResize: (id: string, edges: ResizeEdges, origin: WindowGeometry, dx: number, dy: number) => void
   children: ReactNode
 }
 
@@ -39,13 +49,15 @@ interface DragSession {
 
 const TASKBAR_CENTER_PCT = 100 - TASKBAR_HEIGHT_PCT / 2
 
-// Os botões da barra de título não iniciam arraste.
-const stopPropagation = (event: ReactPointerEvent<HTMLElement>) => event.stopPropagation()
+// Os botões da barra de título não iniciam arraste nem contam como duplo clique da barra.
+const stopPropagation = (event: ReactPointerEvent<HTMLElement> | ReactMouseEvent<HTMLElement>) =>
+  event.stopPropagation()
 
 /**
  * Janela do SO. O posicionador (div) só cuida de posição e empilhamento, em % do desktop (cqw/cqh
  * do container do Desktop); a animação (escala, opacidade e deslocamento vertical) roda na seção
- * interna, então as duas coisas nunca disputam o mesmo `transform`.
+ * interna, então as duas coisas nunca disputam o mesmo `transform`. As alças de resize ficam no
+ * posicionador, por fora da seção (que corta o excesso).
  */
 export function Window({
   id,
@@ -55,12 +67,16 @@ export function Window({
   geometry,
   z,
   minimized,
+  maximized,
   active,
+  fill = false,
   desktopRef,
   onFocus,
   onMinimize,
+  onToggleMaximize,
   onClose,
   onMove,
+  onResize,
   children,
 }: WindowProps) {
   const { reduced, duration, ease } = useOsMotion()
@@ -70,15 +86,18 @@ export function Window({
   const sectionRef = useRef<HTMLElement>(null)
   const dragRef = useRef<DragSession | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [resizing, setResizing] = useState(false)
 
-  // Janela nova recebe o foco (teclado): senão ele ficaria no atalho, atrás dela.
+  // Janela nova recebe o foco (teclado): senão ele ficaria no atalho, atrás dela. Um app que já
+  // pegou o foco por conta própria (o campo do terminal) não o perde.
   useEffect(() => {
-    sectionRef.current?.focus({ preventScroll: true })
+    const section = sectionRef.current
+    if (section && !section.contains(document.activeElement)) section.focus({ preventScroll: true })
   }, [])
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    // Só botão principal (mouse), toque ou caneta; e uma sessão de arraste por vez.
-    if (event.button !== 0 || dragRef.current) return
+    // Maximizada não se arrasta. Só botão principal (mouse), toque ou caneta; uma sessão por vez.
+    if (maximized || event.button !== 0 || dragRef.current) return
     try {
       event.currentTarget.setPointerCapture(event.pointerId)
     } catch {
@@ -98,14 +117,8 @@ export function Window({
     const drag = dragRef.current
     const desktop = desktopRef.current
     if (!drag || !desktop || drag.pointerId !== event.pointerId) return
-    // O delta em pixels da tela é convertido pelo tamanho RENDERIZADO do desktop. Com o drei
-    // aplicando matrix3d/scale num ancestral, getBoundingClientRect() já devolve a caixa escalada,
-    // e (delta / largura renderizada) continua sendo a fração certa do desktop.
-    const rect = desktop.getBoundingClientRect()
-    if (rect.width <= 0 || rect.height <= 0) return
-    const x = drag.originX + ((event.clientX - drag.startX) / rect.width) * 100
-    const y = drag.originY + ((event.clientY - drag.startY) / rect.height) * 100
-    onMove(id, x, y)
+    const delta = pointerDeltaPct(desktop, event.clientX - drag.startX, event.clientY - drag.startY)
+    if (delta) onMove(id, drag.originX + delta.dx, drag.originY + delta.dy)
   }
 
   const endDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -131,12 +144,17 @@ export function Window({
     ...(accent ? { '--accent': accent } : null),
   }
 
+  const maximizeLabel = maximized ? OS_TEXT.window.restore : OS_TEXT.window.maximize
+
   return (
     <div
       className={styles.positioner}
       style={positionStyle}
       data-state={!isPresent ? 'closing' : minimized ? 'minimized' : 'open'}
       data-minimized={minimized}
+      data-maximized={maximized}
+      // Durante arraste e resize a geometria segue o ponteiro sem transição; maximizar e restaurar animam.
+      data-interacting={dragging || resizing}
       data-active={active && !hidden}
       aria-hidden={hidden || undefined}
       inert={hidden}
@@ -162,17 +180,23 @@ export function Window({
         <div
           className={styles.titlebar}
           data-dragging={dragging}
+          data-maximized={maximized}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
           onLostPointerCapture={endDrag}
+          onDoubleClick={() => onToggleMaximize(id)}
         >
           <span className={styles.titleGlyph} aria-hidden="true">
             <OsGlyph name={glyph} />
           </span>
           <span className={styles.title}>{title}</span>
-          <div className={styles.controls} onPointerDown={stopPropagation}>
+          <div
+            className={styles.controls}
+            onPointerDown={stopPropagation}
+            onDoubleClick={stopPropagation}
+          >
             <button
               type="button"
               className={styles.control}
@@ -181,6 +205,19 @@ export function Window({
               onClick={() => onMinimize(id)}
             >
               <MinusIcon weight="regular" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={styles.control}
+              aria-label={maximizeLabel}
+              title={maximizeLabel}
+              onClick={() => onToggleMaximize(id)}
+            >
+              {maximized ? (
+                <CopyIcon weight="regular" aria-hidden="true" />
+              ) : (
+                <SquareIcon weight="regular" aria-hidden="true" />
+              )}
             </button>
             <button
               type="button"
@@ -193,8 +230,20 @@ export function Window({
             </button>
           </div>
         </div>
-        <div className={styles.body}>{children}</div>
+        <div className={styles.body} data-fill={fill}>
+          {children}
+        </div>
+        {/* Marca do canto de redimensionar (só visual). */}
+        {maximized ? null : <span className={styles.grip} aria-hidden="true" />}
       </motion.section>
+      {maximized ? null : (
+        <ResizeHandles
+          geometry={geometry}
+          desktopRef={desktopRef}
+          onResize={(edges, origin, dx, dy) => onResize(id, edges, origin, dx, dy)}
+          onActiveChange={setResizing}
+        />
+      )}
     </div>
   )
 }

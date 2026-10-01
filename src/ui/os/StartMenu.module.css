@@ -121,3 +121,18 @@
   font-size: calc(var(--px) * 16);
   color: var(--os-ink-soft);
 }
+
+/* Rodapé: separador e o botão Desligar, que avisa com um tom de alerta no hover. */
+.footer {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--os-line);
+}
+
+.shutdown .glyph {
+  color: #ff8a8f;
+}
+
+.shutdown:hover {
+  background: rgb(229 72 77 / 0.2);
+}

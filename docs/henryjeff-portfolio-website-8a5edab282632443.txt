@@ -1,0 +1,4922 @@
+Directory structure:
+└── henryjeff-portfolio-website/
+    ├── readme.md
+    ├── buildspec.yaml
+    ├── LICENSE.md
+    ├── package.json
+    ├── .babelrc
+    ├── .prettierrc
+    ├── bundler/
+    │   ├── webpack.common.js
+    │   ├── webpack.dev.js
+    │   └── webpack.prod.js
+    ├── server/
+    │   └── index.ts
+    ├── src/
+    │   ├── index.html
+    │   ├── script.ts
+    │   ├── style.css
+    │   ├── tsconfig.json
+    │   ├── types.d.ts
+    │   └── Application/
+    │       ├── Application.ts
+    │       ├── Renderer.ts
+    │       ├── sources.ts
+    │       ├── Audio/
+    │       │   ├── AudioManager.ts
+    │       │   └── AudioSources.ts
+    │       ├── Camera/
+    │       │   ├── Camera.ts
+    │       │   └── CameraKeyframes.ts
+    │       ├── Shaders/
+    │       │   ├── coffee/
+    │       │   │   ├── fragment.glsl
+    │       │   │   └── vertex.glsl
+    │       │   └── screen/
+    │       │       ├── fragment.glsl
+    │       │       └── vertex.glsl
+    │       ├── UI/
+    │       │   ├── Animation.ts
+    │       │   ├── App.tsx
+    │       │   ├── EventBus.ts
+    │       │   ├── index.ts
+    │       │   ├── style.css
+    │       │   └── components/
+    │       │       ├── FreeCamToggle.tsx
+    │       │       ├── HelpPrompt.tsx
+    │       │       ├── InfoOverlay.tsx
+    │       │       ├── InterfaceUI.tsx
+    │       │       ├── LoadingScreen.tsx
+    │       │       └── MuteToggle.tsx
+    │       ├── Utils/
+    │       │   ├── BakedModel.ts
+    │       │   ├── Debug.ts
+    │       │   ├── EventEmitter.ts
+    │       │   ├── Loading.ts
+    │       │   ├── Mouse.ts
+    │       │   ├── Resources.ts
+    │       │   ├── Sizes.ts
+    │       │   └── Time.ts
+    │       └── World/
+    │           ├── CoffeeSteam.ts
+    │           ├── Computer.ts
+    │           ├── Cursor.ts
+    │           ├── Decor.ts
+    │           ├── Environment.ts
+    │           ├── Hitboxes.ts
+    │           ├── MonitorScreen.ts
+    │           └── World.ts
+    └── static/
+        ├── .gitkeep
+        ├── draco/
+        │   └── README.md
+        └── models/
+            └── .gitkeep
+
+================================================
+FILE: readme.md
+================================================
+# henryheffernan.com
+
+This is one of two repositories created for my portfolio website <a href="https://henryheffernan.com/"><samp>henryheffernan.com</samp></a>. If you are looking for the 2D OS repository you can find it <a href="https://github.com/henryjeff/portfolio-inner-site"><samp>here</samp></a>! Thanks for taking the time to check this out. If you have any questions of comments, feel free to shoot me an email at <samp><a href="mailto:henryheffernan@gmail.com">henryheffernan@gmail.com</a></samp> or you can DM me on twitter <a href="https://twitter.com/henryheffernan"><samp>@henryheffernan</samp></a>.
+
+<br>
+
+To setup a dev environment:
+
+```bash
+# Clone the repository
+
+# Install dependencies 
+npm i
+
+# Run the local dev server
+npm run dev
+```
+
+To serve a production build:
+
+```bash
+# Install dependencies if not already done - 'npi i'
+
+# Build for production
+npm run build
+
+# Serve the build using express
+npm start
+```
+
+
+
+================================================
+FILE: buildspec.yaml
+================================================
+version: 0.2
+
+phases:
+    install:
+        commands:
+            - npm install
+    build:
+        commands:
+            - npm run build
+
+artifacts:
+    files:
+        - '**/*'
+
+
+
+================================================
+FILE: LICENSE.md
+================================================
+Copyright 2024 Henry Heffernan
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+================================================
+FILE: package.json
+================================================
+{
+    "repository": "#",
+    "license": "UNLICENSED",
+    "scripts": {
+        "start": "node server/index.ts",
+        "build": "webpack --config ./bundler/webpack.prod.js",
+        "dev": "webpack serve --config ./bundler/webpack.dev.js"
+    },
+    "dependencies": {
+        "@babel/core": "^7.16.12",
+        "@babel/preset-env": "^7.16.11",
+        "@babel/preset-react": "^7.16.7",
+        "@tweenjs/tween.js": "^18.6.4",
+        "@types/tweenjs": "^1.0.4",
+        "babel-loader": "^8.2.3",
+        "bezier-easing": "^2.1.0",
+        "body-parser": "^1.20.0",
+        "camera-controls": "^1.34.2",
+        "clean-webpack-plugin": "^4.0.0",
+        "compression": "^1.7.4",
+        "copy-webpack-plugin": "^10.2.4",
+        "cors": "^2.8.5",
+        "css-loader": "^6.5.1",
+        "express": "^4.17.3",
+        "file-loader": "^6.2.0",
+        "framer-motion": "^6.3.1",
+        "glslify": "^7.1.1",
+        "glslify-import-loader": "^0.1.2",
+        "glslify-loader": "^2.0.0",
+        "gsap": "^3.9.1",
+        "html-loader": "^3.1.0",
+        "html-webpack-plugin": "^5.5.0",
+        "ip": "^1.1.5",
+        "lil-gui": "^0.16.0",
+        "mini-css-extract-plugin": "^2.5.3",
+        "nodemailer": "^6.7.3",
+        "portfinder-sync": "0.0.2",
+        "raw-loader": "^4.0.2",
+        "react": "^17.0.2",
+        "react-dom": "^17.0.2",
+        "stats.js": "^0.17.0",
+        "style-loader": "^3.3.1",
+        "three": "^0.137.5",
+        "ts-loader": "^9.2.8",
+        "typescript": "^4.6.2",
+        "webpack": "^5.68.0",
+        "webpack-cli": "^4.9.2",
+        "webpack-dev-server": "^4.7.3",
+        "webpack-merge": "^5.8.0"
+    },
+    "devDependencies": {
+        "@babel/preset-typescript": "^7.16.7",
+        "@types/react": "^17.0.43",
+        "@types/react-dom": "^17.0.14",
+        "@types/stats.js": "^0.17.0",
+        "@types/three": "^0.138.0"
+    }
+}
+
+
+
+================================================
+FILE: .babelrc
+================================================
+{
+  "presets": [
+    "@babel/preset-env",
+    "@babel/preset-react",
+    "@babel/preset-typescript"
+  ]   
+}
+
+
+================================================
+FILE: .prettierrc
+================================================
+{
+    "tabWidth": 4,
+    "semi": true,
+    "singleQuote": true
+}
+
+
+================================================
+FILE: bundler/webpack.common.js
+================================================
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCSSExtractPlugin = require('mini-css-extract-plugin');
+const path = require('path');
+
+module.exports = {
+    entry: path.resolve(__dirname, '../src/script.ts'),
+    output: {
+        hashFunction: 'xxhash64',
+        filename: 'bundle.[contenthash].js',
+        path: path.resolve(__dirname, '../public'),
+    },
+    devtool: 'source-map',
+    plugins: [
+        new CopyWebpackPlugin({
+            patterns: [{ from: path.resolve(__dirname, '../static') }],
+        }),
+        new HtmlWebpackPlugin({
+            template: path.resolve(__dirname, '../src/index.html'),
+            minify: true,
+        }),
+        new MiniCSSExtractPlugin(),
+    ],
+    resolve: {
+        alias: {
+            three: path.resolve('./node_modules/three'),
+        },
+        extensions: ['.tsx', '.ts', '.js'],
+    },
+    module: {
+        rules: [
+            // HTML
+            {
+                test: /\.(html)$/,
+                use: ['html-loader'],
+            },
+            {
+                test: /\.ts?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+            },
+            // JS
+            {
+                test: /\.tsx$/,
+                exclude: /node_modules/,
+                use: ['babel-loader'],
+            },
+
+            // CSS
+            {
+                test: /\.css$/,
+                use: [MiniCSSExtractPlugin.loader, 'css-loader'],
+            },
+
+            // Images
+            {
+                test: /\.(jpg|png|gif|svg)$/,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'assets/images/[hash][ext]',
+                },
+            },
+            // Audio
+            {
+                test: /\.(mp3|wav)$/,
+                loader: 'file-loader',
+                options: {
+                    name: '[path][name].[ext]',
+                },
+            },
+            // Fonts
+            {
+                test: /\.(ttf|eot|woff|woff2)$/,
+                type: 'asset/resource',
+                generator: {
+                    filename: 'assets/fonts/[hash][ext]',
+                },
+            },
+            // Shaders
+            {
+                test: /\.(glsl|vs|fs|vert|frag)$/,
+                exclude: /node_modules/,
+                use: ['glslify-import-loader', 'raw-loader', 'glslify-loader'],
+            },
+        ],
+    },
+};
+
+
+
+================================================
+FILE: bundler/webpack.dev.js
+================================================
+const path = require('path')
+const { merge } = require('webpack-merge')
+const commonConfiguration = require('./webpack.common.js')
+const ip = require('ip')
+const portFinderSync = require('portfinder-sync')
+
+const infoColor = (_message) =>
+{
+    return `\u001b[1m\u001b[34m${_message}\u001b[39m\u001b[22m`
+}
+
+module.exports = merge(
+    commonConfiguration,
+    {
+        stats: 'errors-warnings',
+        mode: 'development',
+        infrastructureLogging:
+        {
+            level: 'warn',
+        },
+        devServer:
+        {
+            host: 'local-ip',
+            port: portFinderSync.getPort(8080),
+            open: true,
+            https: false,
+            allowedHosts: 'all',
+            hot: false,
+            watchFiles: ['src/**', 'static/**'],
+            static:
+            {
+                watch: true,
+                directory: path.join(__dirname, '../static')
+            },
+            client:
+            {
+                logging: 'none',
+                overlay: true,
+                progress: false
+            },
+            onAfterSetupMiddleware: function(devServer)
+            {
+                const port = devServer.options.port
+                const https = devServer.options.https ? 's' : ''
+                const localIp = ip.address()
+                const domain1 = `http${https}://${localIp}:${port}`
+                const domain2 = `http${https}://localhost:${port}`
+                
+                console.log(`Project running at:\n  - ${infoColor(domain1)}\n  - ${infoColor(domain2)}`)
+            }
+        }
+    }
+)
+
+
+
+================================================
+FILE: bundler/webpack.prod.js
+================================================
+const { merge } = require('webpack-merge')
+const commonConfiguration = require('./webpack.common.js')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+
+module.exports = merge(
+    commonConfiguration,
+    {
+        mode: 'production',
+        plugins:
+        [
+            new CleanWebpackPlugin()
+        ]
+    }
+)
+
+
+
+================================================
+FILE: server/index.ts
+================================================
+const express = require('express');
+const path = require('path');
+const cors = require('cors');
+const router = express.Router();
+const bodyParser = require('body-parser');
+const nodemailer = require('nodemailer');
+const compression = require('compression');
+
+const app = express();
+const port = 8080;
+
+app.use(cors());
+app.use(compression());
+
+// Have Node serve the files for our built React app
+app.use(express.static(path.resolve(__dirname, '../public')));
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// parse application/json
+app.use(bodyParser.json());
+
+// Handle GET requests to /api route
+app.post('/api/send-email', (req, res) => {
+    const { name, company, email, message } = req.body;
+
+    const transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        auth: {
+            user: process.env.FOLIO_EMAIL,
+            pass: process.env.FOLIO_PASSWORD,
+        },
+    });
+
+    transporter
+        .verify()
+        .then(() => {
+            transporter
+                .sendMail({
+                    from: `"${name}" <henryheffernan.folio@gmail.com>`, // sender address
+                    to: 'henryheffernan@gmail.com, henryheffernan.folio@gmail.com', // list of receivers
+                    subject: `${name} <${email}> ${
+                        company ? `from ${company}` : ''
+                    } submitted a contact form`, // Subject line
+                    text: `${message}`, // plain text body
+                })
+                .then((info) => {
+                    console.log({ info });
+                    res.json({ message: 'success' });
+                })
+                .catch((e) => {
+                    console.error(e);
+                    res.status(500).send(e);
+                });
+        })
+        .catch((e) => {
+            console.error(e);
+            res.status(500).send(e);
+        });
+});
+
+// listen to app on port 8080
+app.listen(port, () => {
+    console.log(`Server is listening on port ${port}`);
+});
+
+
+
+================================================
+FILE: src/index.html
+================================================
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background-color: rgb(0, 0, 0);
+      margin: 0;
+    }
+
+    #webgl {
+      pointer-events: none;
+    }
+
+    #ui-app {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    #ui {
+      position: absolute;
+      overflow: hidden;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    #monitor-videos {
+      pointer-events: none;
+      position: 'absolute';
+      opacity: 0;
+      width: 0;
+      height: 0;
+      top: 0;
+      left: 0;
+
+    }
+
+    #css {
+      cursor: pointer;
+    }
+
+    #ui-interactive {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 256px;
+    }
+
+    video {
+      position: absolute;
+      top: 0;
+      pointer-events: none;
+    }
+  </style>
+
+  <!-- Primary Meta Tags -->
+  <title>Henry Heffernan - Portfolio 2022</title>
+  <meta name="title" content="Henry Heffernan - Software Engineer">
+  <meta name="description"
+    content="I'm Henry, a Software Engineer based in NY. Rensselaer Polytechnic Institute Graduate with my B.S. in Computer Science, currently looking for a full time role.">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://henryheffernan.com/">
+  <meta property="og:title" content="Henry Heffernan - Software Engineer">
+  <meta property="og:description"
+    content="I'm Henry, a Software Engineer based in NY. Rensselaer Polytechnic Institute Graduate with my B.S. in Computer Science, currently looking for a full time role.">
+
+  <!-- Twitter -->
+
+
+  <meta property="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <meta property="twitter:url" content="https://henryheffernan.com/">
+  <meta name="twitter:url" content="https://henryheffernan.com/">
+
+  <meta property="twitter:title" content="Henry Heffernan - Software Engineer">
+  <meta name="twitter:title" content="Henry Heffernan - Software Engineer">
+
+  <meta property="twitter:description"
+    content="I'm Henry, a Software Engineer based in NY. Rensselaer Polytechnic Institute Graduate with my B.S. in Computer Science, currently looking for a full time role.">
+  <meta name="twitter:description"
+    content="I'm Henry, a Software Engineer based in NY. Rensselaer Polytechnic Institute Graduate with my B.S. in Computer Science, currently looking for a full time role.">
+
+  <meta property="twitter:image" content="https://henryheffernan.com/images/preview-new.jpg">
+  <meta name="twitter:image" content="https://henryheffernan.com/images/preview-new.jpg">
+
+  <!-- Images -->
+  <meta property="og:image" content="https://henryheffernan.com/images/preview-new.jpg">
+  <meta property="og:image:secure" content="https://henryheffernan.com/images/preview-new.jpg">
+
+  <link rel="shortcut icon" href="../static/images/favicon.ico" type="image/x-icon">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4FJBF6WF60"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-4FJBF6WF60');
+  </script>
+</head>
+
+<body>
+  <div id="css"></div>
+  <div id="webgl"></div>
+  <div id="overlay"></div>
+  <div id="ui-interactive"></div>
+  <div id="ui"></div>
+  <div id="monitor-videos">
+    <video id="video-1" muted loop autoplay width="0" height="0" src="../static/textures/monitor/video/base-static.mp4"
+      style="opacity: 0;"></video>
+    <video id="video-2" muted loop autoplay width="0" height="0"
+      src="../static/textures/monitor/video/static-texture-layer.mp4" style="opacity: 0;"></video>
+  </div>
+</body>
+
+</html>
+
+
+================================================
+FILE: src/script.ts
+================================================
+import './style.css';
+
+import Application from './Application/Application';
+
+const app: Application = new Application();
+
+
+
+================================================
+FILE: src/style.css
+================================================
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    overflow: hidden;
+}
+
+.webgl {
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+}
+
+.jitter {
+    animation-duration: 0.3s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: jittery;
+    z-index: -10;
+}
+
+.interface-wrapper {
+    width: 100%;
+    top: 64px;
+    left: 64px;
+}
+
+.icon-control-container {
+    height: 26.5px;
+    width: 26.5px;
+}
+
+@media only screen and (max-width: 768px) {
+    .interface-wrapper {
+        width: 100%;
+        top: 24px;
+        left: 24px;
+    }
+
+    .icon-control-container {
+        height: 19.5px;
+        width: 19.5px;
+    }
+}
+
+@keyframes jittery {
+    10% {
+        transform: translate(-0.1px, -0.15px) scale(1, 1);
+    }
+
+    20% {
+        transform: translate(0.15px, 0.1px) scale(1, 1);
+    }
+
+    30% {
+        transform: translate(-0.2px, -0.25px) scale(1, 1);
+    }
+
+    40% {
+        transform: translate(0.05px, 0.1px) scale(1, 1);
+    }
+
+    50% {
+        transform: translate(-0.025px, -0.05px) scale(1, 1);
+    }
+
+    60% {
+        transform: translate(0px, 0.075px) scale(1, 1);
+    }
+
+    70% {
+        transform: translate(-0.075px, -0.1px) scale(1, 1);
+    }
+
+    80% {
+        transform: translate(0.075px, 0.125px) scale(1, 1);
+    }
+
+    90% {
+        transform: translate(-0.125px, -0.075px) scale(1, 1);
+    }
+
+    100% {
+        transform: translate(0.075px, 0.025px) scale(1, 1);
+    }
+}
+
+
+
+================================================
+FILE: src/tsconfig.json
+================================================
+{
+    "compilerOptions": {
+        "target": "ES6",
+        "moduleResolution": "node",
+        "strict": true,
+        "paths": {
+            "three/examples/jsm/libs/dat.gui.module": ["../node_modules/@types/dat.gui"]
+        },
+        "strictPropertyInitialization": false,
+        "allowSyntheticDefaultImports": true,
+        "jsx": "react",
+    },
+    
+    "include": ["Application/*", "./*"],
+}
+
+
+
+================================================
+FILE: src/types.d.ts
+================================================
+type Resource =
+    | TextureResource
+    | CubeTextureResource
+    | ModelResource
+    | AudioResource;
+
+declare interface StyleSheetCSS {
+    [key: string]: React.CSSProperties;
+}
+
+type TextureResource = {
+    name: string;
+    type: 'texture';
+    path: string;
+};
+
+type CubeTextureResource = {
+    name: string;
+    type: 'cubeTexture';
+    path: string[];
+};
+
+type ModelResource = {
+    name: string;
+    type: 'gltfModel';
+    path: string;
+};
+
+type AudioResource = {
+    name: string;
+    type: 'audio';
+    path: string;
+};
+
+type EnclosingPlane = {
+    size: THREE.Vector2;
+    position: THREE.Vector3;
+    rotation: THREE.Euler;
+};
+
+type CameraKeyframe = {
+    position: THREE.Vector3;
+    focalPoint: THREE.Vector3;
+};
+
+type LoadedResource =
+    | LoadedTexture
+    | LoadedCubeTexture
+    | LoadedModel
+    | LoadedAudio;
+
+type LoadedTexture = THREE.Texture;
+
+type LoadedModel = import('three/examples/jsm/loaders/GLTFLoader').GLTF;
+
+type LoadedCubeTexture = THREE.CubeTexture;
+
+type LoadedAudio = AudioBuffer;
+
+type ResourceType = 'texture' | 'cubeTexture' | 'gltfModel';
+
+
+
+================================================
+FILE: src/Application/Application.ts
+================================================
+import * as THREE from 'three';
+
+import Debug from './Utils/Debug';
+import Sizes from './Utils/Sizes';
+import Time from './Utils/Time';
+import Camera from './Camera/Camera';
+import Renderer from './Renderer';
+import Mouse from './Utils/Mouse';
+
+//@ts-ignore
+import World from './World/World';
+import Resources from './Utils/Resources';
+
+import sources from './sources';
+
+import Stats from 'stats.js';
+import Loading from './Utils/Loading';
+
+import UI from './UI';
+
+let instance: Application | null = null;
+
+export default class Application {
+    debug: Debug;
+    sizes: Sizes;
+    time: Time;
+    scene: THREE.Scene;
+    cssScene: THREE.Scene;
+    overlayScene: THREE.Scene;
+    resources: Resources;
+    camera: Camera;
+    renderer: Renderer;
+    world: World;
+    mouse: Mouse;
+    loading: Loading;
+    ui: UI;
+    stats: Stats | undefined;
+
+    constructor() {
+        // Singleton
+        if (instance) {
+            return instance;
+        }
+
+        instance = this;
+
+        // Global access
+        //@ts-ignore
+        // window.Application = this;
+
+        // Setup
+        this.debug = new Debug();
+        this.sizes = new Sizes();
+        this.mouse = new Mouse();
+        this.loading = new Loading();
+        this.time = new Time();
+        this.scene = new THREE.Scene();
+        this.cssScene = new THREE.Scene();
+        this.overlayScene = new THREE.Scene();
+        this.resources = new Resources(sources);
+        this.camera = new Camera();
+        this.renderer = new Renderer();
+        this.camera.createControls();
+        this.world = new World();
+
+        this.ui = new UI();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('debug')) {
+            this.stats = new Stats();
+            this.stats.showPanel(0);
+
+            document.body.appendChild(this.stats.dom);
+        }
+
+        // Resize event
+        this.sizes.on('resize', () => {
+            this.resize();
+        });
+
+        // Time tick event
+        this.time.on('tick', () => {
+            this.update();
+        });
+    }
+
+    resize() {
+        this.camera.resize();
+        this.renderer.resize();
+    }
+
+    update() {
+        if (this.stats) this.stats.begin();
+        this.camera.update();
+        this.world.update();
+        this.renderer.update();
+        if (this.stats) this.stats.end();
+    }
+
+    destroy() {
+        this.sizes.off('resize');
+        this.time.off('tick');
+
+        // Traverse the whole scene
+        this.scene.traverse((child) => {
+            // Test if it's a mesh
+            if (child instanceof THREE.Mesh) {
+                child.geometry.dispose();
+
+                // Loop through the material properties
+                for (const key in child.material) {
+                    const value = child.material[key];
+
+                    // Test if there is a dispose function
+                    if (value && typeof value.dispose === 'function') {
+                        value.dispose();
+                    }
+                }
+            }
+        });
+
+        this.renderer.instance.dispose();
+
+        if (this.debug.active) this.debug.ui.destroy();
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Renderer.ts
+================================================
+import * as THREE from 'three';
+import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
+import Application from './Application';
+import Sizes from './Utils/Sizes';
+import Camera from './Camera/Camera';
+import UIEventBus from './UI/EventBus';
+// @ts-ignore
+import screenVert from './Shaders/screen/vertex.glsl';
+// @ts-ignore
+import screenFrag from './Shaders/screen/fragment.glsl';
+import Time from './Utils/Time';
+
+export default class Renderer {
+    application: Application;
+    sizes: Sizes;
+    scene: THREE.Scene;
+    cssScene: THREE.Scene;
+    time: Time;
+    overlay: THREE.Mesh;
+    overlayScene: THREE.Scene;
+    camera: Camera;
+    overlayInstance: THREE.WebGLRenderer;
+    instance: THREE.WebGLRenderer;
+    cssInstance: CSS3DRenderer;
+    raiseExposure: boolean;
+    uniforms: {
+        [uniform: string]: THREE.IUniform<any>;
+    };
+
+    constructor() {
+        this.application = new Application();
+        this.time = this.application.time;
+        this.sizes = this.application.sizes;
+        this.scene = this.application.scene;
+        this.cssScene = this.application.cssScene;
+        this.overlayScene = this.application.overlayScene;
+        this.camera = this.application.camera;
+
+        this.setInstance();
+    }
+
+    setInstance() {
+        this.instance = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance',
+        });
+        // Settings
+        // this.instance.physicallyCorrectLights = true;
+        this.instance.outputEncoding = THREE.sRGBEncoding;
+        // this.instance.toneMapping = THREE.ACESFilmicToneMapping;
+        // this.instance.toneMappingExposure = 0.9;
+        this.instance.setSize(this.sizes.width, this.sizes.height);
+        this.instance.setPixelRatio(Math.min(this.sizes.pixelRatio, 2));
+        this.instance.setClearColor(0x000000, 0.0);
+
+        // Style
+        this.instance.domElement.style.position = 'absolute';
+        this.instance.domElement.style.zIndex = '1px';
+        this.instance.domElement.style.top = '0px';
+
+        document.querySelector('#webgl')?.appendChild(this.instance.domElement);
+
+        this.overlayInstance = new THREE.WebGLRenderer();
+        this.overlayInstance.setSize(this.sizes.width, this.sizes.height);
+        this.overlayInstance.domElement.style.position = 'absolute';
+        this.overlayInstance.domElement.style.top = '0px';
+        this.overlayInstance.domElement.style.mixBlendMode = 'soft-light';
+        this.overlayInstance.domElement.style.opacity = '0.12';
+        // this.overlayInstance.domElement.style.mixBlendMode = 'luminosity';
+        // this.overlayInstance.domElement.style.opacity = '1';
+        this.overlayInstance.domElement.style.pointerEvents = 'none';
+
+        document
+            .querySelector('#overlay')
+            ?.appendChild(this.overlayInstance.domElement);
+
+        this.cssInstance = new CSS3DRenderer();
+        this.cssInstance.setSize(this.sizes.width, this.sizes.height);
+        this.cssInstance.domElement.style.position = 'absolute';
+        this.cssInstance.domElement.style.top = '0px';
+
+        document
+            .querySelector('#css')
+            ?.appendChild(this.cssInstance.domElement);
+
+        this.uniforms = {
+            u_time: { value: 1 },
+        };
+
+        this.overlay = new THREE.Mesh(
+            new THREE.PlaneGeometry(10000, 10000),
+            new THREE.ShaderMaterial({
+                vertexShader: screenVert,
+                fragmentShader: screenFrag,
+                uniforms: this.uniforms,
+                depthTest: false,
+                depthWrite: false,
+            })
+        );
+
+        this.overlayScene.add(this.overlay);
+    }
+
+    resize() {
+        this.instance.setSize(this.sizes.width, this.sizes.height);
+        this.instance.setPixelRatio(Math.min(this.sizes.pixelRatio, 2));
+
+        this.cssInstance.setSize(this.sizes.width, this.sizes.height);
+
+        this.overlayInstance.setSize(this.sizes.width, this.sizes.height);
+        this.overlayInstance.setPixelRatio(Math.min(this.sizes.pixelRatio, 2));
+    }
+
+    update() {
+        this.application.camera.instance.updateProjectionMatrix();
+        if (this.uniforms) {
+            this.uniforms.u_time.value = Math.sin(this.time.current * 0.01);
+        }
+
+        this.instance.render(this.scene, this.camera.instance);
+        this.cssInstance.render(this.cssScene, this.camera.instance);
+        this.overlayInstance.render(this.overlayScene, this.camera.instance);
+        this.overlay.position.copy(this.camera.instance.position);
+    }
+}
+
+
+
+================================================
+FILE: src/Application/sources.ts
+================================================
+const sources: Resource[] = [
+    {
+        name: 'computerSetupModel',
+        type: 'gltfModel',
+        path: 'models/Computer/computer_setup.glb',
+    },
+    {
+        name: 'computerSetupTexture',
+        type: 'texture',
+        path: 'models/Computer/baked_computer.jpg',
+    },
+    {
+        name: 'environmentModel',
+        type: 'gltfModel',
+        path: 'models/World/environment.glb',
+    },
+    {
+        name: 'environmentTexture',
+        type: 'texture',
+        path: 'models/World/baked_environment.jpg',
+    },
+    {
+        name: 'decorModel',
+        type: 'gltfModel',
+        path: 'models/Decor/decor.glb',
+    },
+    {
+        name: 'decorTexture',
+        type: 'texture',
+        path: 'models/Decor/baked_decor_modified.jpg',
+    },
+    {
+        name: 'monitorSmudgeTexture',
+        type: 'texture',
+        path: 'textures/monitor/layers/compressed/smudges.jpg',
+    },
+    {
+        name: 'monitorShadowTexture',
+        type: 'texture',
+        path: 'textures/monitor/layers/compressed/shadow-compressed.png',
+    },
+    {
+        name: 'mouseDown',
+        type: 'audio',
+        path: 'audio/mouse/mouse_down.mp3',
+    },
+    {
+        name: 'mouseUp',
+        type: 'audio',
+        path: 'audio/mouse/mouse_up.mp3',
+    },
+    {
+        name: 'keyboardKeydown1',
+        type: 'audio',
+        path: 'audio/keyboard/key_1.mp3',
+    },
+    {
+        name: 'keyboardKeydown2',
+        type: 'audio',
+        path: 'audio/keyboard/key_2.mp3',
+    },
+    {
+        name: 'keyboardKeydown3',
+        type: 'audio',
+        path: 'audio/keyboard/key_3.mp3',
+    },
+    {
+        name: 'keyboardKeydown4',
+        type: 'audio',
+        path: 'audio/keyboard/key_4.mp3',
+    },
+    {
+        name: 'keyboardKeydown5',
+        type: 'audio',
+        path: 'audio/keyboard/key_5.mp3',
+    },
+    {
+        name: 'keyboardKeydown6',
+        type: 'audio',
+        path: 'audio/keyboard/key_6.mp3',
+    },
+    {
+        name: 'startup',
+        type: 'audio',
+        path: 'audio/startup/startup.mp3',
+    },
+    {
+        name: 'office',
+        type: 'audio',
+        path: 'audio/atmosphere/office.mp3',
+    },
+    {
+        name: 'ccType',
+        type: 'audio',
+        path: 'audio/cc/type.mp3',
+    },
+];
+
+export default sources;
+
+
+
+================================================
+FILE: src/Application/Audio/AudioManager.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import { AmbienceAudio, ComputerAudio } from './AudioSources';
+import UIEventBus from '../UI/EventBus';
+
+const POS_DEBUG = false;
+const DEFAULT_REF_DISTANCE = 10000;
+export default class Audio {
+    application: Application;
+    listener: THREE.AudioListener;
+    context: AudioContext;
+    loadedAudio: { [key in string]: LoadedAudio };
+    audioPool: { [key in string]: THREE.PositionalAudio | THREE.Audio };
+    audioSources: {
+        computer: ComputerAudio;
+        ambience: AmbienceAudio;
+    };
+    scene: THREE.Scene;
+
+    constructor() {
+        this.application = new Application();
+        this.listener = new THREE.AudioListener();
+        this.application.camera.instance.add(this.listener);
+        this.loadedAudio = this.application.resources.items.audio;
+        this.scene = this.application.scene;
+        this.audioPool = {};
+
+        this.audioSources = {
+            computer: new ComputerAudio(this),
+            ambience: new AmbienceAudio(this),
+        };
+
+        UIEventBus.on('loadingScreenDone', () => {
+            setTimeout(() => {
+                const AudioContext =
+                    // @ts-ignore
+                    window.AudioContext || window.webkitAudioContext;
+                this.context = new AudioContext();
+                this.context.resume();
+            }, 100);
+        });
+
+        UIEventBus.on('muteToggle', (mute: boolean) => {
+            this.listener.setMasterVolume(mute ? 0 : 1);
+        });
+    }
+
+    playAudio(
+        sourceName: string,
+        options: {
+            volume?: number;
+            randDetuneScale?: number;
+            loop?: boolean;
+            filter?: {
+                type: BiquadFilterType;
+                frequency: number;
+            };
+            position?: THREE.Vector3;
+            refDistance?: number;
+            pitch?: number;
+        } = {}
+    ) {
+        // Resume context if it's suspended
+        if (this.context) this.context.resume();
+
+        // Get the audio source
+        sourceName = this.getRandomVariant(sourceName);
+
+        // Setup
+        const buffer = this.loadedAudio[sourceName];
+        const poolKey = sourceName + '_' + Object.keys(this.audioPool).length;
+
+        let audio: THREE.Audio<any> | THREE.PositionalAudio = new THREE.Audio(
+            this.listener
+        );
+
+        if (options.position) {
+            audio = new THREE.PositionalAudio(this.listener);
+
+            // @ts-ignore
+            audio.setRefDistance(options.refDistance || DEFAULT_REF_DISTANCE);
+            // @ts-ignore
+            // audio.setDistanceModel('linear');
+
+            const extraMaterialOptions = !POS_DEBUG
+                ? {
+                      transparent: true,
+                      opacity: 0,
+                  }
+                : {};
+
+            const sphere = new THREE.SphereGeometry(100, 8, 8);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xff0000,
+                ...extraMaterialOptions,
+            });
+            const mesh = new THREE.Mesh(sphere, material);
+
+            mesh.position.copy(options.position);
+            mesh.name = poolKey;
+            this.scene.add(mesh);
+        }
+        audio.setBuffer(buffer);
+
+        if (options.filter) {
+            const ac = audio.context;
+            const filter = ac.createBiquadFilter();
+            filter.type = options.filter.type; // Low pass filter
+            filter.frequency.setValueAtTime(
+                options.filter.frequency,
+                ac.currentTime
+            );
+            // filter.frequency.linearRampToValueAtTime(2400, ac.currentTime + 2);
+
+            audio.setFilter(filter);
+        }
+
+        // Set options
+        audio.setLoop(options.loop ? true : false);
+        audio.setVolume(options.volume || 1);
+
+        audio.play();
+
+        // add a filter to the audio
+
+        // Calculate detune
+        const detuneAmount =
+            (Math.random() * 200 - 100) *
+            (options.randDetuneScale ? options.randDetuneScale : 0);
+
+        // Set detune after .play is called
+        audio.setDetune(detuneAmount);
+
+        if (options.pitch) {
+            audio.setDetune(options.pitch * 100);
+        }
+
+        // Add to pool
+        if (audio.source) {
+            audio.source.onended = () => {
+                delete this.audioPool[poolKey];
+                if (options.position) {
+                    const positionalObject =
+                        this.scene.getObjectByName(poolKey);
+                    if (positionalObject) {
+                        this.scene.remove(positionalObject);
+                    }
+                }
+            };
+            this.audioPool[poolKey] = audio;
+        }
+        return poolKey;
+    }
+
+    setAudioFilterFrequency(audio: string, frequency: number) {
+        const a = this.audioPool[audio];
+
+        if (a) {
+            const ac = a.context;
+            const filter = a.getFilter() as BiquadFilterNode;
+            // clamp the frequency between 0 and 22500
+            const f = Math.max(0, Math.min(22050, frequency));
+
+            filter.frequency.setValueAtTime(f, ac.currentTime);
+        }
+    }
+
+    setAudioVolume(audio: string, volume: number) {
+        const a = this.audioPool[audio];
+        if (a) {
+            a.setVolume(volume);
+        }
+    }
+
+    getRandomVariant(sourceName: string) {
+        const variants = [];
+        for (const key in this.loadedAudio) {
+            if (key.includes(sourceName)) {
+                variants.push(key);
+            }
+        }
+        return variants[Math.floor(Math.random() * variants.length)];
+    }
+
+    update() {
+        for (const key in this.audioSources) {
+            const _key = key as keyof typeof this.audioSources;
+            this.audioSources[_key].update();
+        }
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Audio/AudioSources.ts
+================================================
+import AudioManager from './AudioManager';
+import * as THREE from 'three';
+import UIEventBus from '../UI/EventBus';
+import { Vector3 } from 'three';
+
+export class AudioSource {
+    manager: AudioManager;
+
+    constructor(manager: AudioManager) {
+        this.manager = manager;
+    }
+
+    update() {}
+}
+export class ComputerAudio extends AudioSource {
+    lastKey: string;
+
+    constructor(manager: AudioManager) {
+        super(manager);
+
+        document.addEventListener('mousedown', (event) => {
+            // @ts-ignore
+            if (event.inComputer) {
+                this.manager.playAudio('mouseDown', {
+                    volume: 0.8,
+                    position: new THREE.Vector3(800, -300, 1200),
+                });
+            }
+        });
+
+        document.addEventListener('mouseup', (event) => {
+            // @ts-ignore
+            if (event.inComputer) {
+                this.manager.playAudio('mouseUp', {
+                    volume: 0.8,
+                    position: new THREE.Vector3(800, -300, 1200),
+                });
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            // @ts-ignore
+            if (event.inComputer) {
+                this.lastKey = '';
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key.includes('_AUTO_')) {
+                this.manager.playAudio('ccType', {
+                    volume: 0.1,
+                    randDetuneScale: 0,
+                    pitch: 20,
+                });
+                return;
+            }
+            if (this.lastKey === event.key) return;
+            this.lastKey = event.key;
+
+            // @ts-ignore
+            if (event.inComputer) {
+                this.manager.playAudio('keyboardKeydown', {
+                    volume: 0.8,
+                    position: new THREE.Vector3(-300, -400, 1200),
+                });
+            }
+        });
+    }
+}
+
+export class AmbienceAudio extends AudioSource {
+    poolKey: string;
+
+    constructor(manager: AudioManager) {
+        super(manager);
+        UIEventBus.on('loadingScreenDone', () => {
+            this.poolKey = this.manager.playAudio('office', {
+                volume: 1,
+                loop: true,
+                randDetuneScale: 0,
+                filter: {
+                    type: 'lowpass',
+                    frequency: 1000,
+                },
+            });
+            this.manager.playAudio('startup', {
+                volume: 0.4,
+                randDetuneScale: 0,
+            });
+        });
+    }
+
+    mapValues(
+        input: number,
+        input_start: number,
+        input_end: number,
+        output_start: number,
+        output_end: number
+    ) {
+        return (
+            output_start +
+            ((output_end - output_start) / (input_end - input_start)) *
+                (input - input_start)
+        );
+    }
+
+    update() {
+        const cameraPosition =
+            this.manager.application.camera.instance.position;
+        const y = cameraPosition.y;
+        const x = cameraPosition.x;
+        const z = cameraPosition.z;
+
+        // calculate distance to origin
+        const distance = Math.sqrt(x * x + y * y + z * z);
+
+        const freq = this.mapValues(distance, 0, 10000, 100, 22000);
+
+        const volume = this.mapValues(distance, 1200, 10000, 0, 0.2);
+        const volumeClamped = Math.min(Math.max(volume, 0.05), 0.1);
+
+        this.manager.setAudioFilterFrequency(this.poolKey, freq - 3000);
+        this.manager.setAudioVolume(this.poolKey, volumeClamped);
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Camera/Camera.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import Sizes from '../Utils/Sizes';
+import EventEmitter from '../Utils/EventEmitter';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import TWEEN from '@tweenjs/tween.js';
+import Renderer from '../Renderer';
+import Resources from '../Utils/Resources';
+import UIEventBus from '../UI/EventBus';
+import Time from '../Utils/Time';
+import BezierEasing from 'bezier-easing';
+import {
+    CameraKeyframeInstance,
+    MonitorKeyframe,
+    IdleKeyframe,
+    LoadingKeyframe,
+    DeskKeyframe,
+    OrbitControlsStart,
+} from './CameraKeyframes';
+
+export enum CameraKey {
+    IDLE = 'idle',
+    MONITOR = 'monitor',
+    LOADING = 'loading',
+    DESK = 'desk',
+    ORBIT_CONTROLS_START = 'orbitControlsStart',
+}
+export default class Camera extends EventEmitter {
+    application: Application;
+    sizes: Sizes;
+    scene: THREE.Scene;
+    instance: THREE.PerspectiveCamera;
+    renderer: Renderer;
+    resources: Resources;
+    time: Time;
+
+    position: THREE.Vector3;
+    focalPoint: THREE.Vector3;
+
+    freeCam: boolean;
+    orbitControls: OrbitControls;
+
+    currentKeyframe: CameraKey | undefined;
+    targetKeyframe: CameraKey | undefined;
+    keyframes: { [key in CameraKey]: CameraKeyframeInstance };
+
+    constructor() {
+        super();
+        this.application = new Application();
+        this.sizes = this.application.sizes;
+        this.scene = this.application.scene;
+        this.renderer = this.application.renderer;
+        this.resources = this.application.resources;
+        this.time = this.application.time;
+
+        this.position = new THREE.Vector3(0, 0, 0);
+        this.focalPoint = new THREE.Vector3(0, 0, 0);
+
+        this.freeCam = false;
+
+        this.keyframes = {
+            idle: new IdleKeyframe(),
+            monitor: new MonitorKeyframe(),
+            loading: new LoadingKeyframe(),
+            desk: new DeskKeyframe(),
+            orbitControlsStart: new OrbitControlsStart(),
+        };
+
+        document.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            // @ts-ignore
+            if (event.target.id === 'prevent-click') return;
+            // print target and current keyframe
+            if (
+                this.currentKeyframe === CameraKey.IDLE ||
+                this.targetKeyframe === CameraKey.IDLE
+            ) {
+                this.transition(CameraKey.DESK);
+            } else if (
+                this.currentKeyframe === CameraKey.DESK ||
+                this.targetKeyframe === CameraKey.DESK
+            ) {
+                this.transition(CameraKey.IDLE);
+            }
+        });
+
+        this.setPostLoadTransition();
+        this.setInstance();
+        this.setMonitorListeners();
+        this.setFreeCamListeners();
+    }
+
+    transition(
+        key: CameraKey,
+        duration: number = 1000,
+        easing?: any,
+        callback?: () => void
+    ) {
+        if (this.currentKeyframe === key) return;
+
+        if (this.targetKeyframe) TWEEN.removeAll();
+
+        this.currentKeyframe = undefined;
+        this.targetKeyframe = key;
+
+        const keyframe = this.keyframes[key];
+
+        const posTween = new TWEEN.Tween(this.position)
+            .to(keyframe.position, duration)
+            .easing(easing || TWEEN.Easing.Quintic.InOut)
+            .onComplete(() => {
+                this.currentKeyframe = key;
+                this.targetKeyframe = undefined;
+                if (callback) callback();
+            });
+
+        const focTween = new TWEEN.Tween(this.focalPoint)
+            .to(keyframe.focalPoint, duration)
+            .easing(easing || TWEEN.Easing.Quintic.InOut);
+
+        posTween.start();
+        focTween.start();
+    }
+
+    setInstance() {
+        this.instance = new THREE.PerspectiveCamera(
+            35,
+            this.sizes.width / this.sizes.height,
+            10,
+            900000
+        );
+        this.currentKeyframe = CameraKey.LOADING;
+
+        this.scene.add(this.instance);
+    }
+
+    setMonitorListeners() {
+        this.on('enterMonitor', () => {
+            this.transition(
+                CameraKey.MONITOR,
+                2000,
+                BezierEasing(0.13, 0.99, 0, 1)
+            );
+            UIEventBus.dispatch('enterMonitor', {});
+        });
+        this.on('leftMonitor', () => {
+            this.transition(CameraKey.DESK);
+            UIEventBus.dispatch('leftMonitor', {});
+        });
+    }
+
+    setFreeCamListeners() {
+        UIEventBus.on('freeCamToggle', (toggle: boolean) => {
+            // if (toggle === this.freeCam) return;
+            if (toggle) {
+                this.transition(
+                    CameraKey.ORBIT_CONTROLS_START,
+                    750,
+                    BezierEasing(0.13, 0.99, 0, 1),
+                    () => {
+                        this.instance.position.copy(
+                            this.keyframes.orbitControlsStart.position
+                        );
+
+                        this.orbitControls.update();
+                        this.freeCam = true;
+                    }
+                );
+                // @ts-ignore
+                document.getElementById('webgl').style.pointerEvents = 'auto';
+            } else {
+                this.freeCam = false;
+                this.transition(
+                    CameraKey.IDLE,
+                    4000,
+                    TWEEN.Easing.Exponential.Out
+                );
+                // @ts-ignore
+                document.getElementById('webgl').style.pointerEvents = 'none';
+            }
+        });
+    }
+
+    setPostLoadTransition() {
+        UIEventBus.on('loadingScreenDone', () => {
+            this.transition(CameraKey.IDLE, 2500, TWEEN.Easing.Exponential.Out);
+        });
+    }
+
+    resize() {
+        this.instance.aspect = this.sizes.width / this.sizes.height;
+        this.instance.updateProjectionMatrix();
+    }
+
+    createControls() {
+        this.renderer = this.application.renderer;
+        this.orbitControls = new OrbitControls(
+            this.instance,
+            this.renderer.instance.domElement
+        );
+
+        const { x, y, z } = this.keyframes.orbitControlsStart.focalPoint;
+        this.orbitControls.target.set(x, y, z);
+
+        this.orbitControls.enablePan = false;
+        this.orbitControls.enableDamping = true;
+        this.orbitControls.object.position.copy(
+            this.keyframes.orbitControlsStart.position
+        );
+        this.orbitControls.dampingFactor = 0.05;
+        this.orbitControls.maxPolarAngle = Math.PI / 2;
+        this.orbitControls.minDistance = 4000;
+        this.orbitControls.maxDistance = 29000;
+
+        this.orbitControls.update();
+    }
+
+    update() {
+        TWEEN.update();
+
+        if (this.freeCam && this.orbitControls) {
+            this.position.copy(this.orbitControls.object.position);
+            this.focalPoint.copy(this.orbitControls.target);
+            this.orbitControls.update();
+            return;
+        }
+
+        for (const key in this.keyframes) {
+            const _key = key as CameraKey;
+            this.keyframes[_key].update();
+        }
+
+        if (this.currentKeyframe) {
+            const keyframe = this.keyframes[this.currentKeyframe];
+            this.position.copy(keyframe.position);
+            this.focalPoint.copy(keyframe.focalPoint);
+        }
+
+        this.instance.position.copy(this.position);
+        this.instance.lookAt(this.focalPoint);
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Camera/CameraKeyframes.ts
+================================================
+import * as THREE from 'three';
+import { CameraKey } from './Camera';
+import Time from '../Utils/Time';
+import Application from '../Application';
+import Mouse from '../Utils/Mouse';
+import Sizes from '../Utils/Sizes';
+
+export class CameraKeyframeInstance {
+    position: THREE.Vector3;
+    focalPoint: THREE.Vector3;
+
+    constructor(keyframe: CameraKeyframe) {
+        this.position = keyframe.position;
+        this.focalPoint = keyframe.focalPoint;
+    }
+
+    update() {}
+}
+
+const keys: { [key in CameraKey]: CameraKeyframe } = {
+    idle: {
+        position: new THREE.Vector3(-20000, 12000, 20000),
+        focalPoint: new THREE.Vector3(0, -1000, 0),
+    },
+    monitor: {
+        position: new THREE.Vector3(0, 950, 2000),
+        focalPoint: new THREE.Vector3(0, 950, 0),
+    },
+    desk: {
+        position: new THREE.Vector3(0, 1800, 5500),
+        focalPoint: new THREE.Vector3(0, 500, 0),
+    },
+    loading: {
+        position: new THREE.Vector3(-35000, 35000, 35000),
+        focalPoint: new THREE.Vector3(0, -5000, 0),
+    },
+    orbitControlsStart: {
+        position: new THREE.Vector3(-15000, 10000, 15000),
+        focalPoint: new THREE.Vector3(-100, 350, 0),
+    },
+};
+
+export class MonitorKeyframe extends CameraKeyframeInstance {
+    application: Application;
+    sizes: Sizes;
+    targetPos: THREE.Vector3;
+    origin: THREE.Vector3;
+
+    constructor() {
+        const keyframe = keys.monitor;
+        super(keyframe);
+        this.application = new Application();
+        this.sizes = this.application.sizes;
+        this.origin = new THREE.Vector3().copy(keyframe.position);
+        this.targetPos = new THREE.Vector3().copy(keyframe.position);
+    }
+
+    update() {
+        const aspect = this.sizes.height / this.sizes.width;
+        const additionalZoom = this.sizes.width < 768 ? 0 : 600;
+        this.targetPos.z = this.origin.z + aspect * 1200 - additionalZoom;
+        this.position.copy(this.targetPos);
+    }
+}
+
+export class LoadingKeyframe extends CameraKeyframeInstance {
+    constructor() {
+        const keyframe = keys.loading;
+        super(keyframe);
+    }
+
+    update() {}
+}
+
+export class DeskKeyframe extends CameraKeyframeInstance {
+    origin: THREE.Vector3;
+    application: Application;
+    mouse: Mouse;
+    sizes: Sizes;
+    targetFoc: THREE.Vector3;
+    targetPos: THREE.Vector3;
+
+    constructor() {
+        const keyframe = keys.desk;
+        super(keyframe);
+        this.application = new Application();
+        this.mouse = this.application.mouse;
+        this.sizes = this.application.sizes;
+        this.origin = new THREE.Vector3().copy(keyframe.position);
+        this.targetFoc = new THREE.Vector3().copy(keyframe.focalPoint);
+        this.targetPos = new THREE.Vector3().copy(keyframe.position);
+    }
+
+    update() {
+        this.targetFoc.x +=
+            (this.mouse.x - this.sizes.width / 2 - this.targetFoc.x) * 0.05;
+        this.targetFoc.y +=
+            (-(this.mouse.y - this.sizes.height) - this.targetFoc.y) * 0.05;
+
+        this.targetPos.x +=
+            (this.mouse.x - this.sizes.width / 2 - this.targetPos.x) * 0.025;
+        this.targetPos.y +=
+            (-(this.mouse.y - this.sizes.height * 2) - this.targetPos.y) *
+            0.025;
+
+        const aspect = this.sizes.height / this.sizes.width;
+        this.targetPos.z = this.origin.z + aspect * 3000 - 1800;
+
+        this.focalPoint.copy(this.targetFoc);
+        this.position.copy(this.targetPos);
+    }
+}
+
+export class IdleKeyframe extends CameraKeyframeInstance {
+    time: Time;
+    origin: THREE.Vector3;
+
+    constructor() {
+        const keyframe = keys.idle;
+        super(keyframe);
+        this.origin = new THREE.Vector3().copy(keyframe.position);
+        this.time = new Time();
+    }
+
+    update() {
+        this.position.x =
+            Math.sin((this.time.elapsed + 19000) * 0.00008) * this.origin.x;
+        this.position.y =
+            Math.sin((this.time.elapsed + 1000) * 0.000004) * 4000 +
+            this.origin.y -
+            3000;
+        this.position.z = this.position.z;
+    }
+}
+
+export class OrbitControlsStart extends CameraKeyframeInstance {
+    constructor() {
+        const keyframe = keys.orbitControlsStart;
+        super(keyframe);
+    }
+
+    update() {}
+}
+
+
+
+================================================
+FILE: src/Application/Shaders/coffee/fragment.glsl
+================================================
+uniform float uTime;
+uniform float uTimeFrequency;
+uniform vec2 uUvFrequency;
+uniform vec3 uColor;
+
+varying vec2 vUv;
+
+vec2 fade(vec2 t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
+vec4 permute(vec4 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
+
+float perlin2d(vec2 P) {
+  vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
+  vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
+  Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
+  vec4 ix = Pi.xzxz;
+  vec4 iy = Pi.yyww;
+  vec4 fx = Pf.xzxz;
+  vec4 fy = Pf.yyww;
+  vec4 i = permute(permute(ix) + iy);
+  vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
+  vec4 gy = abs(gx) - 0.5;
+  vec4 tx = floor(gx + 0.5);
+  gx = gx - tx;
+  vec2 g00 = vec2(gx.x, gy.x);
+  vec2 g10 = vec2(gx.y, gy.y);
+  vec2 g01 = vec2(gx.z, gy.z);
+  vec2 g11 = vec2(gx.w, gy.w);
+  vec4 norm =
+      1.79284291400159 - 0.85373472095314 * vec4(dot(g00, g00), dot(g01, g01),
+                                                 dot(g10, g10), dot(g11, g11));
+  g00 *= norm.x;
+  g01 *= norm.y;
+  g10 *= norm.z;
+  g11 *= norm.w;
+  float n00 = dot(g00, vec2(fx.x, fy.x));
+  float n10 = dot(g10, vec2(fx.y, fy.y));
+  float n01 = dot(g01, vec2(fx.z, fy.z));
+  float n11 = dot(g11, vec2(fx.w, fy.w));
+  vec2 fade_xy = fade(Pf.xy);
+  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
+  float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+  return 2.3 * n_xy;
+}
+
+void main() {
+  vec2 uv = vUv * uUvFrequency;
+  uv.y -= uTime * uTimeFrequency;
+
+  float borderAlpha = min(vUv.x * 4.0, (1.0 - vUv.x) * 4.0);
+  borderAlpha = borderAlpha * (1.0 - vUv.y);
+
+  float perlin = perlin2d(uv);
+  perlin *= borderAlpha;
+  perlin *= 0.6;
+  perlin = min(perlin, 1.0);
+
+  gl_FragColor = vec4(uColor, perlin);
+}
+
+
+================================================
+FILE: src/Application/Shaders/coffee/vertex.glsl
+================================================
+uniform float uTime;
+
+varying vec2 vUv;
+
+vec2 fade(vec2 t) { return t * t * t * (t * (t * 6.0 - 15.0) + 10.0); }
+vec4 permute(vec4 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
+
+float perlin2d(vec2 P) {
+  vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
+  vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
+  Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
+  vec4 ix = Pi.xzxz;
+  vec4 iy = Pi.yyww;
+  vec4 fx = Pf.xzxz;
+  vec4 fy = Pf.yyww;
+  vec4 i = permute(permute(ix) + iy);
+  vec4 gx = 2.0 * fract(i * 0.0243902439) - 1.0; // 1/41 = 0.024...
+  vec4 gy = abs(gx) - 0.5;
+  vec4 tx = floor(gx + 0.5);
+  gx = gx - tx;
+  vec2 g00 = vec2(gx.x, gy.x);
+  vec2 g10 = vec2(gx.y, gy.y);
+  vec2 g01 = vec2(gx.z, gy.z);
+  vec2 g11 = vec2(gx.w, gy.w);
+  vec4 norm =
+      1.79284291400159 - 0.85373472095314 * vec4(dot(g00, g00), dot(g01, g01),
+                                                 dot(g10, g10), dot(g11, g11));
+  g00 *= norm.x;
+  g01 *= norm.y;
+  g10 *= norm.z;
+  g11 *= norm.w;
+  float n00 = dot(g00, vec2(fx.x, fy.x));
+  float n10 = dot(g10, vec2(fx.y, fy.y));
+  float n01 = dot(g01, vec2(fx.z, fy.z));
+  float n11 = dot(g11, vec2(fx.w, fy.w));
+  vec2 fade_xy = fade(Pf.xy);
+  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
+  float n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+  return 2.3 * n_xy;
+}
+
+void main() {
+  vec3 newPosition = position;
+  vec2 displacementUv = uv;
+  displacementUv *= 5.0;
+  displacementUv.y -= uTime * 0.0002;
+
+  float displacementStrength = pow(uv.y * 3.0, 2.0);
+  float perlin = perlin2d(displacementUv) * displacementStrength;
+
+  newPosition.y += perlin * 0.1;
+
+  vec4 modelPosition = modelMatrix * vec4(newPosition, 1.0);
+  vec4 viewPosition = viewMatrix * modelPosition;
+  vec4 projectionPosition = projectionMatrix * viewPosition;
+  gl_Position = projectionPosition;
+
+  vUv = uv;
+}
+
+
+================================================
+FILE: src/Application/Shaders/screen/fragment.glsl
+================================================
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+const float PHI = 1.61803398874989484820459; // Φ = Golden Ratio
+uniform float u_time;
+
+// float gold_noise(vec2 xy, float seed) {
+//   return fract(tan(distance(xy * PHI, xy) * seed) * xy.x);
+// }
+
+float noise(vec2 xy, float seed) {
+  return fract(tan(distance(xy * PHI, xy) * seed) * xy.x);
+}
+
+void main() {
+  gl_FragColor = vec4(noise(gl_FragCoord.xy, fract(u_time) + 1.0),
+                      noise(gl_FragCoord.xy, fract(u_time) + 2.0),
+                      noise(gl_FragCoord.xy, fract(u_time) + 3.0), 0.01);
+}
+
+
+================================================
+FILE: src/Application/Shaders/screen/vertex.glsl
+================================================
+varying vec2 vUv;
+
+void main() {
+  vUv = uv;
+  gl_Position = vec4(position, 1.0);
+}
+
+
+================================================
+FILE: src/Application/UI/Animation.ts
+================================================
+export type AnimationEasing =
+    | 'sSoft'
+    | 'sMedium'
+    | 'sHard'
+    | 'expIn'
+    | 'expOut'
+    | 'expInOut';
+
+export const Easing: { [key in AnimationEasing]: number[] } = {
+    sHard: [0.95, 0, 0.5, 1],
+    sMedium: [0.8, 0, 0.2, 1],
+    sSoft: [0.6, 0, 0.4, 1],
+    expIn: [0.9, 0.05, 1, 0.3],
+    expOut: [0.05, 0.7, 0.1, 1],
+    expInOut: [0.9, 0.05, 0.1, 1],
+};
+
+
+
+================================================
+FILE: src/Application/UI/App.tsx
+================================================
+import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
+import LoadingScreen from './components/LoadingScreen';
+import HelpPrompt from './components/HelpPrompt';
+import InterfaceUI from './components/InterfaceUI';
+import eventBus from './EventBus';
+import './style.css';
+
+const App = () => {
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        eventBus.on('loadingScreenDone', () => {
+            setLoading(false);
+        });
+    }, []);
+
+    return (
+        <div id="ui-app">
+            {!loading && <HelpPrompt />}
+            <LoadingScreen />
+        </div>
+    );
+};
+
+const createUI = () => {
+    ReactDOM.render(<App />, document.getElementById('ui'));
+};
+
+const createVolumeUI = () => {
+    ReactDOM.render(<InterfaceUI />, document.getElementById('ui-interactive'));
+};
+
+export { createUI, createVolumeUI };
+
+
+
+================================================
+FILE: src/Application/UI/EventBus.ts
+================================================
+const UIEventBus = {
+    on(event: string, callback: (...args: any[]) => any) {
+        // @ts-ignore
+        document.addEventListener(event, (e) => callback(e.detail));
+    },
+    dispatch(event: string, data: any) {
+        document.dispatchEvent(new CustomEvent(event, { detail: data }));
+    },
+    remove(event: string, callback: (...args: any[]) => any) {
+        document.removeEventListener(event, callback);
+    },
+};
+
+export default UIEventBus;
+
+
+
+================================================
+FILE: src/Application/UI/index.ts
+================================================
+import { createUI, createVolumeUI } from './App';
+
+export default class UI {
+    constructor() {
+        createUI();
+        createVolumeUI();
+    }
+}
+
+
+
+================================================
+FILE: src/Application/UI/style.css
+================================================
+h1,
+h2,
+h3,
+h4,
+h5,
+p {
+    /* font-family: ocr-a-std, monospace; */
+    font-family: monospace;
+    font-weight: 400;
+    font-style: normal;
+    color: white;
+    /* mobile friendly font size */
+    font-size: 16px;
+}
+
+/* if on mobile */
+@media only screen and (max-width: 768px) {
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    p {
+        font-size: 10px;
+    }
+}
+
+br {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    height: 16px;
+}
+
+.loading::after {
+    display: inline-block;
+    animation: dotty steps(1, end) 1s infinite;
+    content: '';
+}
+
+@keyframes dotty {
+    0% {
+        content: '   ';
+    }
+    25% {
+        content: '. ';
+    }
+    50% {
+        content: '.. ';
+    }
+    75% {
+        content: '...';
+    }
+    100% {
+        content: '   ';
+    }
+}
+.blinking-cursor {
+    background-color: #fff;
+    width: 0.8em;
+    height: 0.15em;
+    -webkit-animation: 0.65s blink step-end infinite;
+    -moz-animation: 0.65s blink step-end infinite;
+    -ms-animation: 0.65s blink step-end infinite;
+    -o-animation: 0.65s blink step-end infinite;
+    animation: 0.65s blink step-end infinite;
+}
+
+@keyframes blink {
+    from,
+    to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: white;
+    }
+}
+
+@-moz-keyframes blink {
+    from,
+    to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: white;
+    }
+}
+
+@-webkit-keyframes blink {
+    from,
+    to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: white;
+    }
+}
+
+@-ms-keyframes blink {
+    from,
+    to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: white;
+    }
+}
+
+@-o-keyframes blink {
+    from,
+    to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: white;
+    }
+}
+
+.bios-start-button {
+    background-color: #000;
+    border: 4px solid #fff;
+    border-width: 4px 3px 4px 3px;
+}
+
+.bios-start-button p {
+    box-sizing: border-box;
+    padding: 8px;
+}
+
+.bios-start-button:hover p {
+    background-color: #fff;
+    cursor: pointer;
+    color: #000;
+}
+
+.loading-screen-header {
+    padding: 48px;
+}
+
+.loading-screen-body {
+    padding-left: 48px;
+    padding-right: 48px;
+}
+
+.loading-screen-footer {
+    padding: 48px;
+    padding-bottom: 64px;
+}
+
+.info-wrapper {
+    top: 64px;
+    left: 64px;
+}
+
+/* if on mobile make all loading screen elements have a padding of 16 */
+@media only screen and (max-width: 768px) {
+    .loading-screen-header {
+        padding: 16px;
+    }
+
+    .info-wrapper {
+        top: 16px;
+        left: 16px;
+    }
+
+    .blinking-cursor {
+        background-color: #fff;
+        width: 0.4em;
+        height: 0.08em;
+        -webkit-animation: 0.65s blink step-end infinite;
+        -moz-animation: 0.65s blink step-end infinite;
+        -ms-animation: 0.65s blink step-end infinite;
+        -o-animation: 0.65s blink step-end infinite;
+        animation: 0.65s blink step-end infinite;
+    }
+    
+    .loading-screen-body {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .loading-screen-footer {
+        padding: 16px;
+        padding-bottom: 32px;
+    }
+}
+
+
+
+================================================
+FILE: src/Application/UI/components/FreeCamToggle.tsx
+================================================
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import UIEventBus from '../EventBus';
+import { Easing } from '../Animation';
+// @ts-ignore
+import camera from '../../../../static/textures/UI/camera.svg';
+// @ts-ignore
+import mouse from '../../../../static/textures/UI/mouse.svg';
+
+interface MuteToggleProps {}
+
+const MuteToggle: React.FC<MuteToggleProps> = ({}) => {
+    const [isHovering, setIsHovering] = useState(false);
+    const [isActive, setIsActive] = useState(false);
+    const [freeCamActive, setFreeCamActive] = useState(false);
+    const [blockEvents, setBlockEvents] = useState(true);
+
+    const onMouseDownHandler = useCallback(
+        (event) => {
+            setIsActive(true);
+            event.preventDefault();
+            setFreeCamActive(!freeCamActive);
+        },
+        [freeCamActive]
+    );
+
+    const iconSize = freeCamActive
+        ? window.innerWidth < 768
+            ? 8
+            : 10
+        : window.innerWidth < 768
+        ? 4
+        : 6;
+
+    const onMouseUpHandler = useCallback(() => {
+        setIsActive(false);
+    }, []);
+
+    useEffect(() => {
+        setTimeout(() => {
+            setBlockEvents(false);
+        }, 100);
+    }, []);
+
+    useEffect(() => {
+        if (!blockEvents) {
+            window.postMessage({ type: 'keydown', key: `_AUTO_` }, '*');
+            UIEventBus.dispatch('freeCamToggle', freeCamActive);
+        }
+    }, [freeCamActive]);
+
+    return (
+        <div style={styles.wrapper}>
+            <div
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                style={styles.container}
+                onMouseDown={onMouseDownHandler}
+                onMouseUp={onMouseUpHandler}
+                className="icon-control-container"
+                id="prevent-click"
+            >
+                <motion.img
+                    id="prevent-click"
+                    src={freeCamActive ? mouse : camera}
+                    style={{ opacity: isActive ? 0.2 : isHovering ? 0.8 : 1 }}
+                    height={iconSize}
+                    animate={
+                        isActive
+                            ? 'active'
+                            : isHovering
+                            ? 'hovering'
+                            : 'default'
+                    }
+                    variants={iconVars}
+                />
+            </div>
+            {/* <motion.div
+                initial="hidden"
+                animate={freeCamActive ? 'active' : 'hidden'}
+                variants={indicatorVars}
+                style={Object.assign({}, styles.container, { marginLeft: 4 })}
+                id="prevent-click"
+            >
+                <p
+                    style={
+                        window.innerWidth < 768
+                            ? { fontSize: 8 }
+                            : { fontSize: 10 }
+                    }
+                >
+                    Free Cam Enabled
+                </p>
+            </motion.div> */}
+        </div>
+    );
+};
+
+const iconVars = {
+    hovering: {
+        // scale: 1.2,
+        opacity: 0.8,
+        transition: {
+            duration: 0.1,
+            ease: 'easeOut',
+        },
+    },
+    active: {
+        scale: 0.8,
+        opacity: 0.5,
+        transition: {
+            duration: 0.1,
+            ease: Easing.expOut,
+        },
+    },
+    default: {
+        scale: 1,
+        opacity: 1,
+        transition: {
+            duration: 0.2,
+            ease: 'easeOut',
+        },
+    },
+};
+
+const indicatorVars = {
+    active: {
+        opacity: 1,
+        x: 0,
+        transition: {
+            duration: 0.2,
+            ease: Easing.expOut,
+        },
+    },
+    hidden: {
+        x: -4,
+        opacity: 0,
+        transition: {
+            duration: 0.2,
+            ease: Easing.expOut,
+        },
+    },
+};
+
+const styles: StyleSheetCSS = {
+    container: {
+        background: 'black',
+        // padding: 4,
+        paddingLeft: 8,
+        paddingRight: 8,
+        textAlign: 'center',
+        display: 'flex',
+        // position: 'absolute',
+        boxSizing: 'border-box',
+        justifyContent: 'center',
+        alignItems: 'center',
+        cursor: 'pointer',
+    },
+    wrapper: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+};
+
+export default MuteToggle;
+
+
+
+================================================
+FILE: src/Application/UI/components/HelpPrompt.tsx
+================================================
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+// import eventBus from '../EventBus';
+import { motion } from 'framer-motion';
+import UIEventBus from '../EventBus';
+
+const HELP_TEXT = 'Click anywhere to begin';
+
+type HelpPromptProps = {};
+
+const HelpPrompt: React.FC<HelpPromptProps> = () => {
+    const [helpText, setHelpText] = useState('');
+    const [visible, setVisible] = useState(true);
+    const visRef = useRef(visible);
+
+    const typeHelpText = (i: number, curText: string) => {
+        if (i < HELP_TEXT.length && visRef.current) {
+            setTimeout(() => {
+                window.postMessage(
+                    { type: 'keydown', key: `_AUTO_${HELP_TEXT[i]}` },
+                    '*'
+                );
+
+                setHelpText(curText + HELP_TEXT[i]);
+                typeHelpText(i + 1, curText + HELP_TEXT[i]);
+            }, Math.random() * 120 + 50);
+        }
+    };
+
+    // make a document listener to listen to clicks
+
+    useEffect(() => {
+        setTimeout(() => {
+            typeHelpText(0, '');
+        }, 500);
+        document.addEventListener('mousedown', () => {
+            setVisible(false);
+        });
+        UIEventBus.on('enterMonitor', () => {
+            setVisible(false);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (visible == false) {
+            window.postMessage({ type: 'keydown', key: `_AUTO_` }, '*');
+        }
+        visRef.current = visible;
+    }, [visible]);
+
+    return helpText.length > 0 ? (
+        <motion.div
+            variants={vars}
+            animate={visible ? 'visible' : 'hide'}
+            style={styles.container}
+        >
+            <p>{helpText}</p>
+            <div style={styles.blinkingContainer}>
+                <div className="blinking-cursor" />
+            </div>
+        </motion.div>
+    ) : (
+        <></>
+    );
+};
+
+const vars = {
+    visible: {
+        opacity: 1,
+    },
+    hide: {
+        y: 12,
+        opacity: 0,
+        transition: {
+            duration: 0.5,
+            ease: 'easeOut',
+        },
+    },
+};
+
+const styles: StyleSheetCSS = {
+    container: {
+        position: 'absolute',
+        bottom: 64,
+        background: 'black',
+        padding: 4,
+        paddingLeft: 16,
+        paddingRight: 16,
+        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'flex-end',
+    },
+    blinkingContainer: {
+        // width: 100,
+        // height: 100,
+        marginLeft: 8,
+        paddingBottom: 2,
+        paddingRight: 4,
+    },
+};
+
+export default HelpPrompt;
+
+
+
+================================================
+FILE: src/Application/UI/components/InfoOverlay.tsx
+================================================
+import React, { useEffect, useRef, useState } from 'react';
+import FreeCamToggle from './FreeCamToggle';
+import MuteToggle from './MuteToggle';
+
+interface InfoOverlayProps {
+    visible: boolean;
+}
+
+const NAME_TEXT = 'Henry Heffernan';
+const TITLE_TEXT = 'Software Engineer';
+const MULTIPLIER = 1;
+
+const InfoOverlay: React.FC<InfoOverlayProps> = ({ visible }) => {
+    const visRef = useRef(visible);
+    const [nameText, setNameText] = useState('');
+    const [titleText, setTitleText] = useState('');
+    const [time, setTime] = useState(new Date().toLocaleTimeString());
+    const timeRef = useRef(time);
+    const [timeText, setTimeText] = useState('');
+    const [textDone, setTextDone] = useState(false);
+    const [volumeVisible, setVolumeVisible] = useState(false);
+    const [freeCamVisible, setFreeCamVisible] = useState(false);
+
+    const typeText = (
+        i: number,
+        curText: string,
+        text: string,
+        setText: React.Dispatch<React.SetStateAction<string>>,
+        callback: () => void,
+        refOverride?: React.MutableRefObject<string>
+    ) => {
+        if (refOverride) {
+            text = refOverride.current;
+        }
+        if (i < text.length) {
+            setTimeout(() => {
+                if (visRef.current === true)
+                    window.postMessage(
+                        { type: 'keydown', key: `_AUTO_${text[i]}` },
+                        '*'
+                    );
+
+                setText(curText + text[i]);
+                typeText(
+                    i + 1,
+                    curText + text[i],
+                    text,
+                    setText,
+                    callback,
+                    refOverride
+                );
+            }, Math.random() * 50 + 50 * MULTIPLIER);
+        } else {
+            callback();
+        }
+    };
+
+    useEffect(() => {
+        if (visible && nameText == '') {
+            setTimeout(() => {
+                typeText(0, '', NAME_TEXT, setNameText, () => {
+                    typeText(0, '', TITLE_TEXT, setTitleText, () => {
+                        typeText(
+                            0,
+                            '',
+                            time,
+                            setTimeText,
+                            () => {
+                                setTextDone(true);
+                            },
+                            timeRef
+                        );
+                    });
+                });
+            }, 400);
+        }
+        visRef.current = visible;
+    }, [visible]);
+
+    useEffect(() => {
+        if (textDone) {
+            setTimeout(() => {
+                setVolumeVisible(true);
+                setTimeout(() => {
+                    setFreeCamVisible(true);
+                }, 250);
+            }, 250);
+        }
+    }, [textDone]);
+
+    useEffect(() => {
+        window.postMessage({ type: 'keydown', key: `_AUTO_` }, '*');
+    }, [freeCamVisible, volumeVisible]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTime(new Date().toLocaleTimeString());
+        }, 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        timeRef.current = time;
+        textDone && setTimeText(time);
+    }, [time]);
+
+    return (
+        <div style={styles.wrapper}>
+            {nameText !== '' && (
+                <div style={styles.container}>
+                    <p>{nameText}</p>
+                </div>
+            )}
+            {titleText !== '' && (
+                <div style={styles.container}>
+                    <p>{titleText}</p>
+                </div>
+            )}
+            {timeText !== '' && (
+                <div style={styles.lastRow}>
+                    <div
+                        style={Object.assign(
+                            {},
+                            styles.container,
+                            styles.lastRowChild
+                        )}
+                    >
+                        <p>{timeText}</p>
+                    </div>
+                    {volumeVisible && (
+                        <div style={styles.lastRowChild}>
+                            <MuteToggle />
+                        </div>
+                    )}
+                    {freeCamVisible && (
+                        <div style={styles.lastRowChild}>
+                            <FreeCamToggle />
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const styles: StyleSheetCSS = {
+    container: {
+        background: 'black',
+        padding: 4,
+        paddingLeft: 16,
+        paddingRight: 16,
+        textAlign: 'center',
+        display: 'flex',
+        marginBottom: 4,
+        boxSizing: 'border-box',
+    },
+    wrapper: {
+        position: 'absolute',
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+    },
+    blinkingContainer: {
+        // width: 100,
+        // height: 100,
+        marginLeft: 8,
+        paddingBottom: 2,
+        paddingRight: 4,
+    },
+    lastRow: {
+        display: 'flex',
+        flexDirection: 'row',
+    },
+    lastRowChild: {
+        marginRight: 4,
+    },
+};
+
+export default InfoOverlay;
+
+
+
+================================================
+FILE: src/Application/UI/components/InterfaceUI.tsx
+================================================
+import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import UIEventBus from '../EventBus';
+import InfoOverlay from './InfoOverlay';
+
+interface InterfaceUIProps {}
+
+const InterfaceUI: React.FC<InterfaceUIProps> = ({}) => {
+    const [initLoad, setInitLoad] = useState(true);
+    const [visible, setVisible] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const interfaceRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        UIEventBus.on('loadingScreenDone', () => {
+            setLoading(false);
+        });
+
+        // find element by id and set ref
+        const element = document.getElementById('ui-interactive');
+        if (element) {
+            // @ts-ignore
+            interfaceRef.current = element;
+        }
+    }, []);
+
+    const initMouseDownHandler = () => {
+        setVisible(true);
+        setInitLoad(false);
+    };
+
+    useEffect(() => {
+        if (!loading && initLoad) {
+            document.addEventListener('mousedown', initMouseDownHandler);
+            return () => {
+                document.removeEventListener('mousedown', initMouseDownHandler);
+            };
+        }
+    }, [loading, initLoad]);
+
+    useEffect(() => {
+        UIEventBus.on('enterMonitor', () => {
+            setVisible(false);
+            setInitLoad(false);
+            if (interfaceRef.current) {
+                interfaceRef.current.style.pointerEvents = 'none';
+            }
+        });
+        UIEventBus.on('leftMonitor', () => {
+            setVisible(true);
+            if (interfaceRef.current) {
+                interfaceRef.current.style.pointerEvents = 'auto';
+            }
+        });
+    }, []);
+
+    return !loading ? (
+        <motion.div
+            initial="hide"
+            variants={vars}
+            animate={visible ? 'visible' : 'hide'}
+            style={styles.wrapper}
+            className="interface-wrapper"
+            id="prevent-click"
+        >
+            <InfoOverlay visible={visible} />
+        </motion.div>
+    ) : (
+        <></>
+    );
+};
+
+const vars = {
+    visible: {
+        opacity: 1,
+        x: 0,
+        transition: {
+            duration: 0.5,
+            delay: 0.3,
+            ease: 'easeOut',
+        },
+    },
+    hide: {
+        x: -32,
+        opacity: 0,
+        transition: {
+            duration: 0.3,
+            ease: 'easeOut',
+        },
+    },
+};
+
+interface StyleSheetCSS {
+    [key: string]: React.CSSProperties;
+}
+
+const styles: StyleSheetCSS = {
+    wrapper: {
+        width: '100%',
+        display: 'flex',
+        position: 'absolute',
+        boxSizing: 'border-box',
+    },
+};
+
+export default InterfaceUI;
+
+
+
+================================================
+FILE: src/Application/UI/components/LoadingScreen.tsx
+================================================
+import React, { useCallback, useEffect, useState } from 'react';
+import eventBus from '../EventBus';
+
+type LoadingProps = {};
+
+const LoadingScreen: React.FC<LoadingProps> = () => {
+    const [progress, setProgress] = useState(0);
+    const [toLoad, setToLoad] = useState(0);
+    const [loaded, setLoaded] = useState(0);
+    const [overlayOpacity, setLoadingOverlayOpacity] = useState(1);
+    const [loadingTextOpacity, setLoadingTextOpacity] = useState(1);
+    const [startPopupOpacity, setStartPopupOpacity] = useState(0);
+    const [firefoxPopupOpacity, setFirefoxPopupOpacity] = useState(0);
+    const [webGLErrorOpacity, setWebGLErrorOpacity] = useState(0);
+
+    const [showBiosInfo, setShowBiosInfo] = useState(false);
+    const [showLoadingResources, setShowLoadingResources] = useState(false);
+    const [doneLoading, setDoneLoading] = useState(false);
+    const [webGLError, setWebGLError] = useState(false);
+    const [counter, setCounter] = useState(0);
+    const [resources] = useState<string[]>([]);
+    const [mobileWarning, setMobileWarning] = useState(window.innerWidth < 768);
+
+    const onResize = () => {
+        if (window.innerWidth < 768) {
+            setMobileWarning(true);
+        } else {
+            setMobileWarning(false);
+        }
+    };
+
+    window.addEventListener('resize', onResize);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('debug')) {
+            start();
+        } else if (!detectWebGLContext()) {
+            setWebGLError(true);
+        } else {
+            setShowBiosInfo(true);
+        }
+    }, []);
+
+    useEffect(() => {
+        eventBus.on('loadedSource', (data) => {
+            setProgress(data.progress);
+            setToLoad(data.toLoad);
+            setLoaded(data.loaded);
+            resources.push(
+                `Loaded ${data.sourceName}${getSpace(
+                    data.sourceName
+                )} ... ${Math.round(data.progress * 100)}%`
+            );
+            if (resources.length > 8) {
+                resources.shift();
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        setShowLoadingResources(true);
+        setCounter(counter + 1);
+    }, [loaded]);
+
+    useEffect(() => {
+        if (progress >= 1 && !webGLError) {
+            setDoneLoading(true);
+
+            setTimeout(() => {
+                setLoadingTextOpacity(0);
+                setTimeout(() => {
+                    setStartPopupOpacity(1);
+                }, 500);
+            }, 1000);
+        }
+    }, [progress]);
+
+    useEffect(() => {
+        if (webGLError) {
+            setTimeout(() => {
+                setWebGLErrorOpacity(1);
+            }, 500);
+        }
+    }, [webGLError]);
+
+    const start = useCallback(() => {
+        setLoadingOverlayOpacity(0);
+        eventBus.dispatch('loadingScreenDone', {});
+        const ui = document.getElementById('ui');
+        if (ui) {
+            ui.style.pointerEvents = 'none';
+        }
+    }, []);
+
+    const getSpace = (sourceName: string) => {
+        let spaces = '';
+        for (let i = 0; i < 24 - sourceName.length; i++) spaces += '\xa0';
+        return spaces;
+    };
+
+    const getCurrentDate = () => {
+        const date = new Date();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const year = date.getFullYear();
+        // add leading zero
+        const monthFormatted = month < 10 ? `0${month}` : month;
+        const dayFormatted = day < 10 ? `0${day}` : day;
+        return `${monthFormatted}/${dayFormatted}/${year}`;
+    };
+
+    const detectWebGLContext = () => {
+        var canvas = document.createElement('canvas');
+
+        // Get WebGLRenderingContext from canvas element.
+        var gl =
+            canvas.getContext('webgl') ||
+            canvas.getContext('experimental-webgl');
+        // Report the result.
+        if (gl && gl instanceof WebGLRenderingContext) {
+            return true;
+        }
+        return false;
+    };
+
+    return (
+        <div
+            style={Object.assign({}, styles.overlay, {
+                opacity: overlayOpacity,
+                transform: `scale(${overlayOpacity === 0 ? 1.1 : 1})`,
+            })}
+        >
+            {startPopupOpacity === 0 && loadingTextOpacity === 0 && (
+                <div style={styles.blinkingContainer}>
+                    <span className="blinking-cursor" />
+                </div>
+            )}
+            {!webGLError && (
+                <div
+                    style={Object.assign({}, styles.overlayText, {
+                        opacity: loadingTextOpacity,
+                    })}
+                >
+                    <div
+                        style={styles.header}
+                        className="loading-screen-header"
+                    >
+                        <div style={styles.logoContainer}>
+                            <div>
+                                <p style={styles.green}>
+                                    <b>Heffernan,</b>{' '}
+                                </p>
+                                <p style={styles.green}>
+                                    <b>Henry Inc.</b>
+                                </p>
+                            </div>
+                        </div>
+                        <div style={styles.headerInfo}>
+                            <p>Released: 01/13/2000</p>
+                            <p>HHBIOS (C)2000 Heffernan Henry Inc.,</p>
+                        </div>
+                    </div>
+                    <div style={styles.body} className="loading-screen-body">
+                        <p>HSP S13 2000-2022 Special UC131S</p>
+                        <div style={styles.spacer} />
+                        {showBiosInfo && (
+                            <>
+                                <p>HSP Showcase(tm) XX 113</p>
+                                <p>Checking RAM : {14000} OK</p>
+                                <div style={styles.spacer} />
+                                <div style={styles.spacer} />
+                                {showLoadingResources ? (
+                                    progress == 1 ? (
+                                        <p>FINISHED LOADING RESOURCES</p>
+                                    ) : (
+                                        <p className="loading">
+                                            LOADING RESOURCES ({loaded}/
+                                            {toLoad === 0 ? '-' : toLoad})
+                                        </p>
+                                    )
+                                ) : (
+                                    <p className="loading">WAIT</p>
+                                )}
+                            </>
+                        )}
+                        <div style={styles.spacer} />
+                        <div style={styles.resourcesLoadingList}>
+                            {resources.map((sourceName) => (
+                                <p key={sourceName}>{sourceName}</p>
+                            ))}
+                        </div>
+                        <div style={styles.spacer} />
+                        {showLoadingResources && doneLoading && (
+                            <p>
+                                All Content Loaded, launching{' '}
+                                <b style={styles.green}>
+                                    'Henry Heffernan Portfolio Showcase'
+                                </b>{' '}
+                                V1.0
+                            </p>
+                        )}
+                        <div style={styles.spacer} />
+                        <span className="blinking-cursor" />
+                    </div>
+                    <div
+                        style={styles.footer}
+                        className="loading-screen-footer"
+                    >
+                        <p>
+                            Press <b>DEL</b> to enter SETUP , <b>ESC</b> to skip
+                            memory test
+                        </p>
+                        <p>{getCurrentDate()}</p>
+                    </div>
+                </div>
+            )}
+            <div
+                style={Object.assign({}, styles.popupContainer, {
+                    opacity: startPopupOpacity,
+                })}
+            >
+                <div style={styles.startPopup}>
+                    {/* <p style={styles.red}>
+                        <b>THIS SITE IS CURRENTLY A W.I.P.</b>
+                    </p>
+                    <p>But do enjoy what I have done so far :)</p>
+                    <div style={styles.spacer} />
+                    <div style={styles.spacer} /> */}
+                    <p>Henry Heffernan Portfolio Showcase 2022</p>
+                    {mobileWarning && (
+                        <>
+                            <br />
+                            <b>
+                                <p style={styles.warning}>
+                                    WARNING: This experience is best viewed on
+                                </p>
+                                <p style={styles.warning}>
+                                    a desktop or laptop computer.
+                                </p>
+                            </b>
+                            <br />
+                        </>
+                    )}
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <p>Click start to begin{'\xa0'}</p>
+                        <span className="blinking-cursor" />
+                    </div>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            marginTop: '16px',
+                        }}
+                    >
+                        <div className="bios-start-button" onClick={start}>
+                            <p>START</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {webGLError && (
+                <div
+                    style={Object.assign({}, styles.popupContainer, {
+                        opacity: webGLErrorOpacity,
+                    })}
+                >
+                    <div style={styles.startPopup}>
+                        <p>
+                            <b style={{ color: 'red' }}>CRITICAL ERROR:</b> No
+                            WebGL Detected
+                        </p>
+                        <div style={styles.spacer} />
+                        <div style={styles.spacer} />
+
+                        <p>WebGL is required to run this site.</p>
+                        <p>
+                            Please enable it or switch to a browser which
+                            supports WebGL
+                        </p>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const styles: StyleSheetCSS = {
+    overlay: {
+        backgroundColor: 'black',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        transition: 'opacity 0.2s, transform 0.2s',
+        MozTransition: 'opacity 0.2s, transform 0.2s',
+        WebkitTransition: 'opacity 0.2s, transform 0.2s',
+        OTransition: 'opacity 0.2s, transform 0.2s',
+        msTransition: 'opacity 0.2s, transform 0.2s',
+
+        transitionTimingFunction: 'ease-in-out',
+        MozTransitionTimingFunction: 'ease-in-out',
+        WebkitTransitionTimingFunction: 'ease-in-out',
+        OTransitionTimingFunction: 'ease-in-out',
+        msTransitionTimingFunction: 'ease-in-out',
+
+        boxSizing: 'border-box',
+        fontSize: 16,
+        letterSpacing: 0.8,
+    },
+
+    spacer: {
+        height: 16,
+    },
+    header: {
+        width: '100%',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'row',
+    },
+    popupContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    warning: {
+        color: 'yellow',
+    },
+    blinkingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        boxSizing: 'border-box',
+        padding: 48,
+    },
+    startPopup: {
+        backgroundColor: '#000',
+        padding: 24,
+        border: '7px solid #fff',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        maxWidth: 500,
+        // alignItems: 'center',
+    },
+    headerInfo: {
+        marginLeft: 64,
+    },
+    red: {
+        color: '#00ff00',
+    },
+    link: {
+        // textDecoration: 'none',
+        color: '#4598ff',
+        cursor: 'pointer',
+    },
+    overlayText: {
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+    },
+    body: {
+        flex: 1,
+        display: 'flex',
+        width: '100%',
+        boxSizing: 'border-box',
+        flexDirection: 'column',
+    },
+    logoContainer: {
+        display: 'flex',
+        flexDirection: 'row',
+    },
+    resourcesLoadingList: {
+        display: 'flex',
+        paddingLeft: 32,
+        paddingBottom: 32,
+        flexDirection: 'column',
+    },
+    logoImage: {
+        width: 64,
+        height: 42,
+        imageRendering: 'pixelated',
+        marginRight: 16,
+    },
+    footer: {
+        boxSizing: 'border-box',
+        width: '100%',
+    },
+};
+
+export default LoadingScreen;
+
+
+
+================================================
+FILE: src/Application/UI/components/MuteToggle.tsx
+================================================
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import UIEventBus from '../EventBus';
+import { Easing } from '../Animation';
+// @ts-ignore
+import volumeOn from '../../../../static/textures/UI/volume_on.svg';
+// @ts-ignore
+import volumeOff from '../../../../static/textures/UI/volume_off.svg';
+
+interface MuteToggleProps {}
+
+const MuteToggle: React.FC<MuteToggleProps> = ({}) => {
+    const [isHovering, setIsHovering] = useState(false);
+    const [isActive, setIsActive] = useState(false);
+    const [muted, setMuted] = useState(false);
+
+    const onMouseDownHandler = useCallback(
+        (event) => {
+            setIsActive(true);
+            event.preventDefault();
+            setMuted(!muted);
+        },
+        [muted]
+    );
+
+    const onMouseUpHandler = useCallback(() => {
+        setIsActive(false);
+    }, []);
+
+    useEffect(() => {
+        UIEventBus.dispatch('muteToggle', muted);
+    }, [muted]);
+
+    return (
+        <div
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+            style={styles.container}
+            onMouseDown={onMouseDownHandler}
+            onMouseUp={onMouseUpHandler}
+            className="icon-control-container"
+            id="prevent-click"
+        >
+            <motion.img
+                id="prevent-click"
+                src={muted ? volumeOff : volumeOn}
+                style={{ opacity: isActive ? 0.2 : isHovering ? 0.8 : 1 }}
+                width={window.innerWidth < 768 ? 8 : 10}
+                animate={
+                    isActive ? 'active' : isHovering ? 'hovering' : 'default'
+                }
+                variants={iconVars}
+            />
+        </div>
+    );
+};
+
+const iconVars = {
+    hovering: {
+        // scale: 1.2,
+        opacity: 0.8,
+        transition: {
+            duration: 0.1,
+            ease: 'easeOut',
+        },
+    },
+    active: {
+        scale: 0.8,
+        opacity: 0.5,
+        transition: {
+            duration: 0.1,
+            ease: Easing.expOut,
+        },
+    },
+    default: {
+        scale: 1,
+        opacity: 1,
+        transition: {
+            duration: 0.2,
+            ease: 'easeOut',
+        },
+    },
+};
+
+const styles: StyleSheetCSS = {
+    container: {
+        background: 'black',
+        // padding: 4,
+        // paddingLeft: 8,
+        // paddingRight: 8,
+        textAlign: 'center',
+        display: 'flex',
+        // position: 'absolute',
+        boxSizing: 'border-box',
+        justifyContent: 'center',
+        alignItems: 'center',
+        cursor: 'pointer',
+    },
+};
+
+export default MuteToggle;
+
+
+
+================================================
+FILE: src/Application/Utils/BakedModel.ts
+================================================
+import * as THREE from 'three';
+
+export default class BakedModel {
+    model: LoadedModel;
+    texture: LoadedTexture;
+    material: THREE.MeshBasicMaterial;
+
+    constructor(model: LoadedModel, texture: LoadedTexture, scale?: number) {
+        this.model = model;
+        this.texture = texture;
+
+        this.texture.flipY = false;
+        this.texture.encoding = THREE.sRGBEncoding;
+
+        this.material = new THREE.MeshBasicMaterial({
+            map: this.texture,
+        });
+
+        this.model.scene.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+                if (scale) child.scale.set(scale, scale, scale);
+                child.material.map = this.texture;
+                child.material = this.material;
+            }
+        });
+
+        return this;
+    }
+
+    getModel(): THREE.Group {
+        return this.model.scene;
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Utils/Debug.ts
+================================================
+import * as dat from 'lil-gui';
+
+export default class Debug {
+    active: boolean;
+    ui: dat.GUI;
+
+    constructor() {
+        this.active = window.location.hash === '#debug';
+
+        if (this.active) {
+            this.ui = new dat.GUI();
+        }
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Utils/EventEmitter.ts
+================================================
+export default class EventEmitter {
+    /**
+     * Types
+     */
+    callbacks: { [key in string]: { [key in string]: (() => any)[] } };
+
+    /**
+     * Constructor
+     */
+    constructor() {
+        this.callbacks = {};
+        this.callbacks.base = {};
+    }
+
+    on(_names: string, callback: (...args: any[]) => any) {
+        // Errors
+        if (typeof _names === 'undefined' || _names === '') {
+            console.warn('wrong names');
+            return false;
+        }
+
+        if (typeof callback === 'undefined') {
+            console.warn('wrong callback');
+            return false;
+        }
+
+        // Resolve names
+        const names = this.resolveNames(_names);
+
+        // Each name
+        names.forEach((_name) => {
+            // Resolve name
+            const name = this.resolveName(_name);
+
+            // Create namespace if not exist
+            if (!(this.callbacks[name.namespace] instanceof Object))
+                this.callbacks[name.namespace] = {};
+
+            // Create callback if not exist
+            if (!(this.callbacks[name.namespace][name.value] instanceof Array))
+                this.callbacks[name.namespace][name.value] = [];
+
+            // Add callback
+            this.callbacks[name.namespace][name.value].push(callback);
+        });
+
+        return this;
+    }
+
+    off(_names: string) {
+        // Errors
+        if (typeof _names === 'undefined' || _names === '') {
+            console.warn('wrong name');
+            return false;
+        }
+
+        // Resolve names
+        const names = this.resolveNames(_names);
+
+        // Each name
+        names.forEach((_name) => {
+            // Resolve name
+            const name = this.resolveName(_name);
+
+            // Remove namespace
+            if (name.namespace !== 'base' && name.value === '') {
+                delete this.callbacks[name.namespace];
+            }
+
+            // Remove specific callback in namespace
+            else {
+                // Default
+                if (name.namespace === 'base') {
+                    // Try to remove from each namespace
+                    for (const namespace in this.callbacks) {
+                        if (
+                            this.callbacks[namespace] instanceof Object &&
+                            this.callbacks[namespace][name.value] instanceof
+                                Array
+                        ) {
+                            delete this.callbacks[namespace][name.value];
+
+                            // Remove namespace if empty
+                            if (
+                                Object.keys(this.callbacks[namespace])
+                                    .length === 0
+                            )
+                                delete this.callbacks[namespace];
+                        }
+                    }
+                }
+
+                // Specified namespace
+                else if (
+                    this.callbacks[name.namespace] instanceof Object &&
+                    this.callbacks[name.namespace][name.value] instanceof Array
+                ) {
+                    delete this.callbacks[name.namespace][name.value];
+
+                    // Remove namespace if empty
+                    if (
+                        Object.keys(this.callbacks[name.namespace]).length === 0
+                    )
+                        delete this.callbacks[name.namespace];
+                }
+            }
+        });
+
+        return this;
+    }
+
+    trigger(_name: string, _args?: any[]) {
+        // Errors
+        if (typeof _name === 'undefined' || _name === '') {
+            console.warn('wrong name');
+            return false;
+        }
+
+        const that = this;
+        let finalResult: any = null;
+        let result = null;
+
+        // Default args
+        const args: any = !(_args instanceof Array) ? [] : _args;
+
+        // Resolve names (should on have one event)
+        let _names = this.resolveNames(_name);
+
+        // Resolve name
+        const name = this.resolveName(_names[0]);
+
+        // Default namespace
+        if (name.namespace === 'base') {
+            // Try to find callback in each namespace
+            for (const namespace in this.callbacks) {
+                if (
+                    this.callbacks[namespace] instanceof Object &&
+                    this.callbacks[namespace][name.value] instanceof Array
+                ) {
+                    this.callbacks[namespace][name.value].forEach(function (
+                        callback
+                    ) {
+                        result = callback.apply(that, args);
+
+                        if (typeof finalResult === 'undefined') {
+                            finalResult = result;
+                        }
+                    });
+                }
+            }
+        }
+
+        // Specified namespace
+        else if (this.callbacks[name.namespace] instanceof Object) {
+            if (name.value === '') {
+                console.warn('wrong name');
+                return this;
+            }
+
+            this.callbacks[name.namespace][name.value].forEach(function (
+                callback
+            ) {
+                result = callback.apply(that, args);
+
+                if (typeof finalResult === 'undefined') finalResult = result;
+            });
+        }
+
+        return finalResult;
+    }
+
+    resolveNames(_names: string): string[] {
+        let names = _names;
+        names = names.replace(/[^a-zA-Z0-9 ,/.]/g, '');
+        names = names.replace(/[,/]+/g, ' ');
+        return names.split(' ');
+    }
+
+    resolveName(name: string) {
+        const parts = name.split('.');
+        const newName: { original: string; value: string; namespace: string } =
+            {
+                original: name,
+                value: parts[0],
+                namespace: 'base',
+            };
+
+        // Specified namespace
+        if (parts.length > 1 && parts[1] !== '') {
+            newName.namespace = parts[1];
+        }
+
+        return newName;
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Utils/Loading.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import EventEmitter from './EventEmitter';
+import Resources from './Resources';
+import UIEventBus from '../UI/EventBus';
+
+export default class Loading extends EventEmitter {
+    progress: number;
+    application: Application;
+    resources: Resources;
+    scene: THREE.Scene;
+
+    constructor() {
+        super();
+
+        this.application = new Application();
+        this.resources = this.application.resources;
+
+        this.scene = this.application.scene;
+        this.on('loadedSource', (sourceName, loaded, toLoad) => {
+            this.progress = loaded / toLoad;
+            UIEventBus.dispatch('loadedSource', {
+                sourceName: sourceName,
+                progress: loaded / toLoad,
+                toLoad: toLoad,
+                loaded: loaded,
+            });
+        });
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Utils/Mouse.ts
+================================================
+import EventEmitter from './EventEmitter';
+import Application from '../Application';
+export default class Mouse extends EventEmitter {
+    x: number;
+    y: number;
+    inComputer: boolean;
+    application: Application;
+
+    constructor() {
+        super();
+
+        // Setup
+        this.x = 0;
+        this.y = 0;
+        this.inComputer = false;
+        // this.application = new Application();
+        // this.audio = this.application.world.audio;
+
+        // Resize event
+        this.on('mousemove', (event: any) => {
+            if (event.clientX && event.clientY) {
+                this.x = event.clientX;
+                this.y = event.clientY;
+            }
+            this.inComputer = event.inComputer ? true : false;
+        });
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Utils/Resources.ts
+================================================
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import Application from '../Application';
+import UIEventBus from '../UI/EventBus';
+import EventEmitter from './EventEmitter';
+import Loading from './Loading';
+
+export default class Resources extends EventEmitter {
+    sources: Resource[];
+    // Not sure about this one
+    items: {
+        texture: { [name: string]: LoadedTexture };
+        cubeTexture: { [name: string]: LoadedCubeTexture };
+        gltfModel: { [name: string]: LoadedModel };
+        audio: { [name: string]: LoadedAudio };
+    };
+    toLoad: number;
+    loaded: number;
+    loaders: {
+        gltfLoader: GLTFLoader;
+        textureLoader: THREE.TextureLoader;
+        cubeTextureLoader: THREE.CubeTextureLoader;
+        audioLoader: THREE.AudioLoader;
+    };
+    application: Application;
+    loading: Loading;
+
+    constructor(sources: Resource[]) {
+        super();
+
+        this.sources = sources;
+
+        this.items = { texture: {}, cubeTexture: {}, gltfModel: {}, audio: {} };
+        this.toLoad = this.sources.length;
+        this.loaded = 0;
+        this.application = new Application();
+        this.loading = this.application.loading;
+
+        this.setLoaders();
+        this.startLoading();
+    }
+
+    setLoaders() {
+        this.loaders = {
+            gltfLoader: new GLTFLoader(),
+            textureLoader: new THREE.TextureLoader(),
+            cubeTextureLoader: new THREE.CubeTextureLoader(),
+            audioLoader: new THREE.AudioLoader(),
+        };
+    }
+
+    startLoading() {
+        // Load each source
+        for (const source of this.sources) {
+            if (source.type === 'gltfModel') {
+                this.loaders.gltfLoader.load(source.path, (file) => {
+                    this.sourceLoaded(source, file);
+                });
+            } else if (source.type === 'texture') {
+                this.loaders.textureLoader.load(source.path, (file) => {
+                    file.encoding = THREE.sRGBEncoding;
+                    this.sourceLoaded(source, file);
+                });
+            } else if (source.type === 'cubeTexture') {
+                this.loaders.cubeTextureLoader.load(source.path, (file) => {
+                    this.sourceLoaded(source, file);
+                });
+            } else if (source.type === 'audio') {
+                this.loaders.audioLoader.load(source.path, (buffer) => {
+                    this.sourceLoaded(source, buffer);
+                });
+            }
+        }
+    }
+
+    sourceLoaded(source: Resource, file: LoadedResource) {
+        this.items[source.type][source.name] = file;
+
+        this.loaded++;
+
+        this.loading.trigger('loadedSource', [
+            source.name,
+            this.loaded,
+            this.toLoad,
+        ]);
+
+        if (this.loaded === this.toLoad) {
+            this.trigger('ready');
+        }
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Utils/Sizes.ts
+================================================
+import EventEmitter from './EventEmitter';
+
+export default class Sizes extends EventEmitter {
+    width: number;
+    height: number;
+    pixelRatio: number;
+
+    constructor() {
+        super();
+
+        // Setup
+        this.width = window.innerWidth;
+        this.height = window.innerHeight;
+        this.pixelRatio = Math.min(window.devicePixelRatio, 2);
+
+        // Resize event
+        window.addEventListener('resize', () => {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            this.pixelRatio = Math.min(window.devicePixelRatio, 2);
+
+            this.trigger('resize');
+        });
+    }
+}
+
+
+
+================================================
+FILE: src/Application/Utils/Time.ts
+================================================
+import UIEventBus from '../UI/EventBus';
+import EventEmitter from './EventEmitter';
+
+export default class Time extends EventEmitter {
+    start: number;
+    current: number;
+    elapsed: number;
+    delta: number;
+
+    constructor() {
+        super();
+
+        // Setup
+        this.start = Date.now();
+        this.current = this.start;
+        this.elapsed = 0;
+        this.delta = 16;
+
+        window.requestAnimationFrame(() => {
+            this.tick();
+        });
+
+        UIEventBus.on('loadingScreenDone', () => {
+            this.start = Date.now();
+        });
+    }
+
+    tick() {
+        const currentTime = Date.now();
+        this.delta = currentTime - this.current;
+        this.current = currentTime;
+        this.elapsed = this.current - this.start;
+
+        this.trigger('tick');
+
+        window.requestAnimationFrame(() => {
+            this.tick();
+        });
+    }
+}
+
+
+
+================================================
+FILE: src/Application/World/CoffeeSteam.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import Resources from '../Utils/Resources';
+import Time from '../Utils/Time';
+
+// @ts-ignore
+import fragmentShader from '../Shaders/coffee/fragment.glsl';
+// @ts-ignore
+import vertexShader from '../Shaders/coffee/vertex.glsl';
+
+export default class CoffeeSteam {
+    model: any;
+    application: Application;
+    resources: Resources;
+    scene: THREE.Scene;
+    time: Time;
+
+    constructor() {
+        this.application = new Application();
+        this.resources = this.application.resources;
+        this.scene = this.application.scene;
+        this.time = this.application.time;
+
+        this.setModel();
+    }
+
+    setModel() {
+        this.model = {};
+
+        this.model.color = '#c9c9c9';
+
+        // Material
+        this.model.material = new THREE.ShaderMaterial({
+            transparent: true,
+            depthWrite: false,
+            vertexShader,
+            fragmentShader,
+            uniforms: {
+                uTime: { value: 0 },
+                uTimeFrequency: { value: 0.001 },
+                uUvFrequency: { value: new THREE.Vector2(3, 5) },
+                uColor: { value: new THREE.Color(this.model.color) },
+            },
+        });
+
+        this.model.mesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(280, 700),
+            this.model.material
+        );
+
+        this.model.mesh.position.copy(new THREE.Vector3(1670, 200, 900));
+
+        this.scene.add(this.model.mesh);
+    }
+
+    update() {
+        this.model.material.uniforms.uTime.value = this.time.elapsed;
+    }
+}
+
+
+
+================================================
+FILE: src/Application/World/Computer.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import BakedModel from '../Utils/BakedModel';
+import Resources from '../Utils/Resources';
+
+export default class Computer {
+    application: Application;
+    scene: THREE.Scene;
+    resources: Resources;
+    bakedModel: BakedModel;
+
+    constructor() {
+        this.application = new Application();
+        this.scene = this.application.scene;
+        this.resources = this.application.resources;
+
+        this.bakeModel();
+        this.setModel();
+    }
+
+    bakeModel() {
+        this.bakedModel = new BakedModel(
+            this.resources.items.gltfModel.computerSetupModel,
+            this.resources.items.texture.computerSetupTexture,
+            900
+        );
+    }
+
+    setModel() {
+        this.scene.add(this.bakedModel.getModel());
+    }
+}
+
+
+
+================================================
+FILE: src/Application/World/Cursor.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import Camera from '../Camera/Camera';
+
+export default class Cursor {
+    application: Application;
+    scene: THREE.Scene;
+    camera: Camera;
+    mouse: THREE.Vector2;
+
+    constructor() {
+        this.application = new Application();
+        this.scene = this.application.scene;
+        this.camera = this.application.camera;
+        this.mouse = new THREE.Vector2(0, 0);
+
+        // create a cursor as a circle
+        const cursor = new THREE.Mesh(
+            new THREE.SphereBufferGeometry(2000, 32),
+            new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5,
+            })
+        );
+
+        // add the cursor to the scene
+        this.scene.add(cursor);
+    }
+}
+
+
+
+================================================
+FILE: src/Application/World/Decor.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import BakedModel from '../Utils/BakedModel';
+import Resources from '../Utils/Resources';
+
+export default class Decor {
+    application: Application;
+    scene: THREE.Scene;
+    resources: Resources;
+    bakedModel: BakedModel;
+
+    constructor() {
+        this.application = new Application();
+        this.scene = this.application.scene;
+        this.resources = this.application.resources;
+
+        this.bakeModel();
+        this.setModel();
+    }
+
+    bakeModel() {
+        this.bakedModel = new BakedModel(
+            this.resources.items.gltfModel.decorModel,
+            this.resources.items.texture.decorTexture,
+            900
+        );
+    }
+
+    setModel() {
+        this.scene.add(this.bakedModel.getModel());
+    }
+}
+
+
+
+================================================
+FILE: src/Application/World/Environment.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import BakedModel from '../Utils/BakedModel';
+import Resources from '../Utils/Resources';
+
+export default class Environment {
+    application: Application;
+    scene: THREE.Scene;
+    resources: Resources;
+    bakedModel: BakedModel;
+
+    constructor() {
+        this.application = new Application();
+        this.scene = this.application.scene;
+        this.resources = this.application.resources;
+
+        this.bakeModel();
+        this.setModel();
+    }
+
+    bakeModel() {
+        this.bakedModel = new BakedModel(
+            this.resources.items.gltfModel.environmentModel,
+            this.resources.items.texture.environmentTexture,
+            900
+        );
+    }
+
+    setModel() {
+        this.scene.add(this.bakedModel.getModel());
+    }
+
+    update() {}
+}
+
+
+
+================================================
+FILE: src/Application/World/Hitboxes.ts
+================================================
+import * as THREE from 'three';
+import Application from '../Application';
+import Camera from '../Camera/Camera';
+import Mouse from '../Utils/Mouse';
+
+const RENDER_WIREFRAME = true;
+
+export default class Decor {
+    application: Application;
+    scene: THREE.Scene;
+    hitboxes: {
+        [key: string]: {
+            action: () => void;
+        };
+    };
+    camera: Camera;
+    mouse: Mouse;
+    raycaster: THREE.Raycaster;
+
+    constructor() {
+        this.application = new Application();
+        this.scene = this.application.scene;
+        this.camera = this.application.camera;
+        this.mouse = this.application.mouse;
+        this.raycaster = new THREE.Raycaster();
+
+        this.createRaycaster();
+        this.createComputerHitbox();
+    }
+
+    createRaycaster() {
+        window.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+            console.log(this.camera.instance.position);
+
+            console.log(this.mouse);
+            const ray = new THREE.Raycaster();
+            ray.setFromCamera(
+                { x: this.mouse.x, y: this.mouse.y },
+                this.camera.instance
+            );
+            console.log(ray);
+            const intersects = ray.intersectObjects(this.scene.children);
+            console.log(intersects);
+            // this.raycaster.setFromCamera(this.mouse, this.camera.instance);
+            // const intersects = this.raycaster.intersectObjects(
+            //     this.scene.children
+            // );
+            // if (intersects.length > 0) {
+            //     const hb = this.hitboxes[intersects[0].object.name];
+            //     if (hb) {
+            //         hb.action();
+            //     }
+            // }
+        });
+    }
+
+    createComputerHitbox() {
+        this.createHitbox(
+            'computerHitbox',
+            () => {
+                // this.camera.focusOnMonitor();
+            },
+            new THREE.Vector3(0, 650, 0),
+            new THREE.Vector3(2000, 2000, 2000)
+        );
+    }
+
+    createHitbox(
+        name: string,
+        action: () => void,
+        position: THREE.Vector3,
+        size: THREE.Vector3
+    ) {
+        const wireframeOptions = RENDER_WIREFRAME
+            ? {
+                  //   wireframe: true,
+                  //   wireframeLinewidth: 50,
+                  opacity: 1,
+              }
+            : {};
+
+        // create hitbox material
+        const hitboxMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            ...wireframeOptions,
+        });
+
+        // create hitbox
+        const hitbox = new THREE.Mesh(
+            new THREE.BoxBufferGeometry(size.x, size.y, size.z),
+            hitboxMaterial
+        );
+
+        // set name of the hitbox object
+        hitbox.name = name;
+
+        // set hitbox position
+        hitbox.position.copy(position);
+
+        // add hitbox to scene
+        this.scene.add(hitbox);
+
+        // add hitbox to hitboxes
+        this.hitboxes = {
+            ...this.hitboxes,
+            [name]: {
+                action,
+            },
+        };
+    }
+}
+
+
+
+================================================
+FILE: src/Application/World/MonitorScreen.ts
+================================================
+import * as THREE from 'three';
+import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
+import GUI from 'lil-gui';
+import Application from '../Application';
+import Debug from '../Utils/Debug';
+import Resources from '../Utils/Resources';
+import Sizes from '../Utils/Sizes';
+import Camera from '../Camera/Camera';
+import EventEmitter from '../Utils/EventEmitter';
+
+const SCREEN_SIZE = { w: 1280, h: 1024 };
+const IFRAME_PADDING = 32;
+const IFRAME_SIZE = {
+    w: SCREEN_SIZE.w - IFRAME_PADDING,
+    h: SCREEN_SIZE.h - IFRAME_PADDING,
+};
+
+export default class MonitorScreen extends EventEmitter {
+    application: Application;
+    scene: THREE.Scene;
+    cssScene: THREE.Scene;
+    resources: Resources;
+    debug: Debug;
+    sizes: Sizes;
+    debugFolder: GUI;
+    screenSize: THREE.Vector2;
+    position: THREE.Vector3;
+    rotation: THREE.Euler;
+    camera: Camera;
+    prevInComputer: boolean;
+    shouldLeaveMonitor: boolean;
+    inComputer: boolean;
+    mouseClickInProgress: boolean;
+    dimmingPlane: THREE.Mesh;
+    videoTextures: { [key in string]: THREE.VideoTexture };
+
+    constructor() {
+        super();
+        this.application = new Application();
+        this.scene = this.application.scene;
+        this.cssScene = this.application.cssScene;
+        this.sizes = this.application.sizes;
+        this.resources = this.application.resources;
+        this.screenSize = new THREE.Vector2(SCREEN_SIZE.w, SCREEN_SIZE.h);
+        this.camera = this.application.camera;
+        this.position = new THREE.Vector3(0, 950, 255);
+        this.rotation = new THREE.Euler(-3 * THREE.MathUtils.DEG2RAD, 0, 0);
+        this.videoTextures = {};
+        this.mouseClickInProgress = false;
+        this.shouldLeaveMonitor = false;
+
+        // Create screen
+        this.initializeScreenEvents();
+        this.createIframe();
+        const maxOffset = this.createTextureLayers();
+        this.createEnclosingPlanes(maxOffset);
+        this.createPerspectiveDimmer(maxOffset);
+    }
+
+    initializeScreenEvents() {
+        document.addEventListener(
+            'mousemove',
+            (event) => {
+                // @ts-ignore
+                const id = event.target.id;
+                if (id === 'computer-screen') {
+                    // @ts-ignore
+                    event.inComputer = true;
+                }
+
+                // @ts-ignore
+                this.inComputer = event.inComputer;
+
+                if (this.inComputer && !this.prevInComputer) {
+                    this.camera.trigger('enterMonitor');
+                }
+
+                if (
+                    !this.inComputer &&
+                    this.prevInComputer &&
+                    !this.mouseClickInProgress
+                ) {
+                    this.camera.trigger('leftMonitor');
+                }
+
+                if (
+                    !this.inComputer &&
+                    this.mouseClickInProgress &&
+                    this.prevInComputer
+                ) {
+                    this.shouldLeaveMonitor = true;
+                } else {
+                    this.shouldLeaveMonitor = false;
+                }
+
+                this.application.mouse.trigger('mousemove', [event]);
+
+                this.prevInComputer = this.inComputer;
+            },
+            false
+        );
+        document.addEventListener(
+            'mousedown',
+            (event) => {
+                // @ts-ignore
+                this.inComputer = event.inComputer;
+                this.application.mouse.trigger('mousedown', [event]);
+
+                this.mouseClickInProgress = true;
+                this.prevInComputer = this.inComputer;
+            },
+            false
+        );
+        document.addEventListener(
+            'mouseup',
+            (event) => {
+                // @ts-ignore
+                this.inComputer = event.inComputer;
+                this.application.mouse.trigger('mouseup', [event]);
+
+                if (this.shouldLeaveMonitor) {
+                    this.camera.trigger('leftMonitor');
+                    this.shouldLeaveMonitor = false;
+                }
+
+                this.mouseClickInProgress = false;
+                this.prevInComputer = this.inComputer;
+            },
+            false
+        );
+    }
+
+    /**
+     * Creates the iframe for the computer screen
+     */
+    createIframe() {
+        // Create container
+        const container = document.createElement('div');
+        container.style.width = this.screenSize.width + 'px';
+        container.style.height = this.screenSize.height + 'px';
+        container.style.opacity = '1';
+        container.style.background = '#1d2e2f';
+
+        // Create iframe
+        const iframe = document.createElement('iframe');
+
+        // Bubble mouse move events to the main application, so we can affect the camera
+        iframe.onload = () => {
+            if (iframe.contentWindow) {
+                window.addEventListener('message', (event) => {
+                    var evt = new CustomEvent(event.data.type, {
+                        bubbles: true,
+                        cancelable: false,
+                    });
+
+                    // @ts-ignore
+                    evt.inComputer = true;
+                    if (event.data.type === 'mousemove') {
+                        var clRect = iframe.getBoundingClientRect();
+                        const { top, left, width, height } = clRect;
+                        const widthRatio = width / IFRAME_SIZE.w;
+                        const heightRatio = height / IFRAME_SIZE.h;
+
+                        // @ts-ignore
+                        evt.clientX = Math.round(
+                            event.data.clientX * widthRatio + left
+                        );
+                        //@ts-ignore
+                        evt.clientY = Math.round(
+                            event.data.clientY * heightRatio + top
+                        );
+                    } else if (event.data.type === 'keydown') {
+                        // @ts-ignore
+                        evt.key = event.data.key;
+                    } else if (event.data.type === 'keyup') {
+                        // @ts-ignore
+                        evt.key = event.data.key;
+                    }
+
+                    iframe.dispatchEvent(evt);
+                });
+            }
+        };
+
+        // Set iframe attributes
+        // PROD
+        iframe.src = 'https://os.henryheffernan.com/';
+        /**
+         * Use dev server is query params are present
+         *
+         * Warning: This will not work unless the dev server is running on localhost:3000
+         * Also running the dev server causes browsers to freak out over unsecure connections
+         * in the iframe, so it will flag a ton of issues.
+         */
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('dev')) {
+            iframe.src = 'http://localhost:3000/';
+        }
+        iframe.style.width = this.screenSize.width + 'px';
+        iframe.style.height = this.screenSize.height + 'px';
+        iframe.style.padding = IFRAME_PADDING + 'px';
+        iframe.style.boxSizing = 'border-box';
+        iframe.style.opacity = '1';
+        iframe.className = 'jitter';
+        iframe.id = 'computer-screen';
+        iframe.frameBorder = '0';
+        iframe.title = 'HeffernanOS';
+
+        // Add iframe to container
+        container.appendChild(iframe);
+
+        // Create CSS plane
+        this.createCssPlane(container);
+    }
+
+    /**
+     * Creates a CSS plane and GL plane to properly occlude the CSS plane
+     * @param element the element to create the css plane for
+     */
+    createCssPlane(element: HTMLElement) {
+        // Create CSS3D object
+        const object = new CSS3DObject(element);
+
+        // copy monitor position and rotation
+        object.position.copy(this.position);
+        object.rotation.copy(this.rotation);
+
+        // Add to CSS scene
+        this.cssScene.add(object);
+
+        // Create GL plane
+        const material = new THREE.MeshLambertMaterial();
+        material.side = THREE.DoubleSide;
+        material.opacity = 0;
+        material.transparent = true;
+        // NoBlending allows the GL plane to occlude the CSS plane
+        material.blending = THREE.NoBlending;
+
+        // Create plane geometry
+        const geometry = new THREE.PlaneGeometry(
+            this.screenSize.width,
+            this.screenSize.height
+        );
+
+        // Create the GL plane mesh
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // Copy the position, rotation and scale of the CSS plane to the GL plane
+        mesh.position.copy(object.position);
+        mesh.rotation.copy(object.rotation);
+        mesh.scale.copy(object.scale);
+
+        // Add to gl scene
+        this.scene.add(mesh);
+    }
+
+    /**
+     * Creates the texture layers for the computer screen
+     * @returns the maximum offset of the texture layers
+     */
+    createTextureLayers() {
+        const textures = this.resources.items.texture;
+
+        this.getVideoTextures('video-1');
+        this.getVideoTextures('video-2');
+
+        // Scale factor to multiply depth offset by
+        const scaleFactor = 4;
+
+        // Construct the texture layers
+        const layers = {
+            smudge: {
+                texture: textures.monitorSmudgeTexture,
+                blending: THREE.AdditiveBlending,
+                opacity: 0.12,
+                offset: 24,
+            },
+            innerShadow: {
+                texture: textures.monitorShadowTexture,
+                blending: THREE.NormalBlending,
+                opacity: 1,
+                offset: 5,
+            },
+            video: {
+                texture: this.videoTextures['video-1'],
+                blending: THREE.AdditiveBlending,
+                opacity: 0.5,
+                offset: 10,
+            },
+            video2: {
+                texture: this.videoTextures['video-2'],
+                blending: THREE.AdditiveBlending,
+                opacity: 0.1,
+                offset: 15,
+            },
+        };
+
+        // Declare max offset
+        let maxOffset = -1;
+
+        // Add the texture layers to the screen
+        for (const [_, layer] of Object.entries(layers)) {
+            const offset = layer.offset * scaleFactor;
+            this.addTextureLayer(
+                layer.texture,
+                layer.blending,
+                layer.opacity,
+                offset
+            );
+            // Calculate the max offset
+            if (offset > maxOffset) maxOffset = offset;
+        }
+
+        // Return the max offset
+        return maxOffset;
+    }
+
+    getVideoTextures(videoId: string) {
+        const video = document.getElementById(videoId);
+        if (!video) {
+            setTimeout(() => {
+                this.getVideoTextures(videoId);
+            }, 100);
+        } else {
+            this.videoTextures[videoId] = new THREE.VideoTexture(
+                video as HTMLVideoElement
+            );
+        }
+    }
+
+    /**
+     * Adds a texture layer to the screen
+     * @param texture the texture to add
+     * @param blending the blending mode
+     * @param opacity the opacity of the texture
+     * @param offset the offset of the texture, higher values are further from the screen
+     */
+    addTextureLayer(
+        texture: THREE.Texture,
+        blendingMode: THREE.Blending,
+        opacity: number,
+        offset: number
+    ) {
+        // Create material
+        const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            blending: blendingMode,
+            side: THREE.DoubleSide,
+            opacity,
+            transparent: true,
+        });
+
+        // Create geometry
+        const geometry = new THREE.PlaneGeometry(
+            this.screenSize.width,
+            this.screenSize.height
+        );
+
+        // Create mesh
+        const mesh = new THREE.Mesh(geometry, material);
+
+        // Copy position and apply the depth offset
+        mesh.position.copy(
+            this.offsetPosition(this.position, new THREE.Vector3(0, 0, offset))
+        );
+
+        // Copy rotation
+        mesh.rotation.copy(this.rotation);
+
+        this.scene.add(mesh);
+    }
+
+    /**
+     * Creates enclosing planes for the computer screen
+     * @param maxOffset the maximum offset of the texture layers
+     */
+    createEnclosingPlanes(maxOffset: number) {
+        // Create planes, lots of boiler plate code here because I'm lazy
+        const planes = {
+            left: {
+                size: new THREE.Vector2(maxOffset, this.screenSize.height),
+                position: this.offsetPosition(
+                    this.position,
+                    new THREE.Vector3(
+                        -this.screenSize.width / 2,
+                        0,
+                        maxOffset / 2
+                    )
+                ),
+                rotation: new THREE.Euler(0, 90 * THREE.MathUtils.DEG2RAD, 0),
+            },
+            right: {
+                size: new THREE.Vector2(maxOffset, this.screenSize.height),
+                position: this.offsetPosition(
+                    this.position,
+                    new THREE.Vector3(
+                        this.screenSize.width / 2,
+                        0,
+                        maxOffset / 2
+                    )
+                ),
+                rotation: new THREE.Euler(0, 90 * THREE.MathUtils.DEG2RAD, 0),
+            },
+            top: {
+                size: new THREE.Vector2(this.screenSize.width, maxOffset),
+                position: this.offsetPosition(
+                    this.position,
+                    new THREE.Vector3(
+                        0,
+                        this.screenSize.height / 2,
+                        maxOffset / 2
+                    )
+                ),
+                rotation: new THREE.Euler(90 * THREE.MathUtils.DEG2RAD, 0, 0),
+            },
+            bottom: {
+                size: new THREE.Vector2(this.screenSize.width, maxOffset),
+                position: this.offsetPosition(
+                    this.position,
+                    new THREE.Vector3(
+                        0,
+                        -this.screenSize.height / 2,
+                        maxOffset / 2
+                    )
+                ),
+                rotation: new THREE.Euler(90 * THREE.MathUtils.DEG2RAD, 0, 0),
+            },
+        };
+
+        // Add each of the planes
+        for (const [_, plane] of Object.entries(planes)) {
+            this.createEnclosingPlane(plane);
+        }
+    }
+
+    /**
+     * Creates a plane for the enclosing planes
+     * @param plane the plane to create
+     */
+    createEnclosingPlane(plane: EnclosingPlane) {
+        const material = new THREE.MeshBasicMaterial({
+            side: THREE.DoubleSide,
+            color: 0x48493f,
+        });
+
+        const geometry = new THREE.PlaneGeometry(plane.size.x, plane.size.y);
+        const mesh = new THREE.Mesh(geometry, material);
+
+        mesh.position.copy(plane.position);
+        mesh.rotation.copy(plane.rotation);
+
+        this.scene.add(mesh);
+    }
+
+    createPerspectiveDimmer(maxOffset: number) {
+        const material = new THREE.MeshBasicMaterial({
+            side: THREE.DoubleSide,
+            color: 0x000000,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+        });
+
+        const plane = new THREE.PlaneGeometry(
+            this.screenSize.width,
+            this.screenSize.height
+        );
+
+        const mesh = new THREE.Mesh(plane, material);
+
+        mesh.position.copy(
+            this.offsetPosition(
+                this.position,
+                new THREE.Vector3(0, 0, maxOffset - 5)
+            )
+        );
+
+        mesh.rotation.copy(this.rotation);
+
+        this.dimmingPlane = mesh;
+
+        this.scene.add(mesh);
+    }
+
+    /**
+     * Offsets a position vector by another vector
+     * @param position the position to offset
+     * @param offset the offset to apply
+     * @returns the new offset position
+     */
+    offsetPosition(position: THREE.Vector3, offset: THREE.Vector3) {
+        const newPosition = new THREE.Vector3();
+        newPosition.copy(position);
+        newPosition.add(offset);
+        return newPosition;
+    }
+
+    update() {
+        if (this.dimmingPlane) {
+            const planeNormal = new THREE.Vector3(0, 0, 1);
+            const viewVector = new THREE.Vector3();
+            viewVector.copy(this.camera.instance.position);
+            viewVector.sub(this.position);
+            viewVector.normalize();
+
+            const dot = viewVector.dot(planeNormal);
+
+            // calculate the distance from the camera vector to the plane vector
+            const dimPos = this.dimmingPlane.position;
+            const camPos = this.camera.instance.position;
+
+            const distance = Math.sqrt(
+                (camPos.x - dimPos.x) ** 2 +
+                    (camPos.y - dimPos.y) ** 2 +
+                    (camPos.z - dimPos.z) ** 2
+            );
+
+            const opacity = 1 / (distance / 10000);
+
+            const DIM_FACTOR = 0.7;
+
+            // @ts-ignore
+            this.dimmingPlane.material.opacity =
+                (1 - opacity) * DIM_FACTOR + (1 - dot) * DIM_FACTOR;
+        }
+    }
+}
+
+
+
+================================================
+FILE: src/Application/World/World.ts
+================================================
+import Application from '../Application';
+import Resources from '../Utils/Resources';
+import ComputerSetup from './Computer';
+import MonitorScreen from './MonitorScreen';
+import Environment from './Environment';
+import Decor from './Decor';
+import CoffeeSteam from './CoffeeSteam';
+import Cursor from './Cursor';
+import Hitboxes from './Hitboxes';
+import AudioManager from '../Audio/AudioManager';
+export default class World {
+    application: Application;
+    scene: THREE.Scene;
+    resources: Resources;
+
+    // Objects in the scene
+    environment: Environment;
+    decor: Decor;
+    computerSetup: ComputerSetup;
+    monitorScreen: MonitorScreen;
+    coffeeSteam: CoffeeSteam;
+    cursor: Cursor;
+    audioManager: AudioManager;
+
+    constructor() {
+        this.application = new Application();
+        this.scene = this.application.scene;
+        this.resources = this.application.resources;
+        // Wait for resources
+        this.resources.on('ready', () => {
+            // Setup
+            this.environment = new Environment();
+            this.decor = new Decor();
+            this.computerSetup = new ComputerSetup();
+            this.monitorScreen = new MonitorScreen();
+            this.coffeeSteam = new CoffeeSteam();
+            this.audioManager = new AudioManager();
+            // const hb = new Hitboxes();
+            // this.cursor = new Cursor();
+        });
+    }
+
+    update() {
+        if (this.monitorScreen) this.monitorScreen.update();
+        if (this.environment) this.environment.update();
+        if (this.coffeeSteam) this.coffeeSteam.update();
+        if (this.audioManager) this.audioManager.update();
+    }
+}
+
+
+
+================================================
+FILE: static/.gitkeep
+================================================
+[Empty file]
+
+
+================================================
+FILE: static/draco/README.md
+================================================
+# Draco 3D Data Compression
+
+Draco is an open-source library for compressing and decompressing 3D geometric meshes and point clouds. It is intended to improve the storage and transmission of 3D graphics.
+
+[Website](https://google.github.io/draco/) | [GitHub](https://github.com/google/draco)
+
+## Contents
+
+This folder contains three utilities:
+
+* `draco_decoder.js` — Emscripten-compiled decoder, compatible with any modern browser.
+* `draco_decoder.wasm` — WebAssembly decoder, compatible with newer browsers and devices.
+* `draco_wasm_wrapper.js` — JavaScript wrapper for the WASM decoder.
+
+Each file is provided in two variations:
+
+* **Default:** Latest stable builds, tracking the project's [master branch](https://github.com/google/draco).
+* **glTF:** Builds targeted by the [glTF mesh compression extension](https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_draco_mesh_compression), tracking the [corresponding Draco branch](https://github.com/google/draco/tree/gltf_2.0_draco_extension).
+
+Either variation may be used with `THREE.DRACOLoader`:
+
+```js
+var dracoLoader = new THREE.DRACOLoader();
+dracoLoader.setDecoderPath('path/to/decoders/');
+dracoLoader.setDecoderConfig({type: 'js'}); // (Optional) Override detection of WASM support.
+```
+
+Further [documentation on GitHub](https://github.com/google/draco/tree/master/javascript/example#static-loading-javascript-decoder).
+
+## License
+
+[Apache License 2.0](https://github.com/google/draco/blob/master/LICENSE)
+
+
+
+================================================
+FILE: static/models/.gitkeep
+================================================
+[Empty file]
+

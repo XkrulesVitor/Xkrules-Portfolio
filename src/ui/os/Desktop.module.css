@@ -21,6 +21,27 @@
   -webkit-user-select: none;
 }
 
+/* Tudo o que existe com o SO ligado (papel de parede, atalhos, janelas, barra de tarefas). Preenche
+   o stage; some inteiro quando o SO desliga (ver Desktop.tsx). Depois de religar, entra com um fade. */
+.shell {
+  position: absolute;
+  inset: 0;
+}
+
+.shell[data-rebooted='true'] {
+  animation: shellIn 0.7s ease-out both;
+}
+
+@keyframes shellIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 /* Papel de parede -------------------------------------------------------------------------- */
 
 .wallpaper {
@@ -73,19 +94,25 @@
 
 /* Atalhos ------------------------------------------------------------------------------------- */
 
-/* Grade que enche por coluna, 3 linhas por vez (convenção de área de trabalho). Com mais projetos
-   nascem novas colunas à direita; as janelas abrem à direita de duas colunas (windowManager.ts). */
+/* Atalhos do sistema: uma coluna à esquerda (5 apps, 5 linhas). Os atalhos dos projetos ficam em
+   outro bloco, à direita (.iconsProjects). As janelas abrem no meio (windowManager.ts). */
 .icons {
   position: absolute;
   top: var(--sp-5);
   left: var(--sp-5);
   display: grid;
   grid-auto-flow: column;
-  grid-template-rows: repeat(3, max-content);
+  grid-template-rows: repeat(5, max-content);
   gap: var(--sp-3) var(--sp-4);
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* Projetos: o bloco gruda na direita e enche por coluna, 5 linhas por vez. */
+.iconsProjects {
+  right: var(--sp-5);
+  left: auto;
 }
 
 /* Camada das janelas: caixa de tamanho ZERO que só cria o contexto de empilhamento (abaixo do
