@@ -65,7 +65,7 @@ def bake_material() -> bpy.types.Material:
     mix.blend_type = 'MIX'
     mix.location = (100, 0)
     mix.inputs['Factor'].default_value = 1.0
-    mix.inputs['A'].default_value = (1, 1, 1, 1)
+    mix.inputs['A'].default_value = (0.8, 0.8, 0.8, 1)
     nt.links.new(attr.outputs['Color'], mix.inputs['B'])
     nt.links.new(mix.outputs['Result'], diff.inputs['Color'])
     nt.links.new(diff.outputs['BSDF'], out.inputs['Surface'])

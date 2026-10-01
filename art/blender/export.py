@@ -147,10 +147,24 @@ def manifest(ctx, extra: dict) -> dict:
             ref = lay[lk]['center']
             err = max(abs(c[i] - ref[i]) for i in range(3))
             checks[key] = {'center': c, 'layout': ref, 'max_error_m': round(err, 5)}
+    try:
+        uv = json.loads(bpy.context.scene.get('uv_stats', '{}'))
+    except ValueError:
+        uv = {}
+    textures = {}
+    for f in sorted(os.listdir(ctx.out)):
+        if f.endswith('.webp'):
+            textures[f] = os.path.getsize(os.path.join(ctx.out, f))
+    glb = os.path.join(ctx.out, 'room.glb')
     return {
         'nodes': nodes, 'categories': cats, 'triangles': total_tris, 'missing_required': missing,
         'suffix_001': dup, 'checks': checks, 'meshes': len(nodes),
-        'props': ctx.props_log, **extra,
+        'props_count': len(ctx.props_log), 'props': ctx.props_log,
+        'uv': uv, 'textures_bytes': textures,
+        'glb_bytes_before_meshopt': os.path.getsize(glb) if os.path.exists(glb) else None,
+        'budget': {'meshes_max': 45, 'triangles_max': 250000, 'textures_bytes_max': 2 * 1024 * 1024,
+                   'glb_bytes_max': 4 * 1024 * 1024},
+        **extra,
     }
 
 

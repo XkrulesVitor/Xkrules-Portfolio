@@ -41,7 +41,9 @@ class Ctx:
         kit.PLANES['wall_back_z'] = self.W['WALL_BACK_Z']
         self.draft = args.quality == 'draft'
         self.atlas = 1024 if self.draft else 2048
-        self.samples = 16 if self.draft else 160
+        self.samples = int(os.environ.get('BAKE_SAMPLES', 32 if self.draft else 160))
+        # a noite é a mais ruidosa (luz da lua só pela janela, lâmpada pequena): o dobro de amostras
+        self.samples_night = int(os.environ.get('BAKE_SAMPLES_NIGHT', 64 if self.draft else 256))
         self.zone_objs: dict[str, list[bpy.types.Object]] = {z: [] for z in ZONES}
         self.props_log: list[dict] = []
         self.timings: dict[str, float] = {}
@@ -71,7 +73,7 @@ class Ctx:
         return obj
 
     def add_emit(self, prop: Prop, color: str, night: float, day: float, cat: str = 'emit',
-                 light_pass: float = 0.0) -> bpy.types.Object:
+                 light_pass: float = 0.0, light_proxy: bool = False) -> bpy.types.Object:
         """Emissivo: ilumina o bake (força por rig) e vai ao glb com material de emissão."""
         prop.zone = None
         obj = prop.finish(cull=False)
@@ -80,6 +82,8 @@ class Ctx:
         obj['emit_color'] = color
         obj['emit_night'] = float(night)
         obj['emit_day'] = float(day)
+        if light_proxy:
+            obj['light_proxy'] = 1
         self._log(obj, cat)
         return obj
 
@@ -151,7 +155,7 @@ def timed(ctx: Ctx, key: str):
             return self_
 
         def __exit__(self_, *a):
-            ctx.timings[key] = round(ctx.timings.get(key, 0.0) + time.time() - self_.t0, 1)
+            ctx.timings[key] = round(time.time() - self_.t0, 1)
             print(f'[tempo] {key}: {ctx.timings[key]} s', flush=True)
 
     return _T()

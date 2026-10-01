@@ -18,16 +18,20 @@ from kit import L, lin
 
 # Parâmetros de partida (ajustados olhando os previews). Cores sRGB.
 NIGHT = {
-    'world_color': '#3a3f8f', 'world_strength': 0.55,
-    'moon_color': '#9fb2ff', 'moon_strength': 3.0,
+    'world_color': '#3a3f8f', 'world_strength': 0.7,
+    'moon_color': '#9fb2ff', 'moon_energy': 220.0, 'moon_spread': 40.0,
     'city_color': '#7c8cff', 'city_energy': 220.0,
     'exposure': 0.0,
 }
 DAY = {
     'world_color': '#cfe2ff', 'world_strength': 1.1,
-    'sun_color': '#ffe2b8', 'sun_strength': 7.0,
+    'sun_color': '#ffe2b8', 'sun_energy': 1400.0, 'sun_spread': 30.0,
     'exposure': 0.0,
 }
+
+# As luzes de zona do lightmap são fracas de propósito (valores brutos perto de 1): o clamp indireto do bake
+# corta vaga-lumes sem achatar a luz direta.
+LIGHTMAP_SCALE = 1.0 / 22.0
 
 # Janela na parede esquerda (x = WALL_LEFT_X): centro, largura (z) e altura (y).
 WINDOW = {'z': 1.75, 'w': 1.5, 'y0': 1.0, 'y1': 2.3}
@@ -75,18 +79,6 @@ def point(name, pos, energy, color='#ffffff', radius=0.05, rigs=(), pure=None):
     return _link(obj)
 
 
-def sun(name, direction, strength, color, angle_deg=2.0, rigs=()):
-    d = bpy.data.lights.new(name, 'SUN')
-    d.energy = strength
-    d.angle = math.radians(angle_deg)
-    d.color = lin(color)[:3]
-    obj = bpy.data.objects.new(name, d)
-    _orient(obj, direction)
-    obj['rigs'] = ','.join(rigs)
-    obj['energy'] = float(strength)
-    return _link(obj)
-
-
 def build_lights(ctx):
     """Cria todas as luzes (uma vez). Posições derivadas do layout.json e das marcas das props."""
     lay = ctx.LAYOUT
@@ -95,20 +87,26 @@ def build_lights(ctx):
     ym = (WINDOW['y0'] + WINDOW['y1']) / 2
 
     # ---- noite: lua pela janela + brilho da cidade + abajur
-    sun('lt_moon', (0.82, -0.52, 0.18), NIGHT['moon_strength'], NIGHT['moon_color'], 2.5, rigs=('night',))
+    # a luz da lua e o sol entram SÓ pela janela: como o quarto não tem teto, um sol direcional iluminaria
+    # o quarto inteiro por cima. Uma luz de área do tamanho da janela, com abertura estreita, faz o facho.
+    wh = WINDOW['y1'] - WINDOW['y0']
+    beam = (0.82, -0.5, 0.18)
+    area('lt_moon', (wl - 0.1, ym, zw), beam, (ww, wh), NIGHT['moon_energy'], NIGHT['moon_color'],
+         rigs=('night',), spread=NIGHT['moon_spread'])
     area('lt_city', (wl - 1.0, ym, zw), (1, 0, 0), (ww, 1.2), NIGHT['city_energy'], NIGHT['city_color'],
          rigs=('night',), spread=140)
     bl = ctx.get_mark('bedlamp', (3.9, 0.82, 1.1))
-    point('lt_bedlamp', bl, 70.0, '#ffb066', 0.07, rigs=('night',))
+    point('lt_bedlamp', bl, 110.0, '#ffb066', 0.09, rigs=('night',))
 
     # ---- dia: sol quente entrando pela janela
-    sun('lt_sun', (0.78, -0.55, 0.12), DAY['sun_strength'], DAY['sun_color'], 1.2, rigs=('day',))
+    area('lt_sun', (wl - 0.1, ym, zw), beam, (ww, wh), DAY['sun_energy'], DAY['sun_color'],
+         rigs=('day',), spread=DAY['sun_spread'])
 
     # ---- lightmap: R = TV, G = mesa, B = PC (cores puras)
     tv = lay['tv']['center']
     tw, th = lay['tv']['size']
-    area('lt_tv_front', (tv[0], tv[1], tv[2] + 0.08), (0, 0, 1), (tw * 0.95, th * 0.95), 900.0, rigs=('light',),
-         pure=(1, 0, 0))
+    area('lt_tv_front', (tv[0], tv[1], tv[2] + 0.08), (0, 0, 1), (tw * 0.95, th * 0.95), 420.0 * LIGHTMAP_SCALE, rigs=('light',),
+         pure=(1, 0, 0), spread=95)
     wall_z = ctx.W['WALL_BACK_Z']
     # halo da fita de LED atrás da TV: quatro faixas voltadas para a parede
     for nm, (px, py, sx, sy) in {
@@ -117,25 +115,25 @@ def build_lights(ctx):
         'lef': (tv[0] - tw / 2 - 0.02, tv[1], 0.04, th + 0.1),
         'rig': (tv[0] + tw / 2 + 0.02, tv[1], 0.04, th + 0.1),
     }.items():
-        area(f'lt_tv_halo_{nm}', (px, py, wall_z + 0.03), (0, 0, -1), (sx, sy), 90.0, rigs=('light',),
+        area(f'lt_tv_halo_{nm}', (px, py, wall_z + 0.03), (0, 0, -1), (sx, sy), 140.0 * LIGHTMAP_SCALE, rigs=('light',),
              pure=(1, 0, 0), spread=180)
 
     mm = lay['monitorMain']['center']
     mv = lay['monitorVertical']['center']
     ms = lay['monitorMain']['size']
     vs = lay['monitorVertical']['size']
-    area('lt_desk_main', (mm[0] + 0.05, mm[1], mm[2]), (1, 0, 0), (ms[0], ms[1]), 330.0, rigs=('light',),
+    area('lt_desk_main', (mm[0] + 0.05, mm[1], mm[2]), (1, 0, 0), (ms[0], ms[1]), 330.0 * LIGHTMAP_SCALE, rigs=('light',),
          pure=(0, 1, 0))
-    area('lt_desk_vert', (mv[0] + 0.05, mv[1], mv[2]), (1, 0, 0), (vs[0], vs[1]), 200.0, rigs=('light',),
+    area('lt_desk_vert', (mv[0] + 0.05, mv[1], mv[2]), (1, 0, 0), (vs[0], vs[1]), 200.0 * LIGHTMAP_SCALE, rigs=('light',),
          pure=(0, 1, 0))
     lb = ctx.get_mark('lightbar', (mm[0] + 0.0, mm[1] + 0.42, mm[2]))
-    area('lt_desk_bar', lb, (0.5, -1, 0), (0.45, 0.05), 120.0, rigs=('light',), pure=(0, 1, 0))
+    area('lt_desk_bar', lb, (0.5, -1, 0), (0.45, 0.05), 120.0 * LIGHTMAP_SCALE, rigs=('light',), pure=(0, 1, 0))
     lamp = ctx.get_mark('desklamp', (-3.78, 1.25, -3.12))
-    point('lt_desk_lamp', lamp, 160.0, rigs=('light',), radius=0.06, pure=(0, 1, 0))
+    point('lt_desk_lamp', lamp, 160.0 * LIGHTMAP_SCALE, rigs=('light',), radius=0.06, pure=(0, 1, 0))
 
     px, py, pz = lay['pcTower']
-    area('lt_pc_glass', (px, py + 0.31, pz + 0.17), (0, 0, 1), (0.46, 0.52), 260.0, rigs=('light',), pure=(0, 0, 1))
-    area('lt_pc_front', (px + 0.30, py + 0.36, pz), (1, 0, 0), (0.05, 0.3), 80.0, rigs=('light',), pure=(0, 0, 1))
+    area('lt_pc_glass', (px, py + 0.31, pz + 0.17), (0, 0, 1), (0.46, 0.52), 260.0 * LIGHTMAP_SCALE, rigs=('light',), pure=(0, 0, 1))
+    area('lt_pc_front', (px + 0.30, py + 0.36, pz), (1, 0, 0), (0.05, 0.3), 80.0 * LIGHTMAP_SCALE, rigs=('light',), pure=(0, 0, 1))
 
 
 def rig(ctx, name: str):
@@ -154,6 +152,10 @@ def rig(ctx, name: str):
             mt.set_emission(o, float(k))
         if cat in ('glass', 'fx'):
             o.hide_render = True
+        if o.get('light_proxy'):
+            # a luz do bake vem de uma luz de verdade (sem vaga-lumes); o mesh emissivo é só visual
+            o.visible_diffuse = False
+            o.visible_shadow = False
     # mundo
     world = sc.world
     if world is None:

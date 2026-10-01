@@ -6,8 +6,8 @@ import { existsSync } from 'node:fs'
 
 const CANDIDATES = [
   process.env.BLENDER_BIN,
-  'D:\Program Files\Blender\blender.exe',
-  'C:\Program Files\Blender Foundation\Blender 4.4\blender.exe',
+  'D:/Program Files/Blender/blender.exe',
+  'C:/Program Files/Blender Foundation/Blender 4.4/blender.exe',
   '/usr/bin/blender',
   '/Applications/Blender.app/Contents/MacOS/Blender',
 ].filter(Boolean)
@@ -21,7 +21,7 @@ if (!bin) {
 const args = process.argv.slice(2)
 const child = spawn(bin, args, {
   stdio: 'inherit',
-  env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
+  env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1', PYTHONDONTWRITEBYTECODE: '1' },
 })
 child.on('error', (err) => {
   console.error(`Falha ao iniciar o Blender (${bin}): ${err.message}`)

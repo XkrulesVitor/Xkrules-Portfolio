@@ -42,3 +42,4 @@ next-env.d.ts
 
 # bake do Blender: intermediarios (art/blender e art/previews sao comitados)
 art/build/
+__pycache__/

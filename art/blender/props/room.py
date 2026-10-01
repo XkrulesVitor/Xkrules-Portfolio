@@ -39,7 +39,7 @@ def _island(ctx):
 def _floor(ctx):
     """Tábuas ao longo de X, com frestas de 6 mm e juntas escalonadas."""
     r = random.Random(7)
-    p = Prop('floor_planks', 'room', tier=0.55)
+    p = Prop('floor_planks', 'room', tier=0.6)
     x_min, x_max = ctx.W['WALL_LEFT_X'], ctx.W['EDGE_RIGHT_X']
     z0, z1 = ctx.W['WALL_BACK_Z'], ctx.W['EDGE_FRONT_Z']
     pw, gap = 0.22, 0.006
@@ -60,7 +60,7 @@ def _floor(ctx):
             warm = r.uniform(-0.02, 0.025)
             col = lin(base, k)
             col = (col[0] * (1 + warm), col[1], col[2] * (1 - warm), 1.0)
-            p.box((ln - gap, 0.04, w), (x + ln / 2, -0.02, zc), col, bevel=0.003, seg=1, hide=('-y',))
+            p.box((ln - gap, 0.04, w), (x + ln / 2, -0.02, zc), col, bevel=0.003, seg=1, keep='+y')
             x += ln
             seg = r.uniform(1.2, 3.2)
     ctx.add_static(p)
@@ -81,7 +81,7 @@ def _walls(ctx):
     za, zb_ = zc - ww / 2, zc + ww / 2
     y0, y1 = win['y0'], win['y1']
 
-    pl = Prop('wall_left', 'room', tier=0.5)
+    pl = Prop('wall_left', 'room', tier=0.6)
     xc = (xl + xli) / 2
     # peças em torno da abertura da janela (sem bevel: a moldura cobre os cortes)
     pl.box((T, y0 - y_lo, zf - zbi), (xc, (y_lo + y0) / 2, (zbi + zf) / 2), wl, bevel=0, hide=('-x',))
@@ -90,12 +90,12 @@ def _walls(ctx):
     pl.box((T, y1 - y0, zf - zb_), (xc, (y0 + y1) / 2, (zb_ + zf) / 2), wl, bevel=0, hide=('-x',))
     ctx.add_static(pl)
 
-    pb = Prop('wall_back', 'room', tier=0.5)
+    pb = Prop('wall_back', 'room', tier=0.6)
     pb.box((W, H - y_lo, T), (0, (y_lo + H) / 2, (zb + zbi) / 2), wb, bevel=0, hide=('-z',))
     ctx.add_static(pb)
 
     # capa do topo das paredes (faixa mais escura, bem chanfrada) + canto
-    pc = Prop('wall_caps', 'room', tier=0.5)
+    pc = Prop('wall_caps', 'room', tier=0.6)
     pc.box((T, 0.03, zf - zbi), (xc, H + 0.015, (zbi + zf) / 2), cap, bevel=0.008)
     pc.box((W, 0.03, T), (0, H + 0.015, (zb + zbi) / 2), cap, bevel=0.008)
     ctx.add_static(pc)
@@ -157,8 +157,6 @@ def _baseboards(ctx):
     xli, zbi = ctx.W['WALL_LEFT_X'], ctx.W['WALL_BACK_Z']
     col = lin(C['baseboard'])
     p = Prop('baseboards', 'room', tier=0.7)
-    p.box((W / 2 + xli * -1 - 0.0 + (W / 2 - 0.0) - W / 2 + 0.0 - 0.0 + (xli + W / 2) * 0 + (-xli + W / 2) - (-xli),
-           0.09, 0.02), (0, 0.045, zbi + 0.01), col, bevel=0.004, hide=('-z',)) if False else None
     x_len = (W / 2) - xli
     p.box((x_len, 0.09, 0.02), (xli + x_len / 2, 0.045, zbi + 0.01), col, bevel=0.004, seg=2)
     z_len = D / 2 - zbi
@@ -185,28 +183,29 @@ def _outlets(ctx):
 
 
 def _city(ctx):
-    """Cidade noturna vista pela janela: janelinhas acesas agrupadas em prédios, num plano distante."""
+    """Cidade noturna vista pela janela: janelinhas acesas em prédios, num painel logo atrás da janela.
+
+    O painel é pequeno de propósito: ele só aparece através da abertura (um plano grande e distante
+    vazaria pelas bordas do quarto na vista HOME). Dois planos dão um pouco de paralaxe."""
     r = random.Random(21)
-    xp = -6.2
+    win = WINDOW
+    zc, ww = win['z'], win['w']
     warm = Prop('emit_window_city', None)
     cool = Prop('emit_window_city_cool', None)
-    z_lo, z_hi = -5.0, 8.5
-    # prédios: (z central, largura, altura do topo, andar base)
-    z = z_lo
-    while z < z_hi:
-        bw = r.uniform(1.4, 3.0)
-        top = r.uniform(-0.2, 6.5)
-        floors = int((top + 5.0) / 0.42)
-        cols = int(bw / 0.3)
-        for fi in range(floors):
-            y = -5.0 + fi * 0.42
-            for ci in range(cols):
-                if r.random() < 0.42:
-                    zz = z + 0.15 + ci * 0.3
-                    target = cool if r.random() < 0.2 else warm
-                    sx, sz = 0.2, 0.12
-                    target.box((0.02, sx, sz), (xp, y, zz), (1, 1, 1, 1), bevel=0.0)
-        z += bw + r.uniform(0.2, 0.8)
-    # antena e luzes vermelhas no topo de dois prédios
+    layers = ((-4.62, 0.17, 0.24, 0.26, 0.5), (-4.9, 0.11, 0.16, 0.19, 0.4))     # x, largura, altura, passo, densidade
+    for xp, wz, wy, step, dens in layers:
+        z = zc - ww / 2 - 0.5
+        while z < zc + ww / 2 + 0.5:
+            bw = r.uniform(0.45, 0.9)
+            top = r.uniform(1.1, 2.6)
+            cols = max(1, int(bw / step))
+            y = 0.35
+            while y < top:
+                for ci in range(cols):
+                    if r.random() < dens:
+                        target = cool if r.random() < 0.2 else warm
+                        target.box((0.012, wy * 0.5, wz * 0.6), (xp, y, z + 0.08 + ci * step), (1, 1, 1, 1), bevel=0.0)
+                y += step * 1.2
+            z += bw + r.uniform(0.05, 0.25)
     ctx.add_emit(warm, '#ffd89b', 2.2, 0.0)
     ctx.add_emit(cool, '#9fe3ff', 2.0, 0.0)

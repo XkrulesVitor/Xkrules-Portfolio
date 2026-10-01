@@ -31,7 +31,7 @@ art/blender/
   bake.py        # atlas de UV único + bakes + denoise
   export.py      # glb (+Y up), nomes do §4
   preview.py     # renders PNG das câmeras-chave para revisão
-art/previews/    # home.png, desk.png, shelf.png, digital.png, printer.png, chair.png, home-day.png (comitados, para revisão)
+art/previews/    # home.jpg, desk.jpg, shelf.jpg, digital.jpg, printer.jpg, chair.jpg, home-day.jpg (comitados, para revisão)
 ```
 
 **Eixos.** O layout é Y-up em metros: `(x, y, z)` do layout vira `(x, -z, y)` no Blender (Z-up). O exportador glTF com "+Y up" desfaz a conversão. Verifique com uma âncora conhecida (centro da tela do monitor) no `manifest.json`.
@@ -40,7 +40,7 @@ art/previews/    # home.png, desk.png, shelf.png, digital.png, printer.png, chai
 
 **Mesa sem gaveteiro.** O gaveteiro branco sob a ponta da frente da mesa foi removido de propósito (decisão do dono, 2026-10-01). Não recriar.
 
-**Previews.** `preview.py` renderiza das câmeras do `layout.json` (presets `home`, `desk`, `shelf`, `shelfDigital`, `printer`, `chair`; fov 35, 1280×720) **com os bakes aplicados como emissão pura e as três zonas misturadas como no runtime** (nós Mix em modo Lighten, fator = canal do lightmap × força, cores e forças de ARCHITECTURE §12.3). O que aparece no preview é o que o navegador vai mostrar. Cycles com 8 amostras, view transform **Standard** (o AgX já está na textura). A revisão pega defeito de bake (UV sobreposta, mancha, vazamento de luz). `home-day.png` usa o `baked-day`.
+**Previews.** `preview.py` renderiza das câmeras do `layout.json` (presets `home`, `desk`, `shelf`, `shelfDigital`, `printer`, `chair`; fov 35, 1280×720) **com os bakes aplicados como emissão pura e as três zonas misturadas como no runtime** (nós Mix em modo Lighten, fator = canal do lightmap × força, cores e forças de ARCHITECTURE §12.3). O que aparece no preview é o que o navegador vai mostrar. Cycles com 8 amostras, view transform **Standard** (o AgX já está na textura). A revisão pega defeito de bake (UV sobreposta, mancha, vazamento de luz). `home-day.jpg` usa o `baked-day`.
 
 ## 3. Saídas (contrato com o runtime)
 

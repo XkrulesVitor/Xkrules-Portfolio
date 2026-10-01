@@ -51,13 +51,14 @@ def rng(seed: int | None = None) -> random.Random:
     return random.Random(seed) if seed is not None else _RNG
 
 
-def _rot(rx=0.0, ry=0.0, rz=0.0) -> Matrix:
-    """Rotação no espaço do layout, em graus. Ordem: Y (giro vertical), depois X, depois Z."""
-    return (
-        Matrix.Rotation(math.radians(ry), 4, 'Y')
-        @ Matrix.Rotation(math.radians(rx), 4, 'X')
-        @ Matrix.Rotation(math.radians(rz), 4, 'Z')
-    )
+def _rot(rx=0.0, ry=0.0, rz=0.0, order='yxz') -> Matrix:
+    """Rotação no espaço do layout, em graus. `order` = ordem de composição da esquerda para a direita
+    (padrão 'yxz': o giro vertical Y é o último a ser aplicado aos vértices)."""
+    ang = {'x': rx, 'y': ry, 'z': rz}
+    m = Matrix.Identity(4)
+    for ch in order:
+        m = m @ Matrix.Rotation(math.radians(ang[ch]), 4, ch.upper())
+    return m
 
 
 class Prop:
@@ -78,8 +79,12 @@ class Prop:
 
     # ------------------------------------------------------------------ núcleo
 
-    def _merge(self, t: bmesh.types.BMesh, color, tier: float | None):
-        """Copia o bmesh temporário `t` (já no espaço do layout) para o bmesh da prop."""
+    def _merge(self, t: bmesh.types.BMesh, color, tier: float | None, flat=None):
+        """Copia o bmesh temporário `t` (já no espaço do layout) para o bmesh da prop.
+        `flat` = índices de faces com sombreamento plano (faces grandes e planas, tampas): evita o
+        artefato de terminador (manchas escuras) que a normal suave de uma face grande causa no bake."""
+        t.faces.index_update()
+        flat = flat if flat is not None else {f.index for f in t.faces if len(f.verts) > 4}
         bm = self.bm
         if self.jitter:
             k = 1.0 + self.rng.uniform(-self.jitter, self.jitter)
@@ -95,7 +100,7 @@ class Prop:
                 nf = bm.faces.new([vm[v.index] for v in f.verts])
             except ValueError:
                 continue
-            nf.smooth = True
+            nf.smooth = f.index not in flat
             nf[self.tier_layer] = tv
             for lp in nf.loops:
                 lp[self.col] = color
@@ -121,15 +126,20 @@ class Prop:
         if kill:
             bmesh.ops.delete(t, geom=list(set(kill)), context='FACES')
 
-    def _place(self, t, at, rx, ry, rz):
-        m = Matrix.Translation(Vector(at)) @ _rot(rx, ry, rz)
+    def _place(self, t, at, rx, ry, rz, order='yxz'):
+        m = Matrix.Translation(Vector(at)) @ _rot(rx, ry, rz, order)
         bmesh.ops.transform(t, matrix=m, verts=t.verts)
 
     # --------------------------------------------------------------- primitivas
 
-    def box(self, size, at, color, bevel=0.012, seg=2, rx=0.0, ry=0.0, rz=0.0, anchor='c', hide=(), tier=None):
-        """Caixa chanfrada. `size`=(sx, sy, sz) nos eixos do layout; `at` = centro (ou base, com anchor='b')."""
+    def box(self, size, at, color, bevel=0.012, seg=2, rx=0.0, ry=0.0, rz=0.0, anchor='c', hide=(), tier=None,
+            order='yxz', keep=None):
+        """Caixa chanfrada. `size`=(sx, sy, sz) nos eixos do layout; `at` = centro (ou base, com anchor='b').
+        Com anchor='b' a base não aparece (apoiada em algo) e é apagada. `keep='+y'` (ou '-x', '+z'...) mantém só
+        a face dessa direção e o chanfro ao redor: placas finas, tábuas, tapetes, teclas. Economiza atlas."""
         sx, sy, sz = size
+        if anchor == 'b' and '-y' not in hide:
+            hide = tuple(hide) + ('-y',)
         t = bmesh.new()
         bmesh.ops.create_cube(t, size=1.0)
         bmesh.ops.scale(t, vec=(sx, sy, sz), verts=t.verts)
@@ -138,16 +148,24 @@ class Prop:
             bmesh.ops.bevel(t, geom=list(t.edges), offset=b, segments=seg, profile=0.5, affect='EDGES',
                             clamp_overlap=True)
         self._cull(t, hide, (sx / 2, sy / 2, sz / 2))
+        if keep:
+            axis = {'x': 0, 'y': 1, 'z': 2}[keep[1]]
+            sgn = 1.0 if keep[0] == '+' else -1.0
+            drop = [f for f in t.faces if f.normal[axis] * sgn < 0.5]
+            if drop:
+                bmesh.ops.delete(t, geom=drop, context='FACES')
+        t.faces.index_update()
+        flat = {f.index for f in t.faces if max(abs(f.normal.x), abs(f.normal.y), abs(f.normal.z)) > 0.9999}
         if anchor == 'b':
             bmesh.ops.translate(t, vec=(0, sy / 2, 0), verts=t.verts)
         elif anchor == 't':
             bmesh.ops.translate(t, vec=(0, -sy / 2, 0), verts=t.verts)
-        self._place(t, at, rx, ry, rz)
-        self._merge(t, color, tier)
+        self._place(t, at, rx, ry, rz, order)
+        self._merge(t, color, tier, flat)
         return self
 
     def cyl(self, r, h, at, color, axis='y', seg=20, r2=None, bevel=0.0, bseg=2, rx=0.0, ry=0.0, rz=0.0,
-            anchor='c', caps=True, tier=None):
+            anchor='c', caps=True, tier=None, order='yxz'):
         """Cilindro ou tronco de cone (r2 = raio do topo). `axis`: eixo do layout em que ele está de pé."""
         t = bmesh.new()
         bmesh.ops.create_cone(t, cap_ends=caps, cap_tris=False, segments=seg, radius1=r,
@@ -164,22 +182,54 @@ class Prop:
         else:
             align = Matrix.Identity(4)
         bmesh.ops.transform(t, matrix=align, verts=t.verts)
+        if anchor == 'b' and caps:
+            axv = {'x': (-1, 0, 0), 'y': (0, -1, 0), 'z': (0, 0, -1)}[axis]
+            drop = [f for f in t.faces if len(f.verts) > 4 and f.normal.dot(axv) > 0.99]
+            if drop:
+                bmesh.ops.delete(t, geom=drop, context='FACES')
         off = {'c': 0.0, 'b': h / 2, 't': -h / 2}[anchor]
         if off:
             d = {'x': (off, 0, 0), 'y': (0, off, 0), 'z': (0, 0, off)}[axis]
             bmesh.ops.translate(t, vec=d, verts=t.verts)
-        self._place(t, at, rx, ry, rz)
+        self._place(t, at, rx, ry, rz, order)
         self._merge(t, color, tier)
         return self
 
-    def blob(self, radii, at, color, seg=10, rings=7, rx=0.0, ry=0.0, rz=0.0, tier=None):
+    def ring(self, r_out, r_in, h, at, color, axis='z', seg=24, rx=0.0, ry=0.0, rz=0.0, tier=None, order='yxz'):
+        """Anel (aro de ventoinha, argola): cilindro vazado com `h` de altura ao longo de `axis`."""
+        t = bmesh.new()
+        ho = h / 2
+        ring_o_t, ring_o_b, ring_i_t, ring_i_b = [], [], [], []
+        for k in range(seg):
+            a = 2 * math.pi * k / seg
+            c, s_ = math.cos(a), math.sin(a)
+            ring_o_t.append(t.verts.new((r_out * c, r_out * s_, ho)))
+            ring_o_b.append(t.verts.new((r_out * c, r_out * s_, -ho)))
+            ring_i_t.append(t.verts.new((r_in * c, r_in * s_, ho)))
+            ring_i_b.append(t.verts.new((r_in * c, r_in * s_, -ho)))
+        for k in range(seg):
+            j = (k + 1) % seg
+            t.faces.new((ring_o_b[k], ring_o_b[j], ring_o_t[j], ring_o_t[k]))      # fora
+            t.faces.new((ring_i_t[k], ring_i_t[j], ring_i_b[j], ring_i_b[k]))      # dentro
+            t.faces.new((ring_o_t[k], ring_o_t[j], ring_i_t[j], ring_i_t[k]))      # topo
+            t.faces.new((ring_i_b[k], ring_i_b[j], ring_o_b[j], ring_o_b[k]))      # base
+        bmesh.ops.recalc_face_normals(t, faces=t.faces)
+        if axis == 'y':
+            bmesh.ops.transform(t, matrix=Matrix.Rotation(-math.pi / 2, 4, 'X'), verts=t.verts)
+        elif axis == 'x':
+            bmesh.ops.transform(t, matrix=Matrix.Rotation(math.pi / 2, 4, 'Y'), verts=t.verts)
+        self._place(t, at, rx, ry, rz, order)
+        self._merge(t, color, tier)
+        return self
+
+    def blob(self, radii, at, color, seg=10, rings=7, rx=0.0, ry=0.0, rz=0.0, tier=None, order='yxz'):
         """Elipsoide (folhas, almofadas redondas, terra de vaso). `radii` = (rx, ry, rz) do layout."""
         t = bmesh.new()
         bmesh.ops.create_uvsphere(t, u_segments=seg, v_segments=rings, radius=1.0)
         # a esfera do Blender tem o polo em Z: girar para o polo ficar em Y do layout
         bmesh.ops.transform(t, matrix=Matrix.Rotation(-math.pi / 2, 4, 'X'), verts=t.verts)
         bmesh.ops.scale(t, vec=tuple(radii), verts=t.verts)
-        self._place(t, at, rx, ry, rz)
+        self._place(t, at, rx, ry, rz, order)
         self._merge(t, color, tier)
         return self
 
@@ -198,7 +248,8 @@ class Prop:
         if bevel > 2e-4:
             bmesh.ops.bevel(t, geom=list(t.edges), offset=min(bevel, 0.45 * abs(y1 - y0)), segments=2,
                             profile=0.5, affect='EDGES', clamp_overlap=True)
-        self._merge(t, color, tier)
+        t.faces.index_update()
+        self._merge(t, color, tier, {f.index for f in t.faces if max(abs(f.normal.x), abs(f.normal.y), abs(f.normal.z)) > 0.9999})
         return self
 
     def quad(self, p0, p1, p2, p3, color, tier=None):
@@ -206,7 +257,8 @@ class Prop:
         t = bmesh.new()
         vs = [t.verts.new(Vector(p)) for p in (p0, p1, p2, p3)]
         t.faces.new(vs)
-        self._merge(t, color, tier)
+        t.faces.index_update()
+        self._merge(t, color, tier, {0})
         return self
 
     def tube(self, pts, radius, color, seg=6, cap=True, tier=None):
@@ -302,9 +354,10 @@ def join(objs, name, zone=None, origin=(0, 0, 0)) -> bpy.types.Object:
         o.select_set(True)
     active = objs[0]
     bpy.context.view_layer.objects.active = active
-    with bpy.context.temp_override(active_object=active, selected_objects=objs, selected_editable_objects=objs,
-                                   object=active):
-        bpy.ops.object.join()
+    if len(objs) > 1:
+        with bpy.context.temp_override(active_object=active, selected_objects=objs, selected_editable_objects=objs,
+                                       object=active):
+            bpy.ops.object.join()
     active.name = name
     active.data.name = name
     if zone:
@@ -321,6 +374,7 @@ def set_origin_world_zero(obj):
 
 def parent_keep(child: bpy.types.Object, parent: bpy.types.Object):
     """Faz `child` filho de `parent` sem mover o filho no mundo."""
+    bpy.context.view_layer.update()          # matrix_world do pai precisa estar atualizada
     child.parent = parent
     child.matrix_parent_inverse = parent.matrix_world.inverted()
 
