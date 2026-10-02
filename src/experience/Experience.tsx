@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic'
 import { Canvas } from '@react-three/fiber'
 import { Overlay } from '@/ui/overlay/Overlay'
 import { useExperienceStore } from '@/store/useExperienceStore'
+import { AudioDirector } from './audio/AudioDirector'
 import { CameraRig } from './camera/CameraRig'
 import { INTRO_START } from './camera/presets'
 import { useKeyboard } from './interaction/useKeyboard'
@@ -43,6 +44,7 @@ export default function Experience() {
             </RoomProvider>
           </Suspense>
           <CameraRig />
+          <AudioDirector />
           {DevTools ? <DevTools /> : null}
         </Canvas>
       </div>

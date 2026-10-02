@@ -84,7 +84,7 @@ src/
 │  │  ├─ useHotspot.ts        # hook único: {hovered, focused, bind} para qualquer hotspot
 │  │  └─ useKeyboard.ts       # Esc → home
 │  ├─ audio/
-│  │  └─ useAudio.ts          # sons opcionais (ventoinha, estática), mudo por padrão
+│  │  └─ AudioDirector.tsx    # ganhos por distância da câmera e gatilhos do store (motor em src/lib/audio, Web Audio sintetizado)
 │  └─ models/                 # componentes GERADOS por gltfjsx (não editar à mão)
 │
 ├─ ui/                        # DOM 2D, FORA do Canvas
@@ -151,7 +151,7 @@ interface ExperienceState {
   hovered: HotspotId | null
   quality: 'high' | 'medium' | 'low'
   theme: 'night' | 'day'            // tema do quarto baked (§12.3); padrão 'night'
-  audioEnabled: boolean
+  muted: boolean                    // padrão true; o AudioContext só nasce no primeiro clique do botão de som
   // ações
   setMode(m: Mode): void
   setHovered(id: HotspotId | null): void
@@ -161,7 +161,7 @@ interface ExperienceState {
   onCameraRest(): void                // transitioning → focused | idle
   setQuality(q): void
   toggleTheme(): void
-  toggleAudio(): void
+  toggleMuted(): void
 }
 ```
 
@@ -283,7 +283,7 @@ Personagem: mesh estático com pose sentada (rig opcional; se houver animação 
 | Estado | Implementação |
 |---|---|
 | Idle | telas com `MeshBasicMaterial` preto + `envMap`/`MeshReflectorMaterial` sutil (desligada) |
-| Hover | `useFrame`: `damp(mat, 'emissiveIntensity', active ? 1.6 : 0, 0.25, dt)` em monitor e monitor vertical; o PC gamer acende os fans e a fita RGB (`pc_fan_*`, `pc_rgb`) e o LED do gabinete pulsa (`sin(t*4)`). A TV não é mais da mesa; áudio opcional de ventoinha (só se `audioEnabled`) |
+| Hover | `useFrame`: `damp(mat, 'emissiveIntensity', active ? 1.6 : 0, 0.25, dt)` em monitor e monitor vertical; o PC gamer acende os fans e a fita RGB (`pc_fan_*`, `pc_rgb`) e o LED do gabinete pulsa (`sin(t*4)`). A TV não é mais da mesa; zumbido da ventoinha cresce com a proximidade da câmera (V.5, mudo por padrão) |
 | Click | preset `desk` perpendicular à tela. Quando `mode === 'focused'`, `MonitorHtml` troca `pointerEvents` de `none` → `auto` e o SO fictício (`ui/os/*`) ganha interação |
 | Voltar | janelas minimizam (motion), câmera recua |
 

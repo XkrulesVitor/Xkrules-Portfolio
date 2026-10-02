@@ -8,6 +8,17 @@ export const SITE = {
   description:
     'Portfólio 3D interativo: projetos web, impressão 3D, board games e game dev num diorama isométrico.',
   themeColor: '#0b1020',
+  /** Endereço público (metadataBase do Next: resolve as URLs relativas de OpenGraph e Twitter). */
+  url: 'https://xkrules-portfolio.vercel.app',
+  /** Idioma do conteúdo, no formato do OpenGraph. */
+  ogLocale: 'pt_BR',
+  /** Imagem de compartilhamento (OpenGraph e Twitter): captura do diorama em `public/`. */
+  ogImage: {
+    path: '/og.jpg',
+    width: 1280,
+    height: 720,
+    alt: 'Diorama isométrico de um quarto gamer à noite: mesa com dois monitores, TV com luz rosa, estante de jogos, impressora 3D e cama.',
+  },
   /** Código-fonte deste portfólio. */
   sourceUrl: 'https://github.com/XkrulesVitor/Xkrules-Portfolio',
   /** Links globais. [TODO] LinkedIn, Instagram, itch.io e loja do Reino de Amestris. */
@@ -22,6 +33,22 @@ export const UI_TEXT = {
     ready: 'Tudo pronto',
     enter: 'Entrar',
     progressLabel: 'Progresso do carregamento',
+    /**
+     * Boot estilo BIOS (V.5). As linhas aparecem em sequência; `tone` pinta o status (ok = menta,
+     * warn = âmbar). O progresso REAL (useProgress) vem das props da LoadingScreen, não daqui.
+     */
+    boot: {
+      brand: 'XKRULES BIOS',
+      tagline: 'Portfólio 3D, quarto gamer',
+      lines: [
+        { label: 'Verificando memória', status: 'OK', tone: 'ok' },
+        { label: 'Detectando placa de vídeo (WebGL)', status: 'OK', tone: 'ok' },
+        { label: 'Montando teclado e mouse', status: 'OK', tone: 'ok' },
+        { label: 'Sintetizador de áudio', status: 'MUDO', tone: 'warn' },
+      ],
+      /** Tecla que aciona o botão "Entrar" (ele já nasce com o foco). */
+      enterKey: 'Enter',
+    },
   },
   hud: {
     hintIdle: 'Arraste para explorar. Clique nos objetos para ver mais.',
@@ -31,6 +58,13 @@ export const UI_TEXT = {
       toDayAria: 'Mudar para o tema claro (dia)',
       toNight: 'Noite',
       toNightAria: 'Mudar para o tema escuro (noite)',
+    },
+    /** Botão de som: como o de tema, descreve a AÇÃO (para onde vai trocar). Mudo por padrão. */
+    sound: {
+      toOn: 'Som',
+      toOnAria: 'Ligar o som do quarto',
+      toOff: 'Mudo',
+      toOffAria: 'Deixar o quarto mudo',
     },
   },
   back: {
@@ -46,6 +80,7 @@ export const UI_TEXT = {
   noscript: {
     intro: 'Este portfólio é uma experiência 3D interativa e precisa de JavaScript para funcionar.',
     sections: 'Seções do portfólio:',
+    links: 'Links:',
   },
 
   // Primitivas (src/ui/primitives). Modelos com {chaves} passam por `fmt` (ui/primitives/format.ts).

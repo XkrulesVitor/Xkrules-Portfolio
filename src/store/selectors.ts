@@ -3,6 +3,7 @@ import type { ExperienceState } from './useExperienceStore'
 export const selectMode = (s: ExperienceState) => s.mode
 export const selectFocus = (s: ExperienceState) => s.focus
 export const selectHovered = (s: ExperienceState) => s.hovered
+export const selectMuted = (s: ExperienceState) => s.muted
 
 export const selectIsFocused = (s: ExperienceState) => s.mode === 'focused'
 

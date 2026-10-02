@@ -2,6 +2,9 @@
    Sem foco no monitor: invisível, sem ponteiro e, no fim do fade, `visibility: hidden` (a tela
    escondida não pinta nem recebe Tab). Com foco: fade de entrada e ponteiro liberado. */
 .screen {
+  position: relative;
+  /* As camadas de vidro (blend) misturam só com o SO, nunca com o resto da página. */
+  isolation: isolate;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease-out;
@@ -12,10 +15,65 @@
   pointer-events: auto;
 }
 
+/* Camadas de "vidro" do monitor (referência: MonitorScreen do Henry Heffernan: sujeira aditiva a
+   ~12% e sombra interna nas bordas). Por cima do Desktop, SEM ponteiro, só visíveis com o monitor
+   ativo. O wrapper é fixo em 1280x720, então medidas em px aqui são do próprio SO (e escalam junto
+   com ele no 3D); nada de vw/vh. Gradientes e um SVG inline: nenhuma imagem externa. */
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.screen[data-active='true'] .glass {
+  opacity: 1;
+}
+
+.glass > * {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Sujeira: manchas orgânicas (ruído fractal de baixa frequência, limiarizado em branco) somadas ao
+   que está por baixo. Bem sutil: só se nota em fundo escuro, como poeira e dedos numa tela real. */
+.smudge {
+  opacity: 0.085;
+  mix-blend-mode: screen;
+  mix-blend-mode: plus-lighter;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1280' height='720'%3E%3Cfilter id='s' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.011 .02' numOctaves='4' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 2.6 -1.32'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+
+/* Reflexo: uma faixa diagonal de luz (uma janela refletida) e um brilho suave no canto de cima. */
+.glare {
+  opacity: 0.05;
+  mix-blend-mode: screen;
+  mix-blend-mode: plus-lighter;
+  background:
+    linear-gradient(112deg, transparent 22%, rgb(255 255 255 / 0.55) 34%, transparent 44%),
+    linear-gradient(112deg, transparent 50%, rgb(255 255 255 / 0.28) 56%, transparent 61%),
+    radial-gradient(60% 45% at 18% 8%, rgb(255 255 255 / 0.5), transparent 70%);
+}
+
+/* Sombra interna: escurece as bordas como a moldura do monitor, mais forte em cima e nos cantos. */
+.shade {
+  background: radial-gradient(130% 120% at 50% 45%, transparent 60%, rgb(0 0 0 / 0.3) 100%);
+  box-shadow:
+    inset 0 0 64px 4px rgb(0 0 0 / 0.42),
+    inset 0 18px 40px -10px rgb(0 0 0 / 0.5),
+    inset 0 0 14px rgb(0 0 0 / 0.55);
+}
+
 /* Sem fade para quem pediu menos movimento: a tela liga e desliga na hora. */
 @media (prefers-reduced-motion: reduce) {
   .screen,
-  .screen[data-active='true'] {
+  .screen[data-active='true'],
+  .glass {
     transition: none;
   }
 }

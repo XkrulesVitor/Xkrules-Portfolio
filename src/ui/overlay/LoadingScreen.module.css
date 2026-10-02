@@ -1,0 +1,78 @@
+/* Tela de loading estilo BIOS (V.5). Só o que o Tailwind não cobre: as animações (linhas que
+   aparecem em sequência, cursor piscando) e o fundo de CRT. Tudo estático para quem pediu menos
+   movimento (bloco `prefers-reduced-motion` no fim). */
+
+/* Fundo: navy do site com "linhas de varredura" bem sutis e uma vinheta nas bordas. Estático. */
+.screen {
+  background-color: var(--color-bg-canvas);
+  background-image:
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.025) 0, rgb(255 255 255 / 0.025) 1px, transparent 1px, transparent 3px),
+    radial-gradient(120% 90% at 50% 45%, transparent 55%, rgb(0 0 0 / 0.45) 100%);
+}
+
+/* Cada linha de boot nasce no instante `--i * 160ms` (sem JS): `backwards` segura a opacidade 0 até
+   lá, e `steps` dá o "pisco" seco de terminal em vez de um fade macio. `--elapsed` (definido no
+   componente) adianta a sequência quando a tela é montada de novo no meio dela. */
+.line {
+  animation: bootLine 90ms steps(2, end) backwards;
+  animation-delay: calc(var(--i, 0) * 160ms - var(--elapsed, 0ms));
+}
+
+@keyframes bootLine {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 0.35em;
+  vertical-align: text-bottom;
+  background-color: var(--color-accent-mint);
+  animation: blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Barra de progresso segmentada (blocos de 8px com vão de 3px). A largura vem do progresso real. */
+.fill {
+  height: 100%;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--color-accent-mint) 0,
+    var(--color-accent-mint) 8px,
+    transparent 8px,
+    transparent 11px
+  );
+  transition: width 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line {
+    animation: none;
+  }
+
+  .cursor {
+    animation: none;
+  }
+
+  .fill {
+    transition: none;
+  }
+}

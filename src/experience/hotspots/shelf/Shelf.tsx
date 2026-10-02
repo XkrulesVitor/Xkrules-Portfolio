@@ -6,6 +6,7 @@ import { Hitbox } from '../../scene/placeholders/Hitbox'
 import { MediaPlaceholder } from '../../scene/placeholders/MediaPlaceholder'
 import { ShelfPlaceholder } from '../../scene/placeholders/ShelfPlaceholder'
 import type { Vec3 } from '../../scene/placeholders/parts'
+import { BakedGameBoxes } from './BakedGameBoxes'
 import { GameBox } from './GameBox'
 import { ShelfParticles } from './ShelfParticles'
 
@@ -43,7 +44,8 @@ const BOXES: readonly BoxSlot[] = [
  * `digital` (câmera na TV e no console, painel à direita). O hover é um só para a zona.
  * No grey-box desenha estante, rack, TV e `GameBox`; no quarto baked o glb desenha tudo (estante,
  * rack, TV `screen_tv` e os nós `box_*`) e aqui ficam só as hitboxes e as partículas.
- * Fase 3/V.3: caixas com spring e highlight por `useRoomNode`, partículas em foco (ShelfParticles).
+ * V.3: as caixas têm spring (hover da zona e `highlightBox`) nos dois modos (`BakedGameBoxes` move
+ * os nós `box_*` do glb; no grey-box o `GameBox` se move sozinho) e as partículas entram em foco.
  */
 export function Shelf() {
   const { bind } = useHotspot('shelf')
@@ -57,7 +59,9 @@ export function Shelf() {
       </group>
       {/* Rack + TV: da parede até a frente do rack, do piso até o topo da TV. */}
       <Hitbox position={[rx, 0.95, rz + 0.03]} size={[rw + 0.06, 1.95, rd + 0.15]} view="digital" />
-      {baked ? null : (
+      {baked ? (
+        <BakedGameBoxes />
+      ) : (
         <>
           <MediaPlaceholder />
           {BOXES.map((b) => (

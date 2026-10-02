@@ -10,6 +10,7 @@ import { BakedRoom } from './baked/BakedRoom'
 import { useSceneMode } from './baked/useSceneMode'
 import { acesCompensatedBackground } from './greyboxBackground'
 import { Lights } from './Lights'
+import { RoomLife } from './life/RoomLife'
 import { Room } from './Room'
 import { WallTv } from './WallTv'
 
@@ -29,6 +30,12 @@ const GREYBOX_COMPOSER_BACKGROUND = acesCompensatedBackground(BACKGROUND)
 //   (sem composer). O `fps` do r3f-perf no painel do browser do dev não vale: o rAF dele é limitado.
 // - Grey-box (`?greybox` ou falha no glb): 27 draw calls, ~1.7k triângulos (sem pós); o pós soma as passadas.
 // - Texturas do bake (draft): 3 WebP de 1024^2 (~410 KB em disco), glb meshopt 743 KB.
+// - V.3 (vida do quarto, 2026-10-02): +1 draw call em HOME (a fumaça `fx_mug_steam` passa a ser desenhada;
+//   59 no total) e +1 com a zona de jogos em foco (Sparkles, <= 72 pontos). As telas reaproveitam os 3
+//   meshes `screen_*` do glb. 3 CanvasTexture novas: monitor 1024x576 (estático, redesenha 1x por
+//   minuto), TV 1024x576 e monitor vertical 504x896, ambas a no máximo 15 Hz (~8.8 MB de VRAM com
+//   mipmaps). Cadeira, impressora, caixas, relógio, LEDs e ventoinhas só mexem em transform/gain dos
+//   nós existentes (sem alocação nem setState no frame).
 
 /** Grey-box procedural: o fallback, idêntico ao de antes do quarto baked. */
 function GreyBoxScene() {
@@ -48,13 +55,16 @@ function GreyBoxScene() {
 }
 
 /**
- * Quarto baked: o glb desenha tudo; os hotspots só trazem as hitboxes (e o `MonitorHtml`, as
- * partículas). Sem luzes dinâmicas: o `Lights` existe só para o grey-box.
+ * Quarto baked: o glb desenha tudo; os hotspots trazem as hitboxes e movem os nós vivos do glb
+ * (cadeira, impressora, caixas), o `MonitorHtml` e as partículas. O `RoomLife` anima o resto do
+ * quarto (relógio, fumaça, LEDs, ventoinhas, telas). Sem luzes dinâmicas: o `Lights` existe só para
+ * o grey-box.
  */
 function BakedScene() {
   return (
     <>
       <BakedRoom />
+      <RoomLife />
       <Bvh>
         <Desk />
         <Chair />

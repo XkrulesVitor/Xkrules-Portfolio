@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { AnimatePresence } from 'motion/react'
+import { AnimatePresence, MotionConfig } from 'motion/react'
 import { getHotspot } from '@/content/hotspots'
 import type { PanelKind } from '@/content/types'
 import { selectFocus, selectMode } from '@/store/selectors'
@@ -20,6 +20,9 @@ const PANELS: Partial<Record<PanelKind, ComponentType>> = {
 /**
  * DOM 2D por cima do Canvas. Sempre `pointer-events: none`; só os filhos interativos
  * recebem `auto` (e os painéis apenas em `focused`).
+ *
+ * `MotionConfig reducedMotion="user"`: com `prefers-reduced-motion`, TODA animação do motion aqui
+ * dentro (HUD, botão Voltar, painéis) perde os deslocamentos e escalas e fica só nos esmaecimentos.
  */
 export function Overlay() {
   const mode = useExperienceStore(selectMode)
@@ -29,12 +32,14 @@ export function Overlay() {
   const Panel = hotspot ? PANELS[hotspot.panel] : undefined
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
-      <Hud />
-      <BackButton />
-      <AnimatePresence mode="wait">
-        {hotspot && Panel ? <Panel key={hotspot.id} /> : null}
-      </AnimatePresence>
-    </div>
+    <MotionConfig reducedMotion="user">
+      <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
+        <Hud />
+        <BackButton />
+        <AnimatePresence mode="wait">
+          {hotspot && Panel ? <Panel key={hotspot.id} /> : null}
+        </AnimatePresence>
+      </div>
+    </MotionConfig>
   )
 }

@@ -21,7 +21,11 @@ export interface ExperienceState {
   quality: Quality
   /** Tema dia/noite (ARCHITECTURE §12.3). O 3D faz damp de `uNightMix` até o alvo, sem setState no frame. */
   theme: Theme
-  audioEnabled: boolean
+  /**
+   * Som do quarto (ARCHITECTURE §12 / V.5). Começa `true`: mudo por padrão, e o AudioContext só nasce
+   * no primeiro clique do botão de som (gesto do usuário). O áudio (`lib/audio`) segue este valor.
+   */
+  muted: boolean
   /** Único canal UI -> 3D além de `focus` (ARCHITECTURE §6.4). */
   highlightBox: string | null
   setMode(mode: Mode): void
@@ -39,7 +43,7 @@ export interface ExperienceState {
   onCameraRest(): void
   setQuality(quality: Quality): void
   toggleTheme(): void
-  toggleAudio(): void
+  toggleMuted(): void
   setHighlightBox(slug: string | null): void
 }
 
@@ -51,7 +55,7 @@ export const useExperienceStore = create<ExperienceState>()(
     hovered: null,
     quality: 'high',
     theme: 'night',
-    audioEnabled: false,
+    muted: true,
     highlightBox: null,
 
     setMode: (mode) => {
@@ -119,7 +123,7 @@ export const useExperienceStore = create<ExperienceState>()(
 
     toggleTheme: () => set((s) => ({ theme: s.theme === 'night' ? 'day' : 'night' })),
 
-    toggleAudio: () => set((s) => ({ audioEnabled: !s.audioEnabled })),
+    toggleMuted: () => set((s) => ({ muted: !s.muted })),
 
     setHighlightBox: (slug) => {
       const s = get()

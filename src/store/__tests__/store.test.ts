@@ -171,11 +171,46 @@ describe('store: máquina de estados', () => {
     assert.equal(get().view, 'tabuleiro')
   })
 
-  it('toggleAudio e setQuality', () => {
-    get().toggleAudio()
-    assert.equal(get().audioEnabled, true)
+  it('setQuality troca a qualidade', () => {
     get().setQuality('low')
     assert.equal(get().quality, 'low')
+  })
+
+  it('som: começa mudo e toggleMuted alterna mudo <-> ligado', () => {
+    assert.equal(get().muted, true) // padrão: mudo (o AudioContext só nasce no 1º clique do botão)
+    get().toggleMuted()
+    assert.equal(get().muted, false)
+    get().toggleMuted()
+    assert.equal(get().muted, true)
+  })
+
+  it('som: o mudo independe do modo, do foco, da vista e do tema', () => {
+    get().toggleMuted() // loading: vale
+    assert.equal(get().muted, false)
+    toIdle()
+    get().toggleTheme()
+    get().setHovered('shelf')
+    get().requestFocus('shelf', 'digital')
+    get().onCameraRest()
+    get().setView('tabuleiro')
+    get().requestHome()
+    get().onCameraRest()
+    assert.equal(get().muted, false) // nada disso mexe no som
+    get().toggleMuted() // focused/idle: também vale
+    assert.equal(get().muted, true)
+  })
+
+  it('subscribeWithSelector do mudo notifica a cada toggle', () => {
+    const seen: boolean[] = []
+    const unsub = useExperienceStore.subscribe(
+      (s) => s.muted,
+      (muted) => seen.push(muted),
+    )
+    get().toggleMuted()
+    get().setHovered('desk') // outro slice: não notifica
+    get().toggleMuted()
+    unsub()
+    assert.deepEqual(seen, [false, true])
   })
 
   it('tema: começa em night e toggleTheme alterna night <-> day em qualquer modo', () => {
