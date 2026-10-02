@@ -178,6 +178,30 @@ describe('store: máquina de estados', () => {
     assert.equal(get().quality, 'low')
   })
 
+  it('tema: começa em night e toggleTheme alterna night <-> day em qualquer modo', () => {
+    assert.equal(get().theme, 'night')
+    get().toggleTheme() // loading: o tema independe do modo
+    assert.equal(get().theme, 'day')
+    toIdle()
+    get().toggleTheme()
+    assert.equal(get().theme, 'night')
+    get().requestFocus('desk')
+    get().onCameraRest()
+    get().toggleTheme() // focused também
+    assert.equal(get().theme, 'day')
+  })
+
+  it('tema não é mexido por foco, volta para home nem hover', () => {
+    toIdle()
+    get().toggleTheme()
+    get().setHovered('desk')
+    get().requestFocus('desk')
+    get().onCameraRest()
+    get().requestHome()
+    get().onCameraRest()
+    assert.equal(get().theme, 'day')
+  })
+
   it('subscribeWithSelector notifica só quando o slice muda', () => {
     toIdle()
     const seen: string[] = []
@@ -190,5 +214,17 @@ describe('store: máquina de estados', () => {
     get().onCameraRest()
     unsub()
     assert.deepEqual(seen, ['transitioning', 'focused'])
+  })
+
+  it('subscribeWithSelector do tema notifica a cada toggle', () => {
+    const seen: string[] = []
+    const unsub = useExperienceStore.subscribe(
+      (s) => s.theme,
+      (theme) => seen.push(theme),
+    )
+    get().toggleTheme()
+    get().toggleTheme()
+    unsub()
+    assert.deepEqual(seen, ['day', 'night'])
   })
 })

@@ -150,6 +150,7 @@ interface ExperienceState {
   view: string | null              // sub-vista do foco (null = a primeira do registry)
   hovered: HotspotId | null
   quality: 'high' | 'medium' | 'low'
+  theme: 'night' | 'day'            // tema do quarto baked (§12.3); padrão 'night'
   audioEnabled: boolean
   // ações
   setMode(m: Mode): void
@@ -159,6 +160,7 @@ interface ExperienceState {
   requestHome(): void                 // focused|transitioning → transitioning(focus=null)
   onCameraRest(): void                // transitioning → focused | idle
   setQuality(q): void
+  toggleTheme(): void
   toggleAudio(): void
 }
 ```
@@ -355,7 +357,7 @@ Atrás da TV vai uma fita de LED rosa emissiva (`tv_backlight`), como na referê
 | Métrica | Alvo |
 |---|---|
 | Frame | ≤ 16 ms (60 fps) em desktop |
-| Draw calls | < 120 |
+| Draw calls | < 120 (baked em HOME: 58; no hover o Outline re-renderiza a seleção e chega a ~102) |
 | Triângulos | < 350k |
 | Texturas | 1 lightmap 2K (KTX2) + demais ≤ 1K; total VRAM < 80 MB |
 | Bundle JS inicial | < 400 kB gzip (three + fiber + drei já ≈ 250 kB) |

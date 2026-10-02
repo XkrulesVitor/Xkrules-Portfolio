@@ -9,6 +9,7 @@ import { useKeyboard } from './interaction/useKeyboard'
 import { useUrlSync } from './interaction/useUrlSync'
 import { LoadingBridge } from './LoadingBridge'
 import './preload'
+import { RoomProvider } from './scene/baked/RoomContext'
 import { Effects } from './scene/Effects'
 import { Scene } from './scene/Scene'
 
@@ -35,8 +36,11 @@ export default function Experience() {
           }}
         >
           <Suspense fallback={null}>
-            <Scene />
-            <Effects />
+            {/* O RoomProvider publica os nós do glb (useRoomNode): o Scene os carrega e o Effects (contorno) os lê. */}
+            <RoomProvider>
+              <Scene />
+              <Effects />
+            </RoomProvider>
           </Suspense>
           <CameraRig />
           {DevTools ? <DevTools /> : null}

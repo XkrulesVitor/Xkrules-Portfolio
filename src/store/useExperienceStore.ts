@@ -5,6 +5,8 @@ import type { HotspotId } from '../content/types'
 export type { HotspotId }
 export type Mode = 'loading' | 'intro' | 'idle' | 'transitioning' | 'focused'
 export type Quality = 'high' | 'medium' | 'low'
+/** Tema do quarto: `night` (padrão) ou `day`. O `BakedMaterial` mistura os dois bakes por `uNightMix`. */
+export type Theme = 'night' | 'day'
 
 export interface ExperienceState {
   mode: Mode
@@ -17,6 +19,8 @@ export interface ExperienceState {
   view: string | null
   hovered: HotspotId | null
   quality: Quality
+  /** Tema dia/noite (ARCHITECTURE §12.3). O 3D faz damp de `uNightMix` até o alvo, sem setState no frame. */
+  theme: Theme
   audioEnabled: boolean
   /** Único canal UI -> 3D além de `focus` (ARCHITECTURE §6.4). */
   highlightBox: string | null
@@ -34,6 +38,7 @@ export interface ExperienceState {
   /** transitioning -> focused | idle; intro -> idle. Chamado APENAS pelo CameraRig. */
   onCameraRest(): void
   setQuality(quality: Quality): void
+  toggleTheme(): void
   toggleAudio(): void
   setHighlightBox(slug: string | null): void
 }
@@ -45,6 +50,7 @@ export const useExperienceStore = create<ExperienceState>()(
     view: null,
     hovered: null,
     quality: 'high',
+    theme: 'night',
     audioEnabled: false,
     highlightBox: null,
 
@@ -110,6 +116,8 @@ export const useExperienceStore = create<ExperienceState>()(
     setQuality: (quality) => {
       if (get().quality !== quality) set({ quality })
     },
+
+    toggleTheme: () => set((s) => ({ theme: s.theme === 'night' ? 'day' : 'night' })),
 
     toggleAudio: () => set((s) => ({ audioEnabled: !s.audioEnabled })),
 

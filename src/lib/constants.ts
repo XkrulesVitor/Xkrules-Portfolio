@@ -1,5 +1,9 @@
-/** Todo .glb usado pela cena entra aqui (preload na tela de loading). Vazio no grey-box. */
-export const PRELOAD_LIST: readonly string[] = []
+/**
+ * Todo .glb usado pela cena entra aqui (preload na tela de loading). As texturas do bake são
+ * pré-carregadas em `experience/preload.ts` (lista em `scene/baked/assets.ts`). Com `?greybox` nada
+ * disso é pré-carregado. O caminho repete `ROOM_GLB_URL` de `scene/baked/assets.ts`.
+ */
+export const PRELOAD_LIST: readonly string[] = ['/models/room.glb']
 
 /** Parâmetros de URL do deep-link: hotspot em foco e sub-vista (ex.: ?focus=shelf&view=digital). */
 export const FOCUS_QUERY_PARAM = 'focus'

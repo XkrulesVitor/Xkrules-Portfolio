@@ -25,6 +25,13 @@ export const UI_TEXT = {
   },
   hud: {
     hintIdle: 'Arraste para explorar. Clique nos objetos para ver mais.',
+    /** Botão de tema: o texto e o aria-label descrevem a AÇÃO (para qual tema vai trocar). */
+    theme: {
+      toDay: 'Dia',
+      toDayAria: 'Mudar para o tema claro (dia)',
+      toNight: 'Noite',
+      toNightAria: 'Mudar para o tema escuro (noite)',
+    },
   },
   back: {
     label: 'Voltar',

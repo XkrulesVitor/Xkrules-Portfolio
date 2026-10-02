@@ -1,5 +1,6 @@
 import type { GameSlug } from '@/content/types'
 import { useHotspot } from '../../interaction/useHotspot'
+import { useSceneMode } from '../../scene/baked/useSceneMode'
 import { LAYOUT, RACK_TOP_Y } from '../../scene/layout'
 import { Hitbox } from '../../scene/placeholders/Hitbox'
 import { MediaPlaceholder } from '../../scene/placeholders/MediaPlaceholder'
@@ -40,23 +41,30 @@ const BOXES: readonly BoxSlot[] = [
  * Hotspot `shelf`: a ZONA DE JOGOS inteira (ARCHITECTURE §6.4). Duas hitboxes, cada uma abre uma
  * sub-vista: a estante abre `tabuleiro` (câmera na estante, painel à esquerda) e o rack + TV abre
  * `digital` (câmera na TV e no console, painel à direita). O hover é um só para a zona.
- * Fase 3: caixas com spring e highlight (GameBox) e partículas em foco (ShelfParticles).
+ * No grey-box desenha estante, rack, TV e `GameBox`; no quarto baked o glb desenha tudo (estante,
+ * rack, TV `screen_tv` e os nós `box_*`) e aqui ficam só as hitboxes e as partículas.
+ * Fase 3/V.3: caixas com spring e highlight por `useRoomNode`, partículas em foco (ShelfParticles).
  */
 export function Shelf() {
   const { bind } = useHotspot('shelf')
+  const baked = useSceneMode() === 'baked'
   return (
     <group name="games_zone" {...bind}>
       <group name="shelf_root" position={[sx, sy, sz]}>
         {/* 1.9 de largura (x -0.25 a 1.65 no mundo): não invade o rack (até -0.62) nem a impressora (desde 1.7). */}
         <Hitbox position={[0, 1.35, 0.05]} size={[1.9, 2.8, 0.7]} view="tabuleiro" />
-        <ShelfPlaceholder />
+        {baked ? null : <ShelfPlaceholder />}
       </group>
       {/* Rack + TV: da parede até a frente do rack, do piso até o topo da TV. */}
       <Hitbox position={[rx, 0.95, rz + 0.03]} size={[rw + 0.06, 1.95, rd + 0.15]} view="digital" />
-      <MediaPlaceholder />
-      {BOXES.map((b) => (
-        <GameBox key={b.slug} slug={b.slug} position={b.position} color={b.color} size={b.size} />
-      ))}
+      {baked ? null : (
+        <>
+          <MediaPlaceholder />
+          {BOXES.map((b) => (
+            <GameBox key={b.slug} slug={b.slug} position={b.position} color={b.color} size={b.size} />
+          ))}
+        </>
+      )}
       <ShelfParticles />
     </group>
   )
