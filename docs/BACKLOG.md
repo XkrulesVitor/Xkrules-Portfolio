@@ -16,7 +16,7 @@ Reporte em 10 linhas: arquivos criados, decisões tomadas, o que ficou pendente.
 
 Legenda de aceite: **A** = `tsc`/`lint`/`build` limpos · **M** = verificação manual no browser (`npm run dev`).
 
-**Status (2026-10-01):** Fases 0, 1, 2.1 e 2.2 concluídas e comitadas; o XkrulesOS roda em produção (correção do `portal` estável no `MonitorHtml`). A Fase 3 não chegou a ser implementada e foi absorvida pela **Fase V** (visual v2, ARCHITECTURE §12), assim como as Fases 4 e 5. Onda 1 (V.1 arte draft, V.4 câmera, V.6 SO) onda 2 (V.2 runtime baked) e onda 3 (V.3 vida, V.5 som e acabamento) concluídas entre 2026-10-01 e 2026-10-02. Próximo passo: V.7 (bake final, calibração, medição e deploy).
+**Status (2026-10-01):** Fases 0, 1, 2.1 e 2.2 concluídas e comitadas; o XkrulesOS roda em produção (correção do `portal` estável no `MonitorHtml`). A Fase 3 não chegou a ser implementada e foi absorvida pela **Fase V** (visual v2, ARCHITECTURE §12), assim como as Fases 4 e 5. Onda 1 (V.1 arte draft, V.4 câmera, V.6 SO) onda 2 (V.2 runtime baked) e onda 3 (V.3 vida, V.5 som e acabamento) concluídas entre 2026-10-01 e 2026-10-02. V.7 em 2026-10-02: bake final 2048² comitado; o enquadramento responsivo da V.4 já cabe nas vistas com o glb final (sem recalibração); `sitemap.xml` e `robots.txt`. Falta: deploy (PR do dono) e Lighthouse em produção.
 
 ---
 
