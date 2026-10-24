@@ -1,7 +1,8 @@
 import type { GameProject } from './types'
 
-// A ordem de cada aba é a ordem do painel e a da prateleira (estante e tampo do rack, da esquerda
-// para a direita). Digitais do mais novo para o mais antigo.
+// Ordem do painel. Tabuleiro: a da estante, da esquerda para a direita. Digital: primeiro os que rodam
+// na TV, depois o que roda no PC e por último os sem versão jogável no quarto. No rack, a ordem dos
+// estojos é a do bake (art/blender/props/games.py) e não precisa acompanhar esta.
 export const GAME_PROJECTS: readonly GameProject[] = [
   {
     slug: 'aldeia_dorme',
@@ -90,34 +91,14 @@ export const GAME_PROJECTS: readonly GameProject[] = [
       width: 512,
       height: 512,
     },
-    play: { where: 'tv', src: 'https://itch.io/embed-upload/18238410?color=000000' },
+    // GameMaker de canvas fixo em 1760x990: a área do embed tem esse tamanho para o jogo caber inteiro.
+    play: {
+      where: 'tv',
+      src: 'https://itch.io/embed-upload/18238410?color=000000',
+      area: { width: 1760, height: 990 },
+    },
     images: [],
     links: [{ label: 'Jogar no itch.io', href: 'https://xkrulesf3lipe.itch.io/piter', kind: 'itch' }],
-  },
-  {
-    slug: 'memory_game',
-    title: 'Jogo da Memória em React',
-    kind: 'digital',
-    genre: 'Jogo da memória educativo',
-    context: 'Projeto para cliente',
-    year: 2026,
-    engine: 'React',
-    summary:
-      'Desenvolvido em React, este jogo da memória foi criado sob demanda para integrar o site de uma cliente com foco em conscientização sobre o diabetes.',
-    details: [
-      'A solução alia tecnologia web moderna a uma abordagem lúdica e educativa, transformando conceitos de saúde, prevenção e autocuidado em uma experiência interativa e envolvente para os visitantes.',
-    ],
-    accent: '#8b5cf6',
-    cover: {
-      src: '/media/games/memory_game.webp',
-      alt: 'Ícone do Jogo da Memória em pixel art: uma carta virada com um ponto de interrogação ao lado de uma carta com uma estrela sorridente, sobre um céu estrelado.',
-      width: 512,
-      height: 512,
-    },
-    // O mesmo jogo roda no XkrulesOS (app Memória 4×4): "Jogar" leva a câmera até o PC.
-    play: { where: 'pc', app: 'memory' },
-    images: [],
-    links: [{ label: 'Ver no site da cliente', href: 'https://jessicamartins.com.br/#diversao', kind: 'live' }],
   },
   {
     slug: 'o_anel',
@@ -166,6 +147,31 @@ export const GAME_PROJECTS: readonly GameProject[] = [
     play: { where: 'tv', src: 'https://itch.io/embed-upload/15523503?color=000000' },
     images: [],
     links: [{ label: 'Jogar no itch.io', href: 'https://beinez.itch.io/racco', kind: 'itch' }],
+  },
+  {
+    slug: 'memory_game',
+    title: 'Jogo da Memória em React',
+    kind: 'digital',
+    genre: 'Jogo da memória educativo',
+    context: 'Projeto para cliente',
+    year: 2026,
+    engine: 'React',
+    summary:
+      'Desenvolvido em React, este jogo da memória foi criado sob demanda para integrar o site de uma cliente com foco em conscientização sobre o diabetes.',
+    details: [
+      'A solução alia tecnologia web moderna a uma abordagem lúdica e educativa, transformando conceitos de saúde, prevenção e autocuidado em uma experiência interativa e envolvente para os visitantes.',
+    ],
+    accent: '#8b5cf6',
+    cover: {
+      src: '/media/games/memory_game.webp',
+      alt: 'Ícone do Jogo da Memória em pixel art: uma carta virada com um ponto de interrogação ao lado de uma carta com uma estrela sorridente, sobre um céu estrelado.',
+      width: 512,
+      height: 512,
+    },
+    // O mesmo jogo roda no XkrulesOS (app Memória 4×4): "Jogar" leva a câmera até o PC.
+    play: { where: 'pc', app: 'memory' },
+    images: [],
+    links: [{ label: 'Ver no site da cliente', href: 'https://jessicamartins.com.br/#diversao', kind: 'live' }],
   },
   {
     slug: 'duel_arena',

@@ -146,6 +146,11 @@ export type GamePlay =
        * O jogo recebe uma área de 1280x720 e o próprio motor o escala (ui/tv/TvGameScreen.tsx).
        */
       src: string
+      /**
+       * Área do jogo em px, quando não é 1280x720. Jogos de canvas FIXO (GameMaker sem "scale to fit")
+       * pedem a área do tamanho do canvas: menor que ele, o canvas vaza e aparecem barras de rolagem.
+       */
+      area?: { width: number; height: number }
     }
   | {
       /** App do XkrulesOS: a câmera vai até o monitor da mesa e a janela abre lá. */

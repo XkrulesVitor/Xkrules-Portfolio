@@ -21,22 +21,27 @@ type TvPlay = Extract<GamePlay, { where: 'tv' }>
 
 /**
  * O embed oficial do itch.io (upload_embed.css) põe o jogo num quadro com 1 px de borda e um rodapé de
- * 20 px. O jogo recebe uma área de 1280x720, como no embed que o próprio itch gera: o motor escala o
- * jogo ali (640x360 em 2x, 1280x720 em 1x). Com menos de 720 px de altura, o zoom inteiro do Construct 3
- * cai para 1x e o jogo fica pequeno no meio da TV. O iframe inteiro é reduzido por CSS até caber na TV.
+ * 20 px. O jogo recebe uma área de 1280x720 por padrão, como no embed que o próprio itch gera: o motor
+ * escala o jogo ali (640x360 em 2x, 1280x720 em 1x). Com menos de 720 px de altura, o zoom inteiro do
+ * Construct 3 cai para 1x e o jogo fica pequeno no meio da TV. Jogos de canvas fixo trazem a própria
+ * `area` (o Piter desenha num canvas de 1760x990). O iframe inteiro é reduzido por CSS até caber na TV.
  */
-const GAME_AREA = { width: 1280, height: 720 } as const
+const DEFAULT_GAME_AREA = { width: 1280, height: 720 } as const
 const EMBED_CHROME = { x: 2, y: 21 } as const
-const FRAME_SIZE = { width: GAME_AREA.width + EMBED_CHROME.x, height: GAME_AREA.height + EMBED_CHROME.y }
-const FRAME_SCALE = Math.min(TV_SCREEN_SIZE.width / FRAME_SIZE.width, TV_SCREEN_SIZE.height / FRAME_SIZE.height)
 
-const FRAME_STYLE: CSSProperties = {
-  position: 'absolute',
-  left: '50%',
-  top: '50%',
-  width: FRAME_SIZE.width,
-  height: FRAME_SIZE.height,
-  transform: `translate(-50%, -50%) scale(${FRAME_SCALE})`,
+function frameStyle(play: TvPlay): CSSProperties {
+  const area = play.area ?? DEFAULT_GAME_AREA
+  const width = area.width + EMBED_CHROME.x
+  const height = area.height + EMBED_CHROME.y
+  const scale = Math.min(TV_SCREEN_SIZE.width / width, TV_SCREEN_SIZE.height / height)
+  return {
+    position: 'absolute',
+    left: '50%',
+    top: '50%',
+    width,
+    height,
+    transform: `translate(-50%, -50%) scale(${scale})`,
+  }
 }
 
 function TvGame({ game, play }: { game: GameProject; play: TvPlay }) {
@@ -60,7 +65,7 @@ function TvGame({ game, play }: { game: GameProject; play: TvPlay }) {
         allow={FRAME_ALLOW}
         allowFullScreen
         className="block border-0 bg-black"
-        style={FRAME_STYLE}
+        style={frameStyle(play)}
         onLoad={() => {
           setLoaded(true)
           // O teclado já vai para o jogo (o clique continua necessário para o áudio).

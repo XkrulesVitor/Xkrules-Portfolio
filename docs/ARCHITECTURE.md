@@ -347,7 +347,7 @@ A zona de jogos é UM hotspot com DUAS sub-vistas (§5). A aba do `GamesPanel` �
 
 `highlightBox: string | null` e `view` são os dois canais UI→3D além de `focus`.
 
-Conteúdo físico (o slug é o mesmo de `content/projects.games.ts` e dos nós `box_<slug>` e `cover_<slug>`; a ordem no móvel, da esquerda para a direita, é a ordem do painel):
+Conteúdo físico (o slug é o mesmo de `content/projects.games.ts` e dos nós `box_<slug>` e `cover_<slug>`; na estante, a ordem da esquerda para a direita é a do painel; no rack, a ordem dos estojos é a do bake, e o painel Digital lista primeiro os jogáveis na TV, depois o do PC e por último os sem versão jogável):
 - **Board games autorais** (`aldeia_dorme`, `conquista_galactica`): caixas quadradas de 36 cm na prateleira 2 da estante.
 - **Jogos digitais** (`porriland`, `piter`, `memory_game`, `o_anel`, `racco`, `duel_arena`): estojos quadrados de 13 cm (como os de CD) de pé no tampo do rack, ao lado do console.
 - **Capas**: as artes são quadradas (`cover` em `content/projects.games.ts`, em `public/media/games/`). Elas são a miniatura do cartão no painel e a textura da caixa no quarto. Cada `box_<slug>` do glb tem um filho `cover_<slug>`, um quadro cinza rente à frente que é assado como o resto do quarto. O `GameCovers` troca o material desse quadro pelo `CoverMaterial`, que multiplica a arte pela luz assada do quadro (dividida pelo albedo do cinza) e aplica as luzes de zona como o `BakedMaterial`. Assim a capa segue o tema dia/noite, a sombra da prateleira e o rosa da TV. As texturas entram no preload.
@@ -372,7 +372,7 @@ Os jogos digitais podem ser jogados dentro do quarto. O campo `GameProject.play`
 
 | `play` | Onde roda | Jogos |
 |---|---|---|
-| `{ where: 'tv', src }` | build HTML5 do itch.io num iframe sobre a tela da TV. `src` é o embed oficial do itch.io (`itch.io/embed-upload/<id>`); o endereço direto do jogo (`html-classic.itch.zone`) é bloqueado fora do itch.io (anti-hotlink) | PorriLand, Piter, O Anel, Racco |
+| `{ where: 'tv', src, area? }` | build HTML5 do itch.io num iframe sobre a tela da TV. `src` é o embed oficial do itch.io (`itch.io/embed-upload/<id>`); o endereço direto do jogo (`html-classic.itch.zone`) é bloqueado fora do itch.io (anti-hotlink) | PorriLand, Piter, O Anel, Racco |
 | `{ where: 'pc', app: 'memory' }` | app do XkrulesOS no monitor da mesa (`PcApp`) | Jogo da Memória ("Memória 4×4") |
 | ausente | não é jogável no quarto | Duel Arena |
 
@@ -381,7 +381,7 @@ O Duel Arena não tem build web: a Cubio está em alfa e o cartão dele aponta p
 **`TvGameHtml`** (o segundo `Html` do projeto, dentro de `Shelf.tsx`):
 - drei `<Html transform>` com um wrapper de **tamanho fixo em px, 1280×716** (`TvGameScreen`, em `src/ui/tv`), preso 2 mm à frente da tela da TV (`LAYOUT.tv`). A conta de escala é a do `MonitorHtml` (`distanceFactor` cobre a largura, o eixo Y leva a correção mínima) e o `portal` também é estável, apontando para o pai do canvas (sem ele o drei recria a raiz React do `Html` e, em produção, o conteúdo some).
 - Sem `occlude`: com o jogo rodando a câmera fica parada de frente para a TV. Sem jogo, o wrapper fica vazio e com `pointer-events: none`. Cliques no wrapper não sobem para a cena (o R3F leria `offsetX/Y` do elemento e viraria "clique fora").
-- O iframe é o embed oficial do itch.io, que tem 1 px de borda e um rodapé de 20 px. Ele recebe uma área de jogo de 1280×720 (iframe de 1282×741, como o embed que o itch gera) e o conjunto é reduzido por CSS até caber na TV. Assim cada motor escala o jogo como no próprio itch: os de 640×360 em 2× e os de 1280×720 em 1×. Uma área menor que 720 de altura derruba o zoom inteiro do Construct 3 para 1×.
+- O iframe é o embed oficial do itch.io, que tem 1 px de borda e um rodapé de 20 px. Ele recebe uma área de jogo de 1280×720 (iframe de 1282×741, como o embed que o itch gera) e o conjunto é reduzido por CSS até caber na TV. Assim cada motor escala o jogo como no próprio itch: os de 640×360 em 2× e os de 1280×720 em 1×. Uma área menor que 720 de altura derruba o zoom inteiro do Construct 3 para 1×. Jogo de canvas fixo declara a própria `area` (`GamePlay`): o Piter, feito em GameMaker sem "scale to fit", desenha num canvas de 1760×990. Numa área menor o canvas vaza e aparecem barras de rolagem.
 - Até o `load` do iframe aparece a tela "Ligando <jogo>" com a capa. No `load` o iframe recebe o foco do teclado; o clique no jogo continua necessário para liberar o áudio. Trocar de jogo remonta o iframe, e sem jogo nada fica montado (o áudio do jogo para junto).
 
 **Com um jogo rodando (`playing !== null`)**
