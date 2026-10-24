@@ -240,7 +240,7 @@ function Primitives({ bg }: { bg: BackdropKind }) {
           label="Exemplo de abas"
           items={[
             { id: 'a', label: 'Tabuleiro', icon: DiceFiveIcon, count: 2, content: <p className="text-sm text-ink/85">Conteúdo da primeira aba.</p> },
-            { id: 'b', label: 'Digital / Game Jams', icon: GameControllerIcon, count: 3, content: <p className="text-sm text-ink/85">Conteúdo da segunda aba.</p> },
+            { id: 'b', label: 'Digital', icon: GameControllerIcon, count: 3, content: <p className="text-sm text-ink/85">Conteúdo da segunda aba.</p> },
             { id: 'c', label: 'Sem ícone', content: <p className="text-sm text-ink/85">Terceira aba, sem ícone nem contador.</p> },
           ]}
         />

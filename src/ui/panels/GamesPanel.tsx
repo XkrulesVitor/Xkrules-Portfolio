@@ -55,8 +55,9 @@ interface GamesPanelProps {
 }
 
 /**
- * Painel do hotspot `shelf`: abas Tabuleiro e Digital / Game Jams. Hover ou foco num jogo destaca
- * a caixa dele na estante (`store.highlightBox`, ARCHITECTURE §6.4).
+ * Painel do hotspot `shelf`: abas Tabuleiro e Digital. O ícone do cabeçalho acompanha a aba (dado no
+ * Tabuleiro, controle no Digital). Hover ou foco num jogo destaca a caixa dele na estante ou no rack
+ * (`store.highlightBox`, ARCHITECTURE §6.4) e, no Digital, põe o título dele na TV.
  *
  * A aba É a sub-vista da zona de jogos (ARCHITECTURE §5): com o hotspot em foco, a aba ativa vem de
  * `store.view` e trocar de aba chama `setView`, que leva a câmera da estante para a TV (ou volta) e
@@ -91,6 +92,7 @@ export function GamesPanel({ games = GAME_PROJECTS, defaultKind = 'tabuleiro', a
       content: <GameList kind={kind} games={list} />,
     }
   })
+  const headerIcon = KINDS.find((k) => k.kind === kind)?.icon ?? GameControllerIcon
 
   return (
     <PanelShell
@@ -98,13 +100,13 @@ export function GamesPanel({ games = GAME_PROJECTS, defaultKind = 'tabuleiro', a
       side={side}
       eyebrow={t.eyebrow}
       subtitle={getHotspot('shelf').description}
-      leading={<PanelIcon icon={GameControllerIcon} />}
+      leading={<PanelIcon icon={headerIcon} swapKey={kind} />}
       autoFocus={autoFocus}
     >
       <PanelSection>
         <p className="flex items-center gap-2 text-xs leading-snug text-ink/70 pointer-coarse:hidden">
           <HandPointingIcon size={16} weight="duotone" aria-hidden="true" className="shrink-0" />
-          {t.hint}
+          {t.hint[kind]}
         </p>
         <Tabs label={t.tabsLabel} items={items} value={kind} onValueChange={selectKind} />
       </PanelSection>

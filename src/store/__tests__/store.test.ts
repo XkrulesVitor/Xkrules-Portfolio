@@ -130,12 +130,12 @@ describe('store: máquina de estados', () => {
 
   it('highlightBox só em focused e some ao voltar', () => {
     toIdle()
-    get().setHighlightBox('peter')
+    get().setHighlightBox('piter')
     assert.equal(get().highlightBox, null)
     get().requestFocus('shelf')
     get().onCameraRest()
-    get().setHighlightBox('peter')
-    assert.equal(get().highlightBox, 'peter')
+    get().setHighlightBox('piter')
+    assert.equal(get().highlightBox, 'piter')
     get().requestHome()
     assert.equal(get().highlightBox, null)
   })
@@ -161,7 +161,7 @@ describe('store: máquina de estados', () => {
     get().setView('digital')
     assert.equal(get().view, null) // transitioning: ignorado
     get().onCameraRest()
-    get().setHighlightBox('terra')
+    get().setHighlightBox('aldeia_dorme')
     get().setView('digital')
     assert.equal(get().mode, 'focused')
     assert.equal(get().focus, 'shelf')

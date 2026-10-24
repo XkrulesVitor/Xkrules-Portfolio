@@ -78,7 +78,7 @@ export const EDITOR_CODE: readonly string[] = [
   '}',
   '',
   '// Um jogo novo na estante: 1 linha.',
-  "const shelf = ['terra', 'aldeia_dorme']",
-  "shelf.push('porrilandia')",
+  "const shelf = ['aldeia_dorme', 'conquista']",
+  "shelf.push('porriland')",
   'const total = shelf.length + 4',
 ]

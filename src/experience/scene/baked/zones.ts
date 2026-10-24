@@ -1,4 +1,5 @@
 import type { HotspotId } from '@/content/types'
+import { GAME_BOX_NODES } from '../../hotspots/shelf/gameBoxNodes'
 
 /**
  * Hotspot -> nós do `room.glb` que o contorno (Outline) destaca no hover. Os nomes seguem
@@ -16,17 +17,8 @@ export const HOTSPOT_OUTLINE_NODES: Readonly<Record<HotspotId, readonly string[]
     'printer_bed',
     'printer_part',
   ],
-  shelf: [
-    'zone_games',
-    'screen_tv',
-    'box_terra',
-    'box_aldeia_dorme',
-    'box_porrilandia',
-    'box_peter',
-    'box_o_anel',
-    'box_racco',
-    'box_memory_game',
-  ],
+  // Caixas e quadros das capas (`cover_*` é filho de `box_*`, mas o Outline não pega filhos).
+  shelf: ['zone_games', 'screen_tv', ...Object.values(GAME_BOX_NODES).flatMap((n) => [n.node, n.cover])],
 }
 
 /**

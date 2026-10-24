@@ -111,7 +111,7 @@ src/
 │  ├─ about.ts
 │  ├─ projects.web.ts         # Inatel², CP2eJR Corporative, ...
 │  ├─ projects.print.ts       # Reino de Amestris
-│  ├─ projects.games.ts       # Porrilândia, Peter, Terra, Aldeia Dorme, O Anel...
+│  ├─ projects.games.ts       # Aldeia Dorme, Conquista Galáctica, PorriLand, Piter, O Anel...
 │  ├─ os.ts                   # textos do SO fictício do monitor
 │  ├─ site.ts                 # identidade, links globais e UI_TEXT (chrome)
 │  └─ types.ts
@@ -333,10 +333,13 @@ A zona de jogos é UM hotspot com DUAS sub-vistas (§5). A aba do `GamesPanel` �
 
 `highlightBox: string | null` e `view` são os dois canais UI→3D além de `focus`.
 
-Conteúdo físico (o slug é o mesmo de `content/projects.games.ts` e do nó `box_<slug>`):
-- **Board games autorais** (`terra`, `aldeia_dorme`): caixas grandes na prateleira 2 da estante.
-- **Jogos digitais e game jams** (`porrilandia`, `peter`, `o_anel`): capinhas de pé no tampo do rack, ao lado do console.
+Conteúdo físico (o slug é o mesmo de `content/projects.games.ts` e dos nós `box_<slug>` e `cover_<slug>`; a ordem no móvel, da esquerda para a direita, é a ordem do painel):
+- **Board games autorais** (`aldeia_dorme`, `conquista_galactica`): caixas quadradas de 36 cm na prateleira 2 da estante.
+- **Jogos digitais** (`porriland`, `piter`, `memory_game`, `o_anel`, `racco`, `duel_arena`): estojos quadrados de 13 cm (como os de CD) de pé no tampo do rack, ao lado do console.
+- **Capas**: as artes são quadradas (`cover` em `content/projects.games.ts`, em `public/media/games/`). Elas são a miniatura do cartão no painel e a textura da caixa no quarto. Cada `box_<slug>` do glb tem um filho `cover_<slug>`, um quadro cinza rente à frente que é assado como o resto do quarto. O `GameCovers` troca o material desse quadro pelo `CoverMaterial`, que multiplica a arte pela luz assada do quadro (dividida pelo albedo do cinza) e aplica as luzes de zona como o `BakedMaterial`. Assim a capa segue o tema dia/noite, a sombra da prateleira e o rosa da TV. As texturas entram no preload.
 - **Decoração da estante**: Root e Heat na prateleira 2; pilhas e miniaturas na 1; caixas deitadas, torre de dados, miniaturas e dados na 3; fileira de caixas na 4. Estática, fundida no `shelf_frame`.
+
+O painel mostra no cartão a capa, o gênero, as etiquetas (prêmio, contexto, ano, ferramenta, jogadores e duração), o primeiro parágrafo e, atrás do "Ler mais", o resto da descrição. O ícone do cabeçalho acompanha a aba (dado no Tabuleiro, controle no Digital).
 
 ### 6.5 TV da zona de jogos
 A TV fica na parede acima do rack, é um componente próprio (`scene/WallTv.tsx`) e não tem hitbox: o clique nela cai na hitbox `digital` do rack. A mesa não mexe mais nela. O material segue o store:
@@ -344,7 +347,7 @@ A TV fica na parede acima do rack, é um componente próprio (`scene/WallTv.tsx`
 | Estado do store | Tela |
 |---|---|
 | `hovered === 'shelf'` | estática retrô (shader com `uTime`) |
-| `focused` + `shelf` + vista `digital` | "ligada no console": tela de título tingida pelo `accent` do jogo em `highlightBox` (ou neutra) |
+| `focused` + `shelf` + vista `digital` | "ligada no console": tela de título com o nome e o ano do jogo em `highlightBox`, tingida pelo `accent` dele (ou neutra). Ferramenta e contexto ficam só no painel |
 | qualquer outro | apagada |
 
 Atrás da TV vai uma fita de LED rosa emissiva (`tv_backlight`), como na referência, para o Bloom.

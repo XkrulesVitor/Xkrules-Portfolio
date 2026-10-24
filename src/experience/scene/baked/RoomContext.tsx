@@ -59,7 +59,7 @@ const NO_NODES = () => null
 const NO_SUBSCRIBE = () => () => {}
 
 /**
- * Nó do glb por nome (`chair_root`, `printer_head`, `box_terra`, `clock_hour`, `emit_*`, `screen_*`...).
+ * Nó do glb por nome (`chair_root`, `printer_head`, `box_piter`, `clock_hour`, `emit_*`, `screen_*`...).
  * `null` no grey-box ou enquanto o glb não carregou: trate o `null` (o componente re-renderiza
  * quando o nó chega). O objeto é estável durante a vida da cena.
  */

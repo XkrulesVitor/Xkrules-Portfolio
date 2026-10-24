@@ -115,8 +115,16 @@ export interface PrintShowcase {
   projects: readonly PrintProject[]
 }
 
-/** Slugs das peças físicas da estante (nó `box_<slug>`, ARCHITECTURE §6.4). */
-export type GameSlug = 'terra' | 'aldeia_dorme' | 'porrilandia' | 'peter' | 'o_anel' | 'racco' | 'memory_game'
+/** Slugs das peças físicas da zona de jogos (nós `box_<slug>` e `cover_<slug>`, ARCHITECTURE §6.4). */
+export type GameSlug =
+  | 'aldeia_dorme'
+  | 'conquista_galactica'
+  | 'porriland'
+  | 'piter'
+  | 'memory_game'
+  | 'o_anel'
+  | 'racco'
+  | 'duel_arena'
 
 export type GameKind = 'tabuleiro' | 'digital'
 
@@ -125,14 +133,32 @@ export interface GameProject {
   slug: GameSlug
   title: string
   kind: GameKind
-  /** Contexto curto: "Game Jam CrazyGames", "Expansão fan-made", etc. */
+  /** Gênero em uma linha, sob o título (ex.: "Roguelike de cartas"). */
+  genre?: string
+  /** Contexto curto: "Game Jam CrazyGames", "Projeto para cliente", etc. */
   context?: string
+  /** Prêmio recebido (ex.: "Melhor Visual"); aparece em destaque no cartão. */
+  award?: string
   role?: string
+  /** Ano em que o jogo foi feito. É o único dado do jogo que a TV da zona de jogos mostra sob o título. */
   year?: number
+  /** Primeiro parágrafo, sempre visível no cartão. */
   summary: string
+  /** Parágrafos seguintes, revelados pelo "Ler mais" do cartão. */
+  details?: readonly string[]
+  /** Ferramenta ou tecnologia (ex.: "Construct 3", "React"). Só no painel lateral. */
   engine?: string
-  /** Cor de destaque do cartão no painel (hex). Espelha a cor da caixa 3D na estante. */
+  /** Board games: número de jogadores (ex.: "6 a 12 jogadores"). */
+  players?: string
+  /** Board games: duração de uma partida (ex.: "20 a 40 min"). */
+  playTime?: string
+  /** Cor de destaque do cartão no painel e da tela de título da TV (hex), tirada da arte. */
   accent?: string
+  /**
+   * Capa QUADRADA: miniatura do cartão no painel e textura da caixa do jogo no quarto 3D (quadro
+   * `cover_<slug>` na frente da caixa). Caminho em /public.
+   */
+  cover?: MediaImage
   images: readonly MediaImage[]
   links: readonly ExternalLink[]
 }

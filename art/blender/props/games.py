@@ -221,31 +221,51 @@ def _shelf_contents(ctx):
     ctx.add_static(p)
 
 
+# Albedo do quadro da capa: cinza neutro claro. O bake dele guarda só a luz que chega à frente da caixa;
+# o runtime multiplica a arte por essa luz e divide por este albedo (`COVER_ALBEDO` do CoverMaterial.ts).
+COVER_GREY = '#e6e6e6'
+
+
 def _live_boxes(ctx):
-    """Caixas dos projetos: nós vivos com pivô no centro (spring em z no runtime)."""
+    """Caixas dos jogos: nós vivos com pivô no centro (spring em z no runtime).
+
+    As capas são quadradas, então as caixas também: board games de 36 cm na prateleira 2 da estante e
+    estojos de 13 cm (como os de CD) de pé no tampo do rack, na ordem do painel. Cada caixa tem um filho
+    `cover_<slug>`: um quadro cinza rente à frente, assado como o resto, onde o runtime aplica a arte
+    (a luz, a sombra e as luzes de zona vêm do bake). A cor da caixa vem da arte e aparece nas laterais
+    e na moldura em volta da capa.
+    """
     top = ctx.W['RACK_TOP_Y']
     rx, _, rz = ctx.LAYOUT['rack']['center']
     sx, sy, sz = ctx.LAYOUT['shelf']
-    board = (0.34, 0.46, 0.1)
-    case = (0.12, 0.17, 0.02)
+    board = (0.36, 0.36, 0.1)
+    case = (0.13, 0.13, 0.02)
+    board_y = sy + 0.705 + board[1] / 2          # apoiada na prateleira 2
+    case_y = top + case[1] / 2
+
+    def on_rack(k):
+        return (rx + 0.12 + k * 0.14, case_y, rz + 0.02)
+
     spec = {
-        'terra': ((sx - 0.62, sy + 0.935, sz + 0.08), board, '#57b894', '#a9e6cf', '#1f6b52'),
-        'aldeia_dorme': ((sx - 0.24, sy + 0.935, sz + 0.08), board, '#3a3f8f', '#8a90e0', '#f2c14e'),
-        'porrilandia': ((rx + 0.25, top + 0.085, rz + 0.02), case, '#e4572e', '#ffb199', '#5a1f10'),
-        'peter': ((rx + 0.38, top + 0.085, rz + 0.02), case, '#4c8bf5', '#a9c7ff', '#173a7a'),
-        'o_anel': ((rx + 0.51, top + 0.085, rz + 0.02), case, '#f2c14e', '#fff0b8', '#6b4d10'),
-        'racco': ((rx + 0.64, top + 0.085, rz + 0.02), case, '#10b981', '#8af0cc', '#07503b'),
-        'memory_game': ((rx + 0.77, top + 0.085, rz + 0.02), case, '#a855f7', '#dcb8ff', '#4a1d7a'),
+        'aldeia_dorme': ((sx - 0.62, board_y, sz + 0.08), board, '#b59b7a'),
+        'conquista_galactica': ((sx - 0.24, board_y, sz + 0.08), board, '#151a30'),
+        'porriland': (on_rack(0), case, '#1d8fd8'),
+        'piter': (on_rack(1), case, '#9a5b2e'),
+        'memory_game': (on_rack(2), case, '#5b2bd1'),
+        'o_anel': (on_rack(3), case, '#a8380f'),
+        'racco': (on_rack(4), case, '#2c5552'),
+        'duel_arena': (on_rack(5), case, '#3a4a5c'),
     }
-    for slug, (pos, size, col, art, deco) in spec.items():
-        b = Prop(f'box_{slug}', None, pivot=pos, tier=1.4)
+    for slug, (pos, size, col) in spec.items():
         x, y, z = pos
         w, h, d = size
-        b.box(size, pos, hx(col), bevel=0.004 if d < 0.05 else 0.006, seg=1)
+        bevel = 0.004 if d < 0.05 else 0.006
+        b = Prop(f'box_{slug}', None, pivot=pos, tier=1.4)
+        b.box(size, pos, hx(col), bevel=bevel, seg=1)
+        box = ctx.add_live(b)
+        # quadro da capa: 1 mm à frente da face, dentro do chanfro (sobra uma moldura fina da cor da caixa)
         zf = z + d / 2
-        # arte da capa: quadro claro, faixa de título, emblema e rodapé escuro
-        b.box((w * 0.84, h * 0.5, 0.003), (x, y + h * 0.1, zf + 0.0015), hx(art), bevel=0, seg=1, keep='+z')
-        b.box((w * 0.84, h * 0.13, 0.003), (x, y + h * 0.37, zf + 0.0015), hx('#f6f3ec'), bevel=0, seg=1, keep='+z')
-        b.box((w * 0.3, h * 0.2, 0.003), (x - w * 0.12, y + h * 0.12, zf + 0.003), hx(deco), bevel=0, seg=1, ry=0, rz=0, keep='+z')
-        b.box((w * 0.84, h * 0.08, 0.003), (x, y - h * 0.34, zf + 0.0015), hx('#1c1f27'), bevel=0, seg=1, keep='+z')
-        ctx.add_live(b)
+        cover = Prop(f'cover_{slug}', None, pivot=pos, tier=1.6)
+        cover.box((w - 2 * bevel, h - 2 * bevel, 0.001), (x, y, zf + 0.0005), hx(COVER_GREY), bevel=0, seg=1,
+                  keep='+z')
+        ctx.add_live(cover, parent=box)

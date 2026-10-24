@@ -8,7 +8,7 @@ export const ABOUT: AboutContent = {
   headline: 'Estudante de Engenharia de Software no Inatel',
   bio: [
     'Estou no 3º [TODO: ano ou período] de Engenharia de Software no Inatel (Instituto Nacional de Telecomunicações). Faço front-ends web com Next.js, React, TypeScript e Tailwind, como o Inatel², o CP2eJR, o MRP Mobi, o Jogo da Memória e a Carta de Amor Interativa.',
-    'Participo de game jams: a Game Jam CrazyGames, com a Porrilândia, e a Game Jam CPG 2026, com As Aventuras de Peter, feito em GameMaker. Também crio board games, como a expansão de Terra e A Aldeia Dorme.',
+    'Participo de game jams: a Game Jam CrazyGames, com PorriLand, a Game Jam CPG 2026, com As Aventuras de Piter, e a 1ª Cubio Brasil Game Jam, em que o Duel Arena levou o prêmio de Melhor Visual. Também crio board games, como Aldeia Dorme e Star Wars: Conquista Galáctica.',
     'Faço modelagem e impressão 3D em resina e filamento com a marca Reino de Amestris. Este portfólio 3D foi construído com React Three Fiber.',
   ],
   // [TODO] avatar: foto em public/media/about/ (webp) e `avatar: { src, alt }`. Sem foto, o painel mostra as iniciais.

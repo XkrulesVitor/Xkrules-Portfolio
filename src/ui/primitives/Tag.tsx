@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { cx } from './cx'
 
-export type TagTone = 'neutral' | 'mint' | 'blue'
+export type TagTone = 'neutral' | 'mint' | 'blue' | 'gold'
 export type TagSize = 'sm' | 'md'
 
 interface TagProps {
@@ -17,6 +17,7 @@ const TONE: Record<TagTone, string> = {
   neutral: 'border-[var(--glass-border)] bg-white/[0.06] text-ink/85',
   mint: 'border-accent-mint/30 bg-accent-mint/10 text-accent-mint',
   blue: 'border-accent-blue/30 bg-accent-blue/10 text-accent-blue',
+  gold: 'border-accent-gold/40 bg-accent-gold/12 text-accent-gold',
 }
 
 const SIZE: Record<TagSize, string> = {
@@ -24,7 +25,7 @@ const SIZE: Record<TagSize, string> = {
   md: 'gap-1.5 px-2.5 py-1 text-xs',
 }
 
-/** Rótulo curto em pílula (tecnologias, contexto, ano). Não interativo. */
+/** Rótulo curto em pílula (tecnologias, contexto, ano, prêmio). Não interativo. */
 export function Tag({ children, tone = 'neutral', size = 'md', icon: Icon, className }: TagProps) {
   return (
     <span

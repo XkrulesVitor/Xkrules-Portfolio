@@ -53,7 +53,7 @@ art/previews/    # home.jpg, desk.jpg, shelf.jpg, digital.jpg, printer.jpg, chai
 | `art/build/manifest.json` | Nós por categoria, bounding boxes no mundo (Y-up), triângulos por nó, tempo de cada etapa |
 
 **Categorias de nó (pelo prefixo do nome):**
-- **baked** (padrão): o runtime aplica o `BakedMaterial` compartilhado. São os `zone_*` e os nós vivos (`chair_root`, `printer_*` menos `printer_led`, `box_*`, `clock_*`). Cada nó vivo é **um mesh só** (partes unidas), com pivô no lugar certo; é baked na posição de repouso e movido em runtime, como a cadeira de Bruno Simon.
+- **baked** (padrão): o runtime aplica o `BakedMaterial` compartilhado. São os `zone_*` e os nós vivos (`chair_root`, `printer_*` menos `printer_led`, `box_*`, `cover_*`, `clock_*`). Cada nó vivo é **um mesh só** (partes unidas), com pivô no lugar certo; é baked na posição de repouso e movido em runtime, como a cadeira de Bruno Simon.
 - `screen_*`: plano com UV 0..1 para vídeo, canvas ou `Html`. Fora do atlas.
 - `emit_*`, `led_*`, `pc_rgb`, `pc_fan_*`, `tv_backlight`: emissivos. No Blender têm shader de emissão e **iluminam a cena no bake**. No runtime recebem material emissivo com `toneMapped: false`. Fora do atlas.
 - `glass_*`: transparentes (`glass_pc`, `glass_window`). Fora do atlas.
@@ -67,8 +67,10 @@ Padrão `<grupo>_<parte>` em snake_case, sem acento e sem sufixo `.001`. Lista m
 zone_room · zone_desk · zone_games · zone_maker · zone_bed   # estático unido por zona
 chair_root                       # pivô no centro da base; gira em Y
 printer_root · printer_axisZ · printer_head · printer_bed · printer_part · printer_led
-box_terra · box_aldeia_dorme     # caixas dos board games (estante, prateleira 2)
-box_porrilandia · box_peter · box_o_anel   # capinhas dos jogos digitais (tampo do rack)
+box_aldeia_dorme · box_conquista_galactica   # caixas dos board games (estante, prateleira 2)
+box_porriland · box_piter · box_memory_game · box_o_anel · box_racco · box_duel_arena   # estojos dos jogos digitais (tampo do rack)
+cover_<slug>                     # um por caixa, FILHO de box_<slug>: quadro cinza (#e6e6e6) rente à frente,
+                                 # baked; o runtime aplica a arte da capa com a luz do bake (CoverMaterial)
 screen_monitor_main              # plano da tela, centro = LAYOUT.monitorMain.center, normal +X
 screen_monitor_vertical
 screen_tv                        # TV acima do rack

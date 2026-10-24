@@ -52,12 +52,9 @@ function tvModeOf(s: Pick<ExperienceState, 'mode' | 'focus' | 'view' | 'hovered'
   return 'logo'
 }
 
-/** "Contexto · engine · ano" do jogo; o ano só entra se o contexto ainda não o diz (ex.: "Game Jam CPG 2026"). */
+/** Subtítulo da tela de título: só o ano do jogo (ferramenta e contexto ficam no painel lateral). */
 function subtitleOf(game: GameProject): string {
-  const parts = [game.context, game.engine].filter((part): part is string => Boolean(part))
-  const year = game.year ? String(game.year) : null
-  if (year && !parts.some((part) => part.includes(year))) parts.push(year)
-  return parts.join(' · ')
+  return game.year ? String(game.year) : ''
 }
 
 function titleFor(slug: string | null): TitleScreen {

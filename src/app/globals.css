@@ -8,6 +8,8 @@
   --color-accent-mint: #7ff5d0;
   --color-accent-blue: #6aa8ff;
   --color-wood: #a8704a;
+  /* Prêmios (etiqueta dourada do cartão de jogo). */
+  --color-accent-gold: #f6c453;
   /* Fase 1: marcador de conteúdo pendente ([TODO: ...]) na UI. */
   --color-todo: #ffc95c;
 

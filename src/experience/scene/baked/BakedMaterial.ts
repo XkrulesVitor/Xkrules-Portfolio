@@ -49,7 +49,11 @@ const vertexShader = /* glsl */ `
   }
 `
 
-const fragmentShader = /* glsl */ `
+/**
+ * Uniforms e funções do bake, compartilhados com o `CoverMaterial` (capas das caixas de jogos):
+ * `bakedColor()` é o bake dia/noite misturado; `applyZoneLights()` põe as luzes de zona por cima.
+ */
+export const BAKED_FRAGMENT_COMMON = /* glsl */ `
   uniform sampler2D uBakedNight;
   uniform sampler2D uBakedDay;
   uniform sampler2D uLightMap;
@@ -71,17 +75,26 @@ const fragmentShader = /* glsl */ `
     return mix(base, max(base, blend), clamp(opacity, 0.0, 1.0));
   }
 
-  void main() {
+  vec3 bakedColor() {
     vec3 bakedNight = texture2D(uBakedNight, vUv).rgb;
     vec3 bakedDay = texture2D(uBakedDay, vUv).rgb;
-    vec3 color = mix(bakedDay, bakedNight, uNightMix);
+    return mix(bakedDay, bakedNight, uNightMix);
+  }
 
+  vec3 applyZoneLights(vec3 color) {
     vec3 lightMap = texture2D(uLightMap, vUv).rgb;
     color = blendLighten(color, uLightTvColor, lightMap.r * uLightTvStrength);
     color = blendLighten(color, uLightDeskColor, lightMap.g * uLightDeskStrength);
     color = blendLighten(color, uLightPcColor, lightMap.b * uLightPcStrength);
+    return color;
+  }
+`
 
-    gl_FragColor = vec4(color, 1.0);
+const fragmentShader = /* glsl */ `
+  ${BAKED_FRAGMENT_COMMON}
+
+  void main() {
+    gl_FragColor = vec4(applyZoneLights(bakedColor()), 1.0);
 
     // Sem tone mapping: o AgX já está na textura.
     #include <colorspace_fragment>
@@ -101,6 +114,20 @@ export type BakedUniforms = {
   uLightPcColor: Color
   uLightPcStrength: number
 }
+
+/** Nomes dos uniforms do bake (o `CoverMaterial` compartilha os MESMOS objetos de uniform). */
+export const BAKED_UNIFORM_NAMES = [
+  'uBakedNight',
+  'uBakedDay',
+  'uLightMap',
+  'uNightMix',
+  'uLightTvColor',
+  'uLightTvStrength',
+  'uLightDeskColor',
+  'uLightDeskStrength',
+  'uLightPcColor',
+  'uLightPcStrength',
+] as const satisfies readonly (keyof BakedUniforms)[]
 
 const DEFAULT_UNIFORMS: BakedUniforms = {
   uBakedNight: null,

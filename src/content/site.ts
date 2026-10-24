@@ -133,12 +133,27 @@ export const UI_TEXT = {
     eyebrow: 'Jogos',
     tabsLabel: 'Categorias de jogos',
     tabuleiro: 'Tabuleiro',
-    digital: 'Digital / Game Jams',
+    digital: 'Digital',
     listLabel: {
       tabuleiro: 'Jogos de tabuleiro',
-      digital: 'Jogos digitais e game jams',
+      digital: 'Jogos digitais',
     },
-    hint: 'Passe o mouse sobre um jogo para destacá-lo na estante.',
+    /** Dica sob o título: a câmera da aba Tabuleiro mostra a estante; a da Digital, a TV e o rack. */
+    hint: {
+      tabuleiro: 'Passe o mouse sobre um jogo para destacá-lo na estante.',
+      digital: 'Passe o mouse sobre um jogo para vê-lo na TV.',
+    },
     emptyTab: 'Nenhum jogo nesta categoria por enquanto.',
+    /** Botão do cartão que revela os parágrafos seguintes da descrição. */
+    readMore: 'Ler mais',
+    readLess: 'Mostrar menos',
+    /** Nomes acessíveis das etiquetas do cartão (o texto visível é o valor). */
+    meta: {
+      year: 'Ano',
+      engine: 'Feito com',
+      players: 'Jogadores',
+      playTime: 'Duração da partida',
+      award: 'Prêmio',
+    },
   },
 } as const
