@@ -6,6 +6,7 @@ import {
   CpuIcon,
   DiceFiveIcon,
   GameControllerIcon,
+  PlayIcon,
   TrophyIcon,
   UsersThreeIcon,
 } from '@phosphor-icons/react'
@@ -13,7 +14,19 @@ import { AnimatePresence, motion } from 'motion/react'
 import { UI_TEXT } from '@/content/site'
 import type { GameProject } from '@/content/types'
 import { useExperienceStore } from '@/store/useExperienceStore'
-import { cx, EASE, FOCUS_RING, GlassCard, LinkButton, SmartImage, Tag, TodoText, useReduceMotion } from '../primitives'
+import {
+  cx,
+  EASE,
+  fmt,
+  FOCUS_RING,
+  GlassCard,
+  LinkButton,
+  SmartImage,
+  Tag,
+  TodoText,
+  usePress,
+  useReduceMotion,
+} from '../primitives'
 
 // Capa sem imagem: gradiente na cor do jogo, sobre o navy do fundo.
 const COVER_BACKGROUND =
@@ -31,6 +44,40 @@ function Cover({ game }: { game: GameProject }) {
     >
       {image ? <SmartImage image={image} sizes="84px" /> : <Icon size={34} weight="duotone" aria-hidden="true" />}
     </div>
+  )
+}
+
+/**
+ * "Jogar na TV" (iframe na TV do quarto, `startGame`) ou "Jogar no PC" (app do XkrulesOS, `openOnPc`).
+ * Pílula cheia na cor do jogo: é a ação principal do cartão.
+ */
+function PlayButton({ game }: { game: GameProject }) {
+  const t = UI_TEXT.games.play
+  const press = usePress({ lift: false })
+  const play = game.play
+  if (!play) return null
+  const onTv = play.where === 'tv'
+
+  return (
+    <motion.button
+      type="button"
+      aria-label={fmt(onTv ? t.tvAria : t.pcAria, { title: game.title })}
+      onClick={() => {
+        const s = useExperienceStore.getState()
+        if (play.where === 'tv') s.startGame(game.slug)
+        else s.openOnPc(play.app)
+      }}
+      {...press}
+      className={cx(
+        'inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-ink select-none pointer-coarse:min-h-10',
+        'border border-[color-mix(in_srgb,var(--card-accent)_60%,transparent)] bg-[color-mix(in_srgb,var(--card-accent)_24%,transparent)]',
+        'transition-colors duration-200 ease-glass hover:bg-[color-mix(in_srgb,var(--card-accent)_38%,transparent)]',
+        FOCUS_RING,
+      )}
+    >
+      <PlayIcon size={14} weight="fill" aria-hidden="true" />
+      {onTv ? t.tv : t.pc}
+    </motion.button>
   )
 }
 
@@ -160,8 +207,9 @@ export function GameCard({ game }: { game: GameProject }) {
         ) : null}
       </AnimatePresence>
 
-      {game.links.length > 0 || details.length > 0 ? (
+      {game.play || game.links.length > 0 || details.length > 0 ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <PlayButton game={game} />
           {game.links.map((link) => (
             <LinkButton key={link.href} link={link} size="sm" />
           ))}

@@ -11,6 +11,7 @@ import { BakedGameBoxes } from './BakedGameBoxes'
 import { GameBox } from './GameBox'
 import { GameCovers } from './GameCovers'
 import { ShelfParticles } from './ShelfParticles'
+import { TvGameHtml } from './TvGameHtml'
 
 interface BoxSlot {
   /** Mesmo slug de content/projects.games.ts: é o que `store.highlightBox` recebe. */
@@ -84,6 +85,7 @@ export function Shelf() {
         </>
       )}
       <ShelfParticles />
+      <TvGameHtml />
     </group>
   )
 }

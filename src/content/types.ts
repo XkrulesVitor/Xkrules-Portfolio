@@ -6,8 +6,11 @@ export type PanelKind = 'about' | 'os' | 'printer' | 'games'
 
 export type PanelSide = 'left' | 'right' | 'none'
 
-/** Chaves dos presets de câmera (experience/camera/presets.ts). */
-export type PresetKey = 'home' | HotspotId | 'shelfDigital'
+/**
+ * Chaves dos presets de câmera (experience/camera/presets.ts). `shelfTv` não é sub-vista do registry:
+ * é a câmera de frente para a TV enquanto um jogo roda nela (`store.playing`).
+ */
+export type PresetKey = 'home' | HotspotId | 'shelfDigital' | 'shelfTv'
 
 /**
  * Sub-vista de um hotspot (ARCHITECTURE §5): muda a câmera e o lado do painel sem sair do foco.
@@ -128,6 +131,28 @@ export type GameSlug =
 
 export type GameKind = 'tabuleiro' | 'digital'
 
+/** Apps do XkrulesOS que um jogo pode abrir no monitor (os `AppRef` sem parâmetro de ui/os). */
+export type PcApp = 'memory'
+
+/** Onde o jogo roda quando o visitante clica em "Jogar" no cartão. */
+export type GamePlay =
+  | {
+      /** Versão web (HTML5) num iframe sobre a tela da TV do quarto. */
+      where: 'tv'
+      /**
+       * Embed OFICIAL do itch.io (`https://itch.io/embed-upload/<id>`, o do "Distribute > Embed game").
+       * O endereço direto do jogo (html-classic.itch.zone/html/<id>/...) é bloqueado fora do itch.io
+       * (anti-hotlink); o embed carrega o jogo por dentro do itch e aceita ser posto em outro site.
+       * O jogo recebe uma área de 1280x720 e o próprio motor o escala (ui/tv/TvGameScreen.tsx).
+       */
+      src: string
+    }
+  | {
+      /** App do XkrulesOS: a câmera vai até o monitor da mesa e a janela abre lá. */
+      where: 'pc'
+      app: PcApp
+    }
+
 /** Jogos (hotspot `shelf`). */
 export interface GameProject {
   slug: GameSlug
@@ -159,6 +184,8 @@ export interface GameProject {
    * `cover_<slug>` na frente da caixa). Caminho em /public.
    */
   cover?: MediaImage
+  /** Jogável dentro do quarto: na TV (iframe) ou no PC (app do XkrulesOS). */
+  play?: GamePlay
   images: readonly MediaImage[]
   links: readonly ExternalLink[]
 }

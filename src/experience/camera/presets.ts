@@ -207,4 +207,16 @@ export const PRESETS: Record<PresetKey, CameraPreset> = {
     userControl: false,
     limits: OPEN_LIMITS,
   },
+  // Jogo rodando na TV (`store.playing`, ARCHITECTURE §6.6): de frente para a tela, sem painel, como a
+  // mesa. Não é sub-vista do registry: o CameraRig troca para este preset enquanto há jogo. A margem
+  // de 9% por lado deixa o botão "Sair do jogo" (topo) e a barra de controles (base) fora da imagem;
+  // a ~1.8 m, a cadeira fica atrás da câmera e não entra no quadro.
+  shelfTv: {
+    position: add(LAYOUT.tv.center, scale(LAYOUT.tv.normal, 1.8)),
+    target: LAYOUT.tv.center,
+    framing: { focusBoxes: [screenBox(LAYOUT.tv)], margin: 0.09 },
+    smoothTime: 0.9,
+    userControl: false,
+    limits: OPEN_LIMITS,
+  },
 }

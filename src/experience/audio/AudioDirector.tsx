@@ -50,12 +50,15 @@ declare global {
 export function AudioDirector() {
   const camera = useThree((s) => s.camera)
 
-  // Mudo do store -> motor. `fireImmediately` aplica o estado inicial (mudo).
+  // Mudo do store -> motor. `fireImmediately` aplica o estado inicial (mudo). Com um jogo na TV o
+  // quarto silencia (o som é o do jogo), sem mexer na preferência `muted` do visitante.
   useEffect(
     () =>
-      useExperienceStore.subscribe((s) => s.muted, (muted) => audio.setMuted(muted), {
-        fireImmediately: true,
-      }),
+      useExperienceStore.subscribe(
+        (s) => s.muted || s.playing !== null,
+        (silent) => audio.setMuted(silent),
+        { fireImmediately: true },
+      ),
     [],
   )
 

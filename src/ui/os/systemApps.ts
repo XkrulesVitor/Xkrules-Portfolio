@@ -1,5 +1,20 @@
 import { OS_TEXT, type OsGlyphKey } from '@/content/os'
+import type { PcApp } from '@/content/types'
 import type { AppRef } from './windowManager'
+
+/** App que um pedido de fora do SO (`store.openOnPc`, ex.: "Jogar no PC" do painel de Jogos) abre. */
+export function pcAppRef(app: PcApp): AppRef {
+  switch (app) {
+    case 'memory':
+      return { kind: 'memory' }
+  }
+}
+
+/** Pedido de abertura vindo de fora do SO; o `id` cresce a cada pedido (um id = uma abertura). */
+export interface LaunchRequest {
+  readonly app: AppRef
+  readonly id: number
+}
 
 export interface SystemApp {
   readonly app: AppRef

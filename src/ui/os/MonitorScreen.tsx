@@ -1,6 +1,8 @@
-import type { HTMLAttributes, KeyboardEvent, PointerEvent } from 'react'
+import { useMemo, type HTMLAttributes, type KeyboardEvent, type PointerEvent } from 'react'
+import type { PcApp } from '@/content/types'
 import { audio } from '@/lib/audio'
 import { Desktop } from './Desktop'
+import { pcAppRef } from './systemApps'
 import type { AppRef } from './windowManager'
 import styles from './MonitorScreen.module.css'
 
@@ -34,6 +36,8 @@ export interface MonitorScreenProps
    * `pointer-events: none` e `inert` (nada do SO recebe clique nem foco de teclado).
    */
   active: boolean
+  /** Pedido de fora do SO para abrir um app (`store.pcLaunch`): repassado ao Desktop. */
+  launch?: { app: PcApp; id: number } | null
 }
 
 /**
@@ -49,11 +53,17 @@ export interface MonitorScreenProps
  */
 export function MonitorScreen({
   active,
+  launch = null,
   onKeyDownCapture,
   onPointerDownCapture,
   onPointerUpCapture,
   ...rest
 }: MonitorScreenProps) {
+  const desktopLaunch = useMemo(
+    () => (launch ? { app: pcAppRef(launch.app), id: launch.id } : null),
+    [launch],
+  )
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!event.repeat && !SILENT_KEYS.has(event.key)) {
       audio.keyClick(WIDE_KEYS.has(event.key) ? 'wide' : 'normal')
@@ -80,7 +90,7 @@ export function MonitorScreen({
       onPointerDownCapture={handlePointerDown}
       onPointerUpCapture={handlePointerUp}
     >
-      <Desktop initialWindows={INITIAL_WINDOWS} />
+      <Desktop initialWindows={INITIAL_WINDOWS} launch={desktopLaunch} />
       <div className={styles.glass} aria-hidden="true">
         <div className={styles.smudge} />
         <div className={styles.glare} />

@@ -94,15 +94,21 @@ function readDeepLink(): DeepLink | null {
   return isHotspotId(focus) ? { focus, view: params.get(VIEW_QUERY_PARAM) } : null
 }
 
+/** Jogo rodando na TV: a câmera fica de frente para a tela, sem painel (ARCHITECTURE §6.6). */
+function isPlaying(mode: Mode, focus: HotspotId | null, playing: boolean): boolean {
+  return playing && mode === 'focused' && focus === 'shelf'
+}
+
 /** Preset de destino de um estado do store, com a sub-vista resolvida pelo registry. */
-function presetKeyFor(mode: Mode, focus: HotspotId | null, view: string | null): PresetKey {
+function presetKeyFor(mode: Mode, focus: HotspotId | null, view: string | null, playing: boolean): PresetKey {
   if (mode === 'intro' || focus === null) return 'home'
+  if (isPlaying(mode, focus, playing)) return 'shelfTv'
   return resolveFocus(focus, view).preset
 }
 
-/** Lado do painel DOM que acompanha o preset (HOME e intro não têm painel). */
-function sideFor(mode: Mode, focus: HotspotId | null, view: string | null): PanelSide {
-  if (mode === 'intro' || focus === null) return 'none'
+/** Lado do painel DOM que acompanha o preset (HOME, intro e o jogo na TV não têm painel). */
+function sideFor(mode: Mode, focus: HotspotId | null, view: string | null, playing: boolean): PanelSide {
+  if (mode === 'intro' || focus === null || isPlaying(mode, focus, playing)) return 'none'
   return resolveFocus(focus, view).side
 }
 
@@ -253,20 +259,20 @@ export function CameraRig() {
       settleAt(controls, key, p, pose)
     }
 
-    const react = (mode: Mode, focus: HotspotId | null, view: string | null) => {
-      const side = sideFor(mode, focus, view)
+    const react = (mode: Mode, focus: HotspotId | null, view: string | null, playing: boolean) => {
+      const side = sideFor(mode, focus, view, playing)
       if (mode === 'intro' || mode === 'transitioning') {
         const link = mode === 'intro' ? readDeepLink() : null
-        fly(presetKeyFor(mode, focus, view), side, {
+        fly(presetKeyFor(mode, focus, view, playing), side, {
           intro: mode === 'intro',
           link,
           notifyRest: true,
         })
         return
       }
-      // Troca de sub-vista em foco (ex.: aba Digital da zona de jogos).
+      // Troca de sub-vista em foco (ex.: aba Digital da zona de jogos) ou jogo ligado/desligado na TV.
       if (mode === 'focused' && focus !== null) {
-        const key = presetKeyFor(mode, focus, view)
+        const key = presetKeyFor(mode, focus, view, playing)
         if (key !== currentKey.current) {
           fly(key, side, { intro: false, link: null, notifyRest: false })
         }
@@ -284,8 +290,9 @@ export function CameraRig() {
       }
       const s = store.getState()
       if (s.mode === 'focused' && s.focus !== null) {
-        const key = presetKeyFor(s.mode, s.focus, s.view)
-        fly(key, sideFor(s.mode, s.focus, s.view), {
+        const playing = s.playing !== null
+        const key = presetKeyFor(s.mode, s.focus, s.view, playing)
+        fly(key, sideFor(s.mode, s.focus, s.view, playing), {
           intro: false,
           link: null,
           notifyRest: false,
@@ -310,16 +317,17 @@ export function CameraRig() {
       applyLimits(controls, OPEN_LIMITS)
       void controls.setLookAt(...INTRO_START.position, ...INTRO_START.target, false)
       controls.enabled = false
-      if (initial.mode === 'intro') react('intro', null, null)
+      if (initial.mode === 'intro') react('intro', null, null, false)
     } else {
-      currentKey.current = presetKeyFor(initial.mode, initial.focus, initial.view)
-      snapTo(currentKey.current, sideFor(initial.mode, initial.focus, initial.view))
-      if (initial.mode === 'transitioning') react('transitioning', initial.focus, initial.view)
+      const playing = initial.playing !== null
+      currentKey.current = presetKeyFor(initial.mode, initial.focus, initial.view, playing)
+      snapTo(currentKey.current, sideFor(initial.mode, initial.focus, initial.view, playing))
+      if (initial.mode === 'transitioning') react('transitioning', initial.focus, initial.view, playing)
     }
 
     const unsubscribe = store.subscribe(
-      (s) => [s.mode, s.focus, s.view] as const,
-      ([mode, focus, view]) => react(mode, focus, view),
+      (s) => [s.mode, s.focus, s.view, s.playing !== null] as const,
+      ([mode, focus, view, playing]) => react(mode, focus, view, playing),
       { equalityFn: shallow },
     )
 

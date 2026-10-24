@@ -263,3 +263,75 @@ describe('store: máquina de estados', () => {
     assert.deepEqual(seen, ['day', 'night'])
   })
 })
+
+describe('store: jogo na TV e app no PC', () => {
+  function toShelfDigital() {
+    toIdle()
+    get().requestFocus('shelf', 'digital')
+    get().onCameraRest()
+  }
+
+  it('startGame só vale com a zona de jogos em foco na vista digital', () => {
+    toIdle()
+    get().startGame('porriland')
+    assert.equal(get().playing, null) // idle
+    get().requestFocus('shelf')
+    get().onCameraRest()
+    get().startGame('porriland')
+    assert.equal(get().playing, null) // vista tabuleiro
+    get().setView('digital')
+    get().setHighlightBox('porriland')
+    get().startGame('porriland')
+    assert.equal(get().playing, 'porriland')
+    assert.equal(get().highlightBox, null) // o painel sai: nenhum destaque preso
+  })
+
+  it('stopGame, troca de vista e volta para HOME desligam o jogo', () => {
+    toShelfDigital()
+    get().startGame('piter')
+    get().stopGame()
+    assert.equal(get().playing, null)
+    assert.equal(get().highlightBox, null)
+    assert.equal(get().mode, 'focused')
+    assert.equal(get().view, 'digital')
+
+    get().startGame('piter')
+    get().setView('tabuleiro')
+    assert.equal(get().playing, null)
+
+    get().setView('digital')
+    get().startGame('racco')
+    get().requestHome()
+    assert.equal(get().playing, null)
+    assert.equal(get().mode, 'transitioning')
+  })
+
+  it('openOnPc voa direto para a mesa e numera cada pedido', () => {
+    toShelfDigital()
+    get().startGame('o_anel')
+    get().openOnPc('memory')
+    assert.equal(get().mode, 'transitioning')
+    assert.equal(get().focus, 'desk')
+    assert.equal(get().view, null)
+    assert.equal(get().playing, null)
+    assert.deepEqual(get().pcLaunch, { app: 'memory', id: 1 })
+
+    get().openOnPc('memory') // em voo: ignorado
+    assert.equal(get().pcLaunch?.id, 1)
+
+    get().onCameraRest()
+    get().openOnPc('memory') // mesa já em foco: só reabre
+    assert.equal(get().mode, 'focused')
+    assert.equal(get().focus, 'desk')
+    assert.equal(get().pcLaunch?.id, 2)
+  })
+
+  it('openOnPc de idle também vai para a mesa; em loading é ignorado', () => {
+    get().openOnPc('memory')
+    assert.equal(get().pcLaunch, null)
+    toIdle()
+    get().openOnPc('memory')
+    assert.equal(get().focus, 'desk')
+    assert.equal(get().mode, 'transitioning')
+  })
+})

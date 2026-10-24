@@ -144,6 +144,13 @@ export const UI_TEXT = {
       digital: 'Passe o mouse sobre um jogo para vê-lo na TV.',
     },
     emptyTab: 'Nenhum jogo nesta categoria por enquanto.',
+    /** Botão "Jogar" do cartão, por destino (`GamePlay.where`). */
+    play: {
+      tv: 'Jogar na TV',
+      tvAria: 'Jogar {title} na TV do quarto',
+      pc: 'Jogar no PC',
+      pcAria: 'Abrir {title} no computador do quarto',
+    },
     /** Botão do cartão que revela os parágrafos seguintes da descrição. */
     readMore: 'Ler mais',
     readLess: 'Mostrar menos',
@@ -155,5 +162,18 @@ export const UI_TEXT = {
       playTime: 'Duração da partida',
       award: 'Prêmio',
     },
+  },
+  /** Jogo rodando na TV do quarto (ui/tv e o botão Voltar enquanto `store.playing`). */
+  tvGame: {
+    exit: 'Sair do jogo',
+    exitAria: 'Sair do jogo e voltar à zona de jogos (Esc)',
+    /** Nome acessível do iframe. */
+    frameTitle: '{title}, jogo na TV',
+    loading: 'Ligando {title}',
+    hint: 'Clique no jogo para jogar. Para sair, clique fora da TV e aperte Esc.',
+    fullscreen: 'Tela cheia',
+    fullscreenAria: 'Abrir {title} em tela cheia',
+    openItch: 'Abrir no itch.io',
+    controlsLabel: 'Controles do jogo',
   },
 } as const

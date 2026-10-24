@@ -1,8 +1,14 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import type { HotspotId } from '../content/types'
+import type { GameKind, HotspotId, PcApp } from '../content/types'
 
 export type { HotspotId }
+
+/**
+ * Vista da zona de jogos com a TV (id do registry em content/hotspots.ts, que casa com GameKind). Literal
+ * aqui porque o store roda nos testes do node sem resolver imports de runtime sem extensão.
+ */
+const TV_VIEW: GameKind = 'digital'
 export type Mode = 'loading' | 'intro' | 'idle' | 'transitioning' | 'focused'
 export type Quality = 'high' | 'medium' | 'low'
 /** Tema do quarto: `night` (padrão) ou `day`. O `BakedMaterial` mistura os dois bakes por `uNightMix`. */
@@ -28,6 +34,17 @@ export interface ExperienceState {
   muted: boolean
   /** Único canal UI -> 3D além de `focus` (ARCHITECTURE §6.4). */
   highlightBox: string | null
+  /**
+   * Jogo (slug) rodando na TV da zona de jogos, ou `null` (ARCHITECTURE §6.6). Só existe em `focused`
+   * + `shelf` + vista `digital`; a câmera vai para o preset `shelfTv` e o painel some. Sai em
+   * `stopGame`, em qualquer troca de vista e ao voltar para HOME.
+   */
+  playing: string | null
+  /**
+   * Último pedido para abrir um app do XkrulesOS no monitor (`openOnPc`). O `id` cresce a cada
+   * pedido: o Desktop abre a janela uma vez por id. Não é limpo (o Desktop guarda o último atendido).
+   */
+  pcLaunch: { app: PcApp; id: number } | null
   setMode(mode: Mode): void
   setHovered(id: HotspotId | null): void
   /**
@@ -45,6 +62,15 @@ export interface ExperienceState {
   toggleTheme(): void
   toggleMuted(): void
   setHighlightBox(slug: string | null): void
+  /** Liga o jogo na TV. Só em `focused` + `shelf` + vista `digital`. */
+  startGame(slug: string): void
+  /** Desliga o jogo da TV (a câmera volta para a vista Digital, com o painel). */
+  stopGame(): void
+  /**
+   * Abre um app do XkrulesOS: de `idle` ou de `focused` em qualquer hotspot, a câmera voa direto para
+   * a mesa (`transitioning` -> `desk`) e a janela abre no monitor. Já com a mesa em foco, só abre.
+   */
+  openOnPc(app: PcApp): void
 }
 
 export const useExperienceStore = create<ExperienceState>()(
@@ -57,6 +83,8 @@ export const useExperienceStore = create<ExperienceState>()(
     theme: 'night',
     muted: true,
     highlightBox: null,
+    playing: null,
+    pcLaunch: null,
 
     setMode: (mode) => {
       const s = get()
@@ -70,6 +98,7 @@ export const useExperienceStore = create<ExperienceState>()(
         focus: mode === 'focused' || mode === 'transitioning' ? s.focus : null,
         view: mode === 'focused' || mode === 'transitioning' ? s.view : null,
         highlightBox: mode === 'focused' ? s.highlightBox : null,
+        playing: mode === 'focused' ? s.playing : null,
       })
     },
 
@@ -89,22 +118,22 @@ export const useExperienceStore = create<ExperienceState>()(
       const canAccept =
         s.mode === 'idle' || s.mode === 'intro' || (s.mode === 'transitioning' && s.focus === null)
       if (!canAccept) return
-      set({ mode: 'transitioning', focus: id, view, hovered: null })
+      set({ mode: 'transitioning', focus: id, view, hovered: null, playing: null })
     },
 
     setView: (view) => {
       const s = get()
       if (s.mode !== 'focused' || s.focus === null || s.view === view) return
-      set({ view, highlightBox: null })
+      set({ view, highlightBox: null, playing: null })
     },
 
     requestHome: () => {
       const s = get()
       // Guarda 2: aceito em focused e transitioning (cancelar uma entrada).
       if (s.mode === 'focused') {
-        set({ mode: 'transitioning', focus: null, view: null, hovered: null, highlightBox: null })
+        set({ mode: 'transitioning', focus: null, view: null, hovered: null, highlightBox: null, playing: null })
       } else if (s.mode === 'transitioning' && s.focus !== null) {
-        set({ focus: null, view: null, hovered: null, highlightBox: null })
+        set({ focus: null, view: null, hovered: null, highlightBox: null, playing: null })
       }
     },
 
@@ -131,6 +160,38 @@ export const useExperienceStore = create<ExperienceState>()(
       if (slug !== null && s.mode !== 'focused') return
       if (s.highlightBox === slug) return
       set({ highlightBox: slug })
+    },
+
+    startGame: (slug) => {
+      const s = get()
+      const onTvView = s.mode === 'focused' && s.focus === 'shelf' && s.view === TV_VIEW
+      if (!onTvView || s.playing === slug) return
+      // O painel sai de cena durante o jogo: nenhum destaque fica preso no rack.
+      set({ playing: slug, highlightBox: null })
+    },
+
+    stopGame: () => {
+      if (get().playing === null) return
+      set({ playing: null, highlightBox: null })
+    },
+
+    openOnPc: (app) => {
+      const s = get()
+      const pcLaunch = { app, id: (s.pcLaunch?.id ?? 0) + 1 }
+      if (s.mode === 'focused' && s.focus === 'desk') {
+        set({ pcLaunch })
+      } else if (s.mode === 'focused' || s.mode === 'idle') {
+        // Exceção deliberada à guarda 1: o pedido vem de um botão, não de um clique na cena.
+        set({
+          mode: 'transitioning',
+          focus: 'desk',
+          view: null,
+          hovered: null,
+          highlightBox: null,
+          playing: null,
+          pcLaunch,
+        })
+      }
     },
   })),
 )

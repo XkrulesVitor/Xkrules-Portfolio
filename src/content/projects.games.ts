@@ -67,6 +67,7 @@ export const GAME_PROJECTS: readonly GameProject[] = [
       width: 512,
       height: 512,
     },
+    play: { where: 'tv', src: 'https://itch.io/embed-upload/18285705?color=000000' },
     images: [],
     links: [{ label: 'Jogar no itch.io', href: 'https://xkrulesf3lipe.itch.io/porriland', kind: 'itch' }],
   },
@@ -89,6 +90,7 @@ export const GAME_PROJECTS: readonly GameProject[] = [
       width: 512,
       height: 512,
     },
+    play: { where: 'tv', src: 'https://itch.io/embed-upload/18238410?color=000000' },
     images: [],
     links: [{ label: 'Jogar no itch.io', href: 'https://xkrulesf3lipe.itch.io/piter', kind: 'itch' }],
   },
@@ -112,8 +114,10 @@ export const GAME_PROJECTS: readonly GameProject[] = [
       width: 512,
       height: 512,
     },
+    // O mesmo jogo roda no XkrulesOS (app Memória 4×4): "Jogar" leva a câmera até o PC.
+    play: { where: 'pc', app: 'memory' },
     images: [],
-    links: [{ label: 'Jogar no site', href: 'https://jessicamartins.com.br/#diversao', kind: 'live' }],
+    links: [{ label: 'Ver no site da cliente', href: 'https://jessicamartins.com.br/#diversao', kind: 'live' }],
   },
   {
     slug: 'o_anel',
@@ -134,6 +138,7 @@ export const GAME_PROJECTS: readonly GameProject[] = [
       width: 512,
       height: 512,
     },
+    play: { where: 'tv', src: 'https://itch.io/embed-upload/13993665?color=000000' },
     images: [],
     links: [
       { label: 'Jogar no itch.io', href: 'https://xkrulesf3lipe.itch.io/um-jogo-de-hordas-o-anel', kind: 'itch' },
@@ -158,6 +163,7 @@ export const GAME_PROJECTS: readonly GameProject[] = [
       width: 512,
       height: 512,
     },
+    play: { where: 'tv', src: 'https://itch.io/embed-upload/15523503?color=000000' },
     images: [],
     links: [{ label: 'Jogar no itch.io', href: 'https://beinez.itch.io/racco', kind: 'itch' }],
   },
@@ -182,6 +188,7 @@ export const GAME_PROJECTS: readonly GameProject[] = [
       height: 512,
     },
     images: [],
-    links: [],
+    // A Cubio está em alfa e ainda não tem página por jogo: o link é o download da plataforma.
+    links: [{ label: 'Baixar a Cubio', href: 'https://www2.playcubio.com/br', kind: 'site' }],
   },
 ]

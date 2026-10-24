@@ -9,6 +9,7 @@ import { GamesPanel } from '../panels/GamesPanel'
 import { PrinterPanel } from '../panels/PrinterPanel'
 import { BackButton } from './BackButton'
 import { Hud } from './Hud'
+import { TvGameBar } from './TvGameBar'
 
 // `os` (desk) não tem painel lateral: a UI vive dentro do monitor (Fase 2).
 const PANELS: Partial<Record<PanelKind, ComponentType>> = {
@@ -27,8 +28,10 @@ const PANELS: Partial<Record<PanelKind, ComponentType>> = {
 export function Overlay() {
   const mode = useExperienceStore(selectMode)
   const focus = useExperienceStore(selectFocus)
+  // Jogo na TV: o painel sai para a tela ficar livre (a câmera vai para o preset `shelfTv`).
+  const playing = useExperienceStore((s) => s.playing !== null)
 
-  const hotspot = mode === 'focused' && focus ? getHotspot(focus) : null
+  const hotspot = mode === 'focused' && focus && !playing ? getHotspot(focus) : null
   const Panel = hotspot ? PANELS[hotspot.panel] : undefined
 
   return (
@@ -36,6 +39,7 @@ export function Overlay() {
       <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
         <Hud />
         <BackButton />
+        <TvGameBar />
         <AnimatePresence mode="wait">
           {hotspot && Panel ? <Panel key={hotspot.id} /> : null}
         </AnimatePresence>

@@ -20,7 +20,7 @@ Relacionados: [ASSET_PIPELINE.md](./ASSET_PIPELINE.md) · [BACKLOG.md](./BACKLOG
 | Animação 3D | `@react-spring/three` para molas (cadeira, caixas) e `useFrame + maath/easing.damp` para valores contínuos (emissive, eixos da impressora) | Mola quando há "física elástica"; damp quando é lerp contínuo |
 | Animação UI 2D | `motion` (`motion/react`, sucessor do framer-motion) com `AnimatePresence` | Entrada/saída de painéis glassmorphism |
 | Pós-processamento | `@react-three/postprocessing`: `Bloom` sempre; `DepthOfField` só em `focused:chair` | DoF é caro; liga só quando a narrativa pede |
-| HTML dentro do 3D | **Apenas o monitor** usa `<Html transform>`, sem `occlude` (o SO só aparece com a câmera parada de frente para o monitor). Os painéis "Sobre", "Impressora" e "Games" são **DOM overlay fora do Canvas** | Overlay DOM é mais nítido, acessível e não sofre distorção de resize |
+| HTML dentro do 3D | **O monitor e a TV** usam `<Html transform>`, sem `occlude`: o SO só aparece com a câmera parada de frente para o monitor, e a TV só tem HTML enquanto um jogo roda (§6.6). Os painéis "Sobre", "Impressora" e "Games" são **DOM overlay fora do Canvas** | Overlay DOM é mais nítido, acessível e não sofre distorção de resize |
 | Iluminação | 100% **baked** no Blender por script (§12): `baked-night`, `baked-day` e `lightmap` RGB misturados no `BakedMaterial` + materiais **emissivos** para telas e LEDs. Zero luzes dinâmicas com sombra | É o que faz as referências serem bonitas, e roda a 60 fps |
 | Arte 3D | Cena **gerada por Python no Blender 4.4 (headless)** a partir do `layout.ts`; estilo diorama "quadradinho" detalhado, com bevel em tudo (§12) | Reprodutível, revisável em PR e executável por agentes; o grey-box vira fallback (`?greybox`) |
 | Loading | `useProgress` + `useGLTF.preload` de todos os `.glb` na tela de loading, depois voo de câmera de introdução | Cache completo antes da interação |
@@ -70,12 +70,13 @@ src/
 │  │  ├─ WallTv.tsx           # TV de parede COMPARTILHADA por desk e shelf (§6.5)
 │  │  ├─ Lights.tsx           # só ambient/hemisphere fraca (o resto é baked)
 │  │  ├─ Effects.tsx          # EffectComposer condicional (Bloom, DoF)
+│  │  ├─ ScenePause.tsx       # frameloop sob demanda enquanto um jogo roda na TV (§6.6)
 │  │  └─ placeholders/        # grey-box (primitivas) usado até os .glb existirem
 │  ├─ hotspots/
 │  │  ├─ chair/   Chair.tsx · useChairSpring.ts
 │  │  ├─ desk/    Desk.tsx · Screens.tsx (emissive) · MonitorHtml.tsx (<Html transform>)
 │  │  ├─ printer/ Printer.tsx · usePrinterAnimation.ts
-│  │  └─ shelf/   Shelf.tsx · GameBox.tsx · ShelfParticles.tsx
+│  │  └─ shelf/   Shelf.tsx · GameBox.tsx · GameCovers.tsx · ShelfParticles.tsx · TvGameHtml.tsx (<Html transform>)
 │  ├─ camera/
 │  │  ├─ CameraRig.tsx        # <CameraControls makeDefault> + subscribe no store
 │  │  ├─ presets.ts           # HOME + 1 preset por hotspot (position, target, limites)
@@ -91,7 +92,8 @@ src/
 │  ├─ overlay/
 │  │  ├─ Overlay.tsx          # roteia painel por store.focus; pointer-events controlado
 │  │  ├─ Hud.tsx              # logo, dica "arraste para explorar", botão som
-│  │  ├─ BackButton.tsx       # "← Voltar" (Esc)
+│  │  ├─ BackButton.tsx       # "← Voltar" (Esc); com jogo na TV vira "← Sair do jogo"
+│  │  ├─ TvGameBar.tsx        # barra do jogo na TV: título, "Tela cheia", "Abrir no itch.io" (§6.6)
 │  │  └─ LoadingScreen.tsx    # barra useProgress + botão "Entrar"
 │  ├─ panels/
 │  │  ├─ AboutPanel.tsx       # chair
@@ -100,6 +102,8 @@ src/
 │  ├─ os/                     # UI que renderiza DENTRO do monitor (via <Html transform>)
 │  │  ├─ Desktop.tsx · Taskbar.tsx · Window.tsx
 │  │  └─ apps/ ProjectsApp.tsx · ProjectWindow.tsx
+│  ├─ tv/                     # UI que renderiza DENTRO da TV (via <Html transform>, §6.6)
+│  │  └─ TvGameScreen.tsx     # wrapper fixo 1280×716 px: iframe do jogo + tela "Ligando..."
 │  └─ primitives/             # GlassCard, Tabs, Carousel, IconButton, Kbd
 │
 ├─ store/
@@ -132,7 +136,7 @@ scripts/      optimize-models.mjs (gltf-transform)
 
 **Regras de fronteira**
 - Nada em `src/ui/**` importa `three` ou `@react-three/*`. Comunicação apenas via `store` e `content`.
-- Nada em `src/experience/**` renderiza DOM fixo (exceto `MonitorHtml` via drei `Html`).
+- Nada em `src/experience/**` renderiza DOM fixo (exceto `MonitorHtml` e `TvGameHtml`, via drei `Html`).
 - `src/content/**` não importa React. São dados puros + tipos.
 
 ---
@@ -152,6 +156,8 @@ interface ExperienceState {
   quality: 'high' | 'medium' | 'low'
   theme: 'night' | 'day'            // tema do quarto baked (§12.3); padrão 'night'
   muted: boolean                    // padrão true; o AudioContext só nasce no primeiro clique do botão de som
+  playing: string | null            // slug do jogo rodando na TV (§6.6); só em focused + shelf + vista digital
+  pcLaunch: { app: PcApp; id: number } | null  // último pedido de abrir um app do XkrulesOS (§6.6); o id cresce a cada pedido
   // ações
   setMode(m: Mode): void
   setHovered(id: HotspotId | null): void
@@ -162,6 +168,9 @@ interface ExperienceState {
   setQuality(q): void
   toggleTheme(): void
   toggleMuted(): void
+  startGame(slug: string): void       // liga o jogo na TV; só em focused + shelf + vista digital; limpa o highlightBox
+  stopGame(): void                    // desliga o jogo; a câmera volta para a vista Digital, com o painel
+  openOnPc(app: PcApp): void          // idle | focused → transitioning(focus='desk') + pcLaunch (exceção da guarda 1)
 }
 ```
 
@@ -172,6 +181,9 @@ interface ExperienceState {
 4. `onCameraRest` é chamado **apenas** pelo `CameraRig` (fonte única de verdade do "chegou").
 5. Painéis DOM só recebem `pointer-events: auto` quando `mode === 'focused'`.
 6. `view` só existe junto com `focus` (some em `requestHome` e fora de `focused`/`transitioning`). `setView` só vale em `focused` e limpa o `highlightBox`.
+7. `startGame` só vale em `focused` + `shelf` + vista `digital` e limpa o `highlightBox`. `playing` volta a `null` em `stopGame`, `setView`, `requestHome`, `requestFocus`, `openOnPc` e em `setMode` que saia de `focused`: um jogo nunca sobrevive à troca de vista nem à saída da zona.
+8. `openOnPc` é uma **exceção deliberada à guarda 1**, porque o pedido vem de um botão e não de um clique na cena. De `idle`, ou de `focused` em qualquer hotspot, ele vai direto a `transitioning` com `focus = 'desk'` e grava o `pcLaunch`. Com a mesa já em foco, só incrementa o `id` do `pcLaunch`. É ignorado em `loading`, `intro` e `transitioning`.
+9. `pcLaunch.id` cresce a cada pedido e o `pcLaunch` nunca é limpo: o `Desktop` guarda o último `id` atendido e abre a janela uma vez por id.
 
 **Quem lê o quê**
 - Componentes 3D leem o store com `useExperienceStore(selector)` para JSX, e com `useExperienceStore.subscribe(selector, cb)` / `getState()` dentro de `useFrame` para valores por frame.
@@ -213,11 +225,12 @@ interface CameraPreset {
 - **Chegada**: não usar a promise de `setLookAt` para decidir "chegou". Ela só resolve no evento `rest` do camera-controls, e a cauda do amortecimento leva vários segundos depois de a câmera parecer parada (medido: ~9 s na intro). O `CameraRig` detecta chegada em `useFrame` comparando `getPosition(v, false)`/`getTarget(v, false)` (valor **atual**, não o final) com o preset (eps 0.06) e usa `2.5 × smoothTime` como teto.
 - HOME: visão isométrica distante (ilha flutuante inteira). Órbita permitida em ±25° azimute, polar entre 35° e 70°, dolly entre 8 e 16 unidades. `truck` habilitado com limites (panning suave).
 - **Sub-vistas**: o preset de destino vem de `resolveFocus(focus, view)` (registry). O `CameraRig` assina `[mode, focus, view]`; em `focused`, se a vista mudar, ele voa para o preset novo **sem** chamar `onCameraRest` (o modo continua `focused` e o painel continua montado). Um `requestHome` no meio desse voo o substitui pelo token.
+- **Jogo na TV**: o preset `shelfTv` fica de frente para a tela da TV, perpendicular como o `desk` (target = centro da tela, position = target + normal × 1.8 m), com `framing` de `margin: 0.09` e sem parallax. A margem de 9% por lado deixa o botão "Sair do jogo" (topo) e a barra de controles (base) fora da imagem. Ele **não é sub-vista do registry**: o `CameraRig` assina também `playing !== null` (`[mode, focus, view, playing]`) e, em `focused` + `shelf` com jogo ligado, escolhe `shelfTv` com lado de painel `none`. Como na troca de sub-vista, o voo não chama `onCameraRest`. Em `stopGame` a câmera volta para `shelfDigital`.
 - Cada hotspot tem seu preset. Desk: câmera **exatamente** perpendicular à tela do monitor (target = centro da tela, position = target + normal * d), `userControl:false`.
 - Preferência `prefers-reduced-motion`: `smoothTime = 0` e `setLookAt(..., false)`.
 - Afinar valores com `leva` em dev (painel `Camera` com botões "copiar preset atual"). Presets finais ficam hardcoded.
 - **Enquadramento responsivo (feito na V.4)**: cada preset tem `framing` (`focusBoxes` derivadas do `layout.ts` e `margin`). `position`/`target` continuam no preset como referência em 16:9 e definem a direção de olhar. O resolvedor puro `camera/framing.ts` calcula a menor distância e o deslocamento lateral para os 8 cantos de cada caixa caberem na área livre (tela menos margem menos o painel de `PANEL_WIDTH_PX`, do lado do registry); `camera/resolvePose.ts` liga isso à viewport. Todo voo usa a pose resolvida, e o resize (debounce 150 ms) refaz o enquadramento sem chamar `onCameraRest`. HOME usa 3 caixas (piso e as duas paredes) e mantém a órbita do usuário no resize; os limites de dolly acompanham a distância resolvida. Testes em `camera/__tests__/framing.test.ts`.
-- **Câmera viva (V.4)**: em HOME `idle`, depois de 3 s sem input, deriva lenta (`idleDrift.ts`, ±1.5° de azimute e ±0.8° de polar como deltas de `rotate`); input do usuário pausa. Em `focused` nos presets `chair`, `printer`, `shelf` e `shelfDigital`, parallax do mouse (`parallax.ts`, `setFocalOffset` de até 4 cm), zerado no começo de cada voo; nunca no `desk`. As duas desligam em `prefers-reduced-motion`. Testes em `camera/__tests__/life.test.ts`.
+- **Câmera viva (V.4)**: em HOME `idle`, depois de 3 s sem input, deriva lenta (`idleDrift.ts`, ±1.5° de azimute e ±0.8° de polar como deltas de `rotate`); input do usuário pausa. Em `focused` nos presets `chair`, `printer`, `shelf` e `shelfDigital`, parallax do mouse (`parallax.ts`, `setFocalOffset` de até 4 cm), zerado no começo de cada voo; nunca no `desk` nem no `shelfTv`. As duas desligam em `prefers-reduced-motion`. Testes em `camera/__tests__/life.test.ts`.
 - Câmera ortográfica **não** será usada: o zoom-in nos hotspots precisa de perspectiva. O "look isométrico" vem de fov baixo (~30–35) e ângulo fixo.
 
 ---
@@ -287,7 +300,7 @@ Personagem: mesh estático com pose sentada (rig opcional; se houver animação 
 | Click | preset `desk` perpendicular à tela. Quando `mode === 'focused'`, `MonitorHtml` troca `pointerEvents` de `none` → `auto` e o SO fictício (`ui/os/*`) ganha interação |
 | Voltar | janelas minimizam (motion), câmera recua |
 
-**`MonitorHtml`** (o único `Html` do projeto):
+**`MonitorHtml`** (o primeiro dos dois `Html` do projeto; o outro é o `TvGameHtml`, §6.6):
 ```tsx
 <Html
   transform
@@ -329,6 +342,7 @@ A zona de jogos é UM hotspot com DUAS sub-vistas (§5). A aba do `GamesPanel` �
 | Click | a hitbox clicada define a vista; `ShelfParticles` (drei `Sparkles`, count ≤ 80) monta junto da vista ativa |
 | Troca de aba | `setView` → a câmera voa entre estante e TV sem sair do foco e o painel desliza para o outro lado |
 | UI | hover num jogo do painel → `store.highlightBox = slug` → a `GameBox` correspondente faz spring extra |
+| Jogar | o cartão de um jogo com `play` (`content/types.ts`) mostra "Jogar na TV" (`startGame(slug)`) ou "Jogar no PC" (`openOnPc(app)`); ver §6.6 |
 | Voltar | partículas desmontam, caixas voltam, câmera recua |
 
 `highlightBox: string | null` e `view` são os dois canais UI→3D além de `focus`.
@@ -348,9 +362,37 @@ A TV fica na parede acima do rack, é um componente próprio (`scene/WallTv.tsx`
 |---|---|
 | `hovered === 'shelf'` | estática retrô (shader com `uTime`) |
 | `focused` + `shelf` + vista `digital` | "ligada no console": tela de título com o nome e o ano do jogo em `highlightBox`, tingida pelo `accent` dele (ou neutra). Ferramenta e contexto ficam só no painel |
+| `playing` (jogo ligado) | o iframe do jogo (`TvGameHtml`, §6.6) cobre a TV inteira, 2 mm à frente da tela. Por baixo fica a tela de título neutra (`startGame` limpa o `highlightBox`) |
 | qualquer outro | apagada |
 
 Atrás da TV vai uma fita de LED rosa emissiva (`tv_backlight`), como na referência, para o Bloom.
+
+### 6.6 Jogos na TV e no PC
+Os jogos digitais podem ser jogados dentro do quarto. O campo `GameProject.play` (`content/types.ts`, tipo `GamePlay`) diz onde:
+
+| `play` | Onde roda | Jogos |
+|---|---|---|
+| `{ where: 'tv', src }` | build HTML5 do itch.io num iframe sobre a tela da TV. `src` é o embed oficial do itch.io (`itch.io/embed-upload/<id>`); o endereço direto do jogo (`html-classic.itch.zone`) é bloqueado fora do itch.io (anti-hotlink) | PorriLand, Piter, O Anel, Racco |
+| `{ where: 'pc', app: 'memory' }` | app do XkrulesOS no monitor da mesa (`PcApp`) | Jogo da Memória ("Memória 4×4") |
+| ausente | não é jogável no quarto | Duel Arena |
+
+O Duel Arena não tem build web: a Cubio está em alfa e o cartão dele aponta para o download da plataforma.
+
+**`TvGameHtml`** (o segundo `Html` do projeto, dentro de `Shelf.tsx`):
+- drei `<Html transform>` com um wrapper de **tamanho fixo em px, 1280×716** (`TvGameScreen`, em `src/ui/tv`), preso 2 mm à frente da tela da TV (`LAYOUT.tv`). A conta de escala é a do `MonitorHtml` (`distanceFactor` cobre a largura, o eixo Y leva a correção mínima) e o `portal` também é estável, apontando para o pai do canvas (sem ele o drei recria a raiz React do `Html` e, em produção, o conteúdo some).
+- Sem `occlude`: com o jogo rodando a câmera fica parada de frente para a TV. Sem jogo, o wrapper fica vazio e com `pointer-events: none`. Cliques no wrapper não sobem para a cena (o R3F leria `offsetX/Y` do elemento e viraria "clique fora").
+- O iframe é o embed oficial do itch.io, que tem 1 px de borda e um rodapé de 20 px. Ele recebe uma área de jogo de 1280×720 (iframe de 1282×741, como o embed que o itch gera) e o conjunto é reduzido por CSS até caber na TV. Assim cada motor escala o jogo como no próprio itch: os de 640×360 em 2× e os de 1280×720 em 1×. Uma área menor que 720 de altura derruba o zoom inteiro do Construct 3 para 1×.
+- Até o `load` do iframe aparece a tela "Ligando <jogo>" com a capa. No `load` o iframe recebe o foco do teclado; o clique no jogo continua necessário para liberar o áudio. Trocar de jogo remonta o iframe, e sem jogo nada fica montado (o áudio do jogo para junto).
+
+**Com um jogo rodando (`playing !== null`)**
+- Câmera: preset `shelfTv` (§4), sem painel.
+- UI: o `Overlay` esconde o painel de Jogos. O `BackButton` vira "Sair do jogo" e chama `stopGame`. A `TvGameBar`, embaixo, mostra o título, "Tela cheia" (`requestFullscreen` no iframe; a tela cheia vai para o top layer e ignora as transformações 3D) e "Abrir no itch.io".
+- Saída: `Esc` na página chama `stopGame`. Com o foco dentro do iframe o jogo fica com o `Esc`, então o botão "Sair do jogo" é a saída garantida. Clicar fora da TV (`onPointerMissed`) **não** volta para HOME enquanto há jogo.
+- Render: o `ScenePause` troca o `frameloop` do R3F para `demand` (o `CameraControls` ainda invalida durante o voo e o resize redesenha) e volta a `always` quando o jogo acaba. O quarto parado não disputa GPU com o jogo.
+- Qualidade: o `PerformanceMonitor` do `QualityManager` (`Effects.tsx`) é desmontado, para os quadros esparsos do `demand` não rebaixarem o `quality`. Volta zerado quando o jogo acaba.
+- Áudio: o `AudioDirector` silencia o quarto (`muted || playing`) sem mexer na preferência `muted` do visitante.
+
+**"Jogar no PC"** (Jogo da Memória): o cartão chama `openOnPc('memory')`. A câmera voa para a mesa (guarda 8, §3) e o `MonitorHtml` repassa o `pcLaunch` ao `MonitorScreen`, que o converte em `LaunchRequest` e o passa ao `Desktop` (prop `launch`). O `Desktop` trata cada `id` uma vez, durante o render (ajuste de estado por prop, sem efeito), e abre a janela `memory`. Se o SO estava desligado, ele liga junto.
 
 ---
 
@@ -372,7 +414,7 @@ Atrás da TV vai uma fita de LED rosa emissiva (`tv_backlight`), como na referê
 - Objetos animados (cadeira, partes da impressora, caixas, ponteiros) ficam no **mesmo `room.glb` e no mesmo atlas**, como nós separados: são baked na posição de repouso e movidos em runtime (ASSET_PIPELINE §3). O estático é unido em um mesh por zona (`zone_*`), o que mantém ~35 draw calls.
 - `<Canvas dpr={[1, 2]} gl={{ antialias: false, powerPreference: 'high-performance' }}>` + `<AdaptiveDpr pixelated />` + `<PerformanceMonitor onDecline={() => setQuality('medium')}>`. Antialias via `SMAA` no composer (mais barato que MSAA com Bloom).
 - `quality`: `high` = Bloom+DoF+dpr 2; `medium` = Bloom, dpr 1.5, sem DoF; `low` = sem composer, dpr 1.
-- `frameloop="always"` (há animações idle), mas parar o composer em `document.hidden`.
+- `frameloop="always"` (há animações idle), mas parar o composer em `document.hidden`. Com um jogo rodando na TV o `ScenePause` passa para `demand` e o `PerformanceMonitor` sai de cena (§6.6).
 - `<Bvh>` do drei ao redor da cena para raycast barato (mesmo com hitboxes simples, o piso/room pode receber raycast).
 - Todo `.glb` carregado com `useGLTF(url)` e listado em `PRELOAD_LIST`; `LoadingScreen` chama `useGLTF.preload` para todos.
 - `useMemo` para qualquer geometria criada em runtime (partículas, curvas). Materiais compartilhados exportados de um módulo `materials.ts`.
@@ -393,7 +435,7 @@ Layout do `Overlay`:
 - `position: fixed; inset: 0; pointer-events: none` sempre. Só os filhos interativos recebem `pointer-events: auto`, e apenas em `focused`.
 - Painéis laterais: largura `min(440px, 92vw)`, altura `100dvh`, à direita (chair, printer) ou esquerda (shelf), decidido no registry.
 - `AnimatePresence mode="wait"` com variantes `initial: {x: 40, opacity: 0}`, `animate`, `exit`. Duração 0.35 s, ease `[0.22, 1, 0.36, 1]`.
-- `BackButton` aparece em `focused` e `transitioning(to hotspot)`. `Esc` sempre ativo.
+- `BackButton` aparece em `focused` e `transitioning(to hotspot)`. `Esc` sempre ativo. Com um jogo na TV, o painel some, o botão vira "Sair do jogo" e a `TvGameBar` aparece embaixo (§6.6).
 - Mobile: **adiado** (fora do escopo por enquanto, ver §0). O plano, se voltar: abaixo de 768px os painéis viram bottom-sheet de 70dvh e o monitor não usa `Html transform`; o `ProjectsApp` entra como painel DOM comum.
 
 Ícones: `@phosphor-icons/react`, sempre pelos nomes com sufixo `Icon` (ex.: `GithubLogoIcon`; os nomes sem sufixo estão obsoletos). Peso `duotone` por padrão, que aproxima o estilo Bulk do Iconly da referência, e `regular` em controles pequenos. O pacote está em `experimental.optimizePackageImports`.

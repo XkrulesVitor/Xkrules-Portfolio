@@ -11,6 +11,7 @@ import { useUrlSync } from './interaction/useUrlSync'
 import { LoadingBridge } from './LoadingBridge'
 import './preload'
 import { RoomProvider } from './scene/baked/RoomContext'
+import { ScenePause } from './scene/ScenePause'
 import { Effects } from './scene/Effects'
 import { Scene } from './scene/Scene'
 
@@ -31,9 +32,10 @@ export default function Experience() {
           gl={{ antialias: false, powerPreference: 'high-performance' }}
           camera={{ fov: 35, near: 0.1, far: 100, position: [...INTRO_START.position] }}
           onPointerMissed={() => {
-            // "Click fora" volta para HOME (só com um hotspot já em foco).
+            // "Click fora" volta para HOME (só com um hotspot já em foco). Com um jogo na TV, clicar
+            // fora só tira o foco do jogo (aí o Esc da página desliga o jogo); não sai da zona.
             const s = useExperienceStore.getState()
-            if (s.mode === 'focused') s.requestHome()
+            if (s.mode === 'focused' && s.playing === null) s.requestHome()
           }}
         >
           <Suspense fallback={null}>
@@ -44,6 +46,7 @@ export default function Experience() {
             </RoomProvider>
           </Suspense>
           <CameraRig />
+          <ScenePause />
           <AudioDirector />
           {DevTools ? <DevTools /> : null}
         </Canvas>

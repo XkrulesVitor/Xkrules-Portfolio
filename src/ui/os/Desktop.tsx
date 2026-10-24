@@ -15,7 +15,7 @@ import { projectGlyph } from './OsGlyph'
 import { PowerScreen, type PowerPhase } from './PowerScreen'
 import scope from './scope.module.css'
 import { StartMenu } from './StartMenu'
-import { SYSTEM_APPS } from './systemApps'
+import { SYSTEM_APPS, type LaunchRequest } from './systemApps'
 import { Taskbar, type TaskbarEntry } from './Taskbar'
 import { Window } from './Window'
 import {
@@ -34,6 +34,11 @@ export interface DesktopProps {
   projects?: readonly WebProject[]
   /** Janelas abertas na montagem (padrão: nenhuma). */
   initialWindows?: readonly AppRef[]
+  /**
+   * Pedido de fora do SO para abrir um app (ex.: "Jogar no PC" no painel de Jogos). Cada `id` novo
+   * abre (ou traz para a frente) a janela uma vez; com o SO desligado, ele liga junto.
+   */
+  launch?: LaunchRequest | null
   className?: string
 }
 
@@ -108,10 +113,20 @@ const STAGE_STYLE: CssVars = { '--taskbar-h': `${TASKBAR_HEIGHT_PCT}%` }
  * Estado das janelas local (useReducer): não toca o store global. "Desligar" também é local:
  * a tela do SO apaga, e religar a recomeça com a janela Projetos; nada fora do SO muda.
  */
-export function Desktop({ projects = WEB_PROJECTS, initialWindows, className }: DesktopProps) {
+export function Desktop({ projects = WEB_PROJECTS, initialWindows, launch = null, className }: DesktopProps) {
   const [wm, dispatch] = useReducer(wmReducer, initialWindows, initWm)
   const [startOpen, setStartOpen] = useState(false)
   const [power, setPower] = useState<'on' | PowerPhase>('on')
+
+  // Pedido de abertura de fora: atendido durante o render (ajuste de estado por prop, sem efeito),
+  // uma vez por id.
+  const [launchedId, setLaunchedId] = useState(0)
+  if (launch && launch.id !== launchedId) {
+    setLaunchedId(launch.id)
+    dispatch({ type: 'open', app: launch.app })
+    setStartOpen(false)
+    if (power === 'off') setPower('boot')
+  }
   // Verdadeiro depois do primeiro boot: a área de trabalho então entra com um fade curto.
   const [rebooted, setRebooted] = useState(false)
   const desktopRef = useRef<HTMLDivElement>(null)

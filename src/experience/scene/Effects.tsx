@@ -83,19 +83,25 @@ function QualityManager() {
     setDpr(QUALITY_DPR[quality])
   }, [quality, setDpr])
 
+  // Com um jogo na TV o quarto renderiza sob demanda (ScenePause): os quadros esparsos virariam "fps
+  // baixo" e rebaixariam a qualidade. O monitor sai de cena e volta zerado quando o jogo acaba.
+  const playing = useExperienceStore((s) => s.playing !== null)
+
   return (
     <>
-      <PerformanceMonitor
-        flipflops={MAX_FLIPFLOPS}
-        onDecline={() => {
-          const s = useExperienceStore.getState()
-          s.setQuality(DEMOTE[s.quality])
-        }}
-        onIncline={() => {
-          const s = useExperienceStore.getState()
-          s.setQuality(PROMOTE[s.quality])
-        }}
-      />
+      {playing ? null : (
+        <PerformanceMonitor
+          flipflops={MAX_FLIPFLOPS}
+          onDecline={() => {
+            const s = useExperienceStore.getState()
+            s.setQuality(DEMOTE[s.quality])
+          }}
+          onIncline={() => {
+            const s = useExperienceStore.getState()
+            s.setQuality(PROMOTE[s.quality])
+          }}
+        />
+      )}
       <AdaptiveDpr pixelated />
     </>
   )
