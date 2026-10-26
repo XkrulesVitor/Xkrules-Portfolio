@@ -1,5 +1,7 @@
-import { beforeEach, describe, it } from 'node:test'
+import { afterEach, beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
+import { DEFAULT_VOLUMES, SOUND_PREFS_KEY } from '../../lib/audio/volumes.ts'
+import { LOCALE_STORAGE_KEY } from '../../lib/locale.ts'
 import { useExperienceStore } from '../useExperienceStore.ts'
 
 // Rodar: npm test  (node --test com type stripping nativo; zero dependências extras).
@@ -333,5 +335,207 @@ describe('store: jogo na TV e app no PC', () => {
     get().openOnPc('memory')
     assert.equal(get().focus, 'desk')
     assert.equal(get().mode, 'transitioning')
+  })
+})
+
+describe('store: volumes e preferência de som', () => {
+  // O store grava em `window.localStorage` (só existe no browser); aqui entra um falso.
+  const bag = new Map<string, string>()
+  const fakeWindow = {
+    localStorage: {
+      getItem: (key: string) => bag.get(key) ?? null,
+      setItem: (key: string, value: string) => void bag.set(key, value),
+    },
+  }
+  const globals = globalThis as { window?: unknown }
+  const saved = () => JSON.parse(bag.get(SOUND_PREFS_KEY) ?? '{}')
+
+  beforeEach(() => {
+    bag.clear()
+    globals.window = fakeWindow
+  })
+  afterEach(() => {
+    delete globals.window
+  })
+
+  it('começa com os volumes padrão (música baixinha) e sem escolha de som', () => {
+    assert.deepEqual({ ...get().volumes }, { ...DEFAULT_VOLUMES })
+    assert.equal(get().volumes.music, 0.35)
+    assert.equal(get().soundChosen, false)
+  })
+
+  it('setVolume limita a 0..1, arredonda em 1% e mexe só na categoria pedida', () => {
+    get().setVolume('music', 0.6)
+    assert.deepEqual({ ...get().volumes }, { ...DEFAULT_VOLUMES, music: 0.6 })
+    get().setVolume('ambient', 7)
+    assert.equal(get().volumes.ambient, 1)
+    get().setVolume('effects', -3)
+    assert.equal(get().volumes.effects, 0)
+    get().setVolume('music', 0.3456)
+    assert.equal(get().volumes.music, 0.35)
+  })
+
+  it('subscribeWithSelector dos volumes notifica só quando o valor muda', () => {
+    const seen: number[] = []
+    const unsub = useExperienceStore.subscribe(
+      (s) => s.volumes,
+      (volumes) => seen.push(volumes.music),
+    )
+    get().setVolume('music', 0.5)
+    get().setVolume('music', 0.5) // igual: nada
+    get().setHovered('desk') // outro slice: nada
+    get().setVolume('music', 0.2)
+    unsub()
+    assert.deepEqual(seen, [0.5, 0.2])
+  })
+
+  it('o volume independe do modo, do foco, do jogo na TV e do mudo', () => {
+    get().setVolume('ambient', 0.9)
+    toIdle()
+    get().requestFocus('shelf', 'digital')
+    get().onCameraRest()
+    get().startGame('piter')
+    get().toggleMuted()
+    get().stopGame()
+    get().requestHome()
+    assert.equal(get().volumes.ambient, 0.9)
+    assert.equal(get().muted, false)
+  })
+
+  it('grava só o que o visitante mudou, no localStorage', () => {
+    assert.equal(bag.size, 0)
+    get().setVolume('music', 0.6)
+    assert.deepEqual(saved(), { volumes: { music: 0.6 } }) // sem mudo escolhido: nada de "muted"
+    get().toggleMuted()
+    assert.deepEqual(saved(), { muted: false, volumes: { music: 0.6 } })
+    get().setVolume('music', DEFAULT_VOLUMES.music) // volta ao padrão: sai do arquivo
+    assert.deepEqual(saved(), { muted: false })
+  })
+
+  it('toggleMuted marca a escolha: o "Entrar" não liga o som por cima dela', () => {
+    get().toggleMuted() // ligou
+    get().toggleMuted() // silenciou de propósito
+    assert.equal(get().muted, true)
+    assert.equal(get().soundChosen, true)
+    get().enterWithSound()
+    assert.equal(get().muted, true)
+  })
+
+  it('enterWithSound liga o som de quem nunca escolheu, sem gravar escolha', () => {
+    get().enterWithSound()
+    assert.equal(get().muted, false)
+    assert.equal(get().soundChosen, false)
+    assert.equal(bag.size, 0) // não é uma preferência: na próxima visita entra de novo com som
+    get().enterWithSound() // idempotente
+    assert.equal(get().muted, false)
+  })
+
+  it('o localStorage quebrado não derruba o store', () => {
+    globals.window = {
+      localStorage: {
+        getItem() {
+          throw new Error('bloqueado')
+        },
+        setItem() {
+          throw new Error('cota cheia')
+        },
+      },
+    }
+    assert.doesNotThrow(() => {
+      get().setVolume('effects', 0.1)
+      get().toggleMuted()
+    })
+    assert.equal(get().volumes.effects, 0.1)
+    assert.equal(get().muted, false)
+  })
+})
+
+describe('store: idioma', () => {
+  // `setLocale` grava no localStorage e atualiza `<html lang>`: entram falsos do window e do document.
+  const bag = new Map<string, string>()
+  const fakeDocument = { documentElement: { lang: 'pt-BR' } }
+  const globals = globalThis as { window?: unknown; document?: unknown }
+
+  beforeEach(() => {
+    bag.clear()
+    fakeDocument.documentElement.lang = 'pt-BR'
+    globals.window = {
+      localStorage: {
+        getItem: (key: string) => bag.get(key) ?? null,
+        setItem: (key: string, value: string) => void bag.set(key, value),
+      },
+    }
+    globals.document = fakeDocument
+  })
+  afterEach(() => {
+    delete globals.window
+    delete globals.document
+  })
+
+  it('no servidor e nos testes (sem window) começa em português', () => {
+    assert.equal(get().locale, 'pt')
+  })
+
+  it('setLocale troca o idioma, grava no localStorage e atualiza <html lang>', () => {
+    get().setLocale('en')
+    assert.equal(get().locale, 'en')
+    assert.equal(bag.get(LOCALE_STORAGE_KEY), 'en')
+    assert.equal(fakeDocument.documentElement.lang, 'en')
+    get().setLocale('pt')
+    assert.equal(get().locale, 'pt')
+    assert.equal(bag.get(LOCALE_STORAGE_KEY), 'pt')
+    assert.equal(fakeDocument.documentElement.lang, 'pt-BR')
+  })
+
+  it('escolher o idioma que já está ativo também grava a escolha', () => {
+    assert.equal(get().locale, 'pt')
+    get().setLocale('pt')
+    assert.equal(bag.get(LOCALE_STORAGE_KEY), 'pt')
+  })
+
+  it('idioma inválido é ignorado', () => {
+    get().setLocale('fr' as never)
+    assert.equal(get().locale, 'pt')
+    assert.equal(bag.size, 0)
+  })
+
+  it('subscribeWithSelector do idioma notifica só quando ele muda', () => {
+    const seen: string[] = []
+    const unsub = useExperienceStore.subscribe(
+      (s) => s.locale,
+      (locale) => seen.push(locale),
+    )
+    get().setLocale('en')
+    get().setLocale('en') // igual: nada
+    get().setHovered('desk') // outro slice: nada
+    get().setLocale('pt')
+    unsub()
+    assert.deepEqual(seen, ['en', 'pt'])
+  })
+
+  it('o idioma independe do modo, do foco e do jogo na TV', () => {
+    get().setLocale('en')
+    toIdle()
+    get().requestFocus('shelf', 'digital')
+    get().onCameraRest()
+    get().startGame('piter')
+    get().stopGame()
+    get().requestHome()
+    assert.equal(get().locale, 'en')
+  })
+
+  it('o localStorage quebrado não derruba o store', () => {
+    globals.window = {
+      localStorage: {
+        getItem() {
+          throw new Error('bloqueado')
+        },
+        setItem() {
+          throw new Error('cota cheia')
+        },
+      },
+    }
+    assert.doesNotThrow(() => get().setLocale('en'))
+    assert.equal(get().locale, 'en')
   })
 })

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { PlayIcon } from '@phosphor-icons/react'
-import { OS_TEXT } from '@/content/os'
 import type { WebProject } from '@/content/types'
-import { OsGlyph, projectGlyph } from '../OsGlyph'
+import { useOsText } from '../../i18n/useLocale'
+import { AppGlyph, projectGlyph } from '../OsGlyph'
 import styles from './ProjectMedia.module.css'
 
 type MediaItem =
@@ -20,6 +20,7 @@ function collectMedia(project: WebProject): MediaItem[] {
 
 /** Estado vazio: janela de navegador estilizada na cor do projeto (não é uma captura real). */
 function MediaPlaceholder({ project }: { project: WebProject }) {
+  const caption = useOsText().media.placeholder
   return (
     <div className={styles.placeholder}>
       <div className={styles.mock} aria-hidden="true">
@@ -31,7 +32,7 @@ function MediaPlaceholder({ project }: { project: WebProject }) {
         </div>
         <div className={styles.mockBody}>
           <div className={styles.mockHero}>
-            <OsGlyph name={projectGlyph(project.slug)} />
+            <AppGlyph name={projectGlyph(project.slug)} icon={project.icon} />
           </div>
           <div className={styles.mockLines}>
             <span className={styles.line} />
@@ -40,7 +41,7 @@ function MediaPlaceholder({ project }: { project: WebProject }) {
           </div>
         </div>
       </div>
-      <p className={styles.caption}>{OS_TEXT.media.placeholder}</p>
+      <p className={styles.caption}>{caption}</p>
     </div>
   )
 }
@@ -50,6 +51,7 @@ function MediaPlaceholder({ project }: { project: WebProject }) {
  * Quem usa deve passar `key={project.slug}` para o item selecionado reiniciar entre projetos.
  */
 export function ProjectMedia({ project }: { project: WebProject }) {
+  const os = useOsText()
   const items = collectMedia(project)
   const [selected, setSelected] = useState(0)
 
@@ -67,7 +69,7 @@ export function ProjectMedia({ project }: { project: WebProject }) {
             className={styles.fill}
             src={current.src}
             poster={current.poster}
-            aria-label={OS_TEXT.media.video}
+            aria-label={os.media.video}
             controls
             playsInline
             preload="metadata"
@@ -90,13 +92,13 @@ export function ProjectMedia({ project }: { project: WebProject }) {
       </div>
 
       {items.length > 1 ? (
-        <div className={styles.thumbs} role="group" aria-label={OS_TEXT.media.gallery}>
+        <div className={styles.thumbs} role="group" aria-label={os.media.gallery}>
           {items.map((item, i) => (
             <button
               key={`${item.kind}:${item.src}`}
               type="button"
               className={styles.thumb}
-              aria-label={item.kind === 'video' ? OS_TEXT.media.video : item.alt}
+              aria-label={item.kind === 'video' ? os.media.video : item.alt}
               aria-pressed={i === index}
               onClick={() => setSelected(i)}
             >

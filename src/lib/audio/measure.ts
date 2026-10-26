@@ -5,6 +5,7 @@
 
 import { createNoiseBuffer } from './noise'
 import { LEVEL_TARGETS_DB, MASTER_GAIN, VOICE_GAIN, toDb } from './mix'
+import { createMusic } from './music'
 import { createAmbient, createFan, playKey, playMouse, playStatic } from './voices'
 
 export interface VoiceMeasure {
@@ -46,6 +47,22 @@ async function render(
   return { peakDb: toDb(peak), rmsDb: toDb(Math.sqrt(sum / Math.max(1, end - start))) }
 }
 
+/** Sorteio determinístico (mulberry32): a música medida é sempre a mesma. */
+function seeded(seed: number): () => number {
+  let a = seed >>> 0
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+/** Música: 8 compassos (a 75 BPM, 3.2 s cada); a medição pula os 2 da entrada em camadas. */
+const MUSIC_SECONDS = 26
+const MUSIC_FROM = 6.5
+
 /** Oito disparos espaçados em 0.3 s: pega a variação de altura e de trecho de ruído. */
 const BURSTS = 8
 const BURST_GAP = 0.3
@@ -65,6 +82,13 @@ export async function measureVoices(): Promise<Record<string, VoiceMeasure>> {
     voice.level.gain.value = VOICE_GAIN.ambient
   })
   result.ambient = { ...ambient, targetDb: LEVEL_TARGETS_DB.ambient }
+
+  // Música no volume padrão (bus em ganho 1): o RMS tem de ficar perto do alvo, bem baixinho.
+  const music = await render(MUSIC_SECONDS, { from: MUSIC_FROM, to: MUSIC_SECONDS }, (ctx, out) => {
+    const voice = createMusic(ctx, createNoiseBuffer(ctx, 'white', 2), out, { random: seeded(7) })
+    voice.pump(MUSIC_SECONDS)
+  })
+  result.music = { ...music, targetDb: LEVEL_TARGETS_DB.music }
 
   const bursts = (
     name: string,

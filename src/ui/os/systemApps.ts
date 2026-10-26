@@ -1,4 +1,4 @@
-import { OS_TEXT, type OsGlyphKey } from '@/content/os'
+import type { OsGlyphKey, OsText } from '@/content/os'
 import type { PcApp } from '@/content/types'
 import type { AppRef } from './windowManager'
 
@@ -18,7 +18,8 @@ export interface LaunchRequest {
 
 export interface SystemApp {
   readonly app: AppRef
-  readonly title: string
+  /** Título no idioma do SO (o texto vem de `useOsText()`). */
+  readonly title: (os: OsText) => string
   readonly glyph: OsGlyphKey
 }
 
@@ -27,9 +28,9 @@ export interface SystemApp {
  * iniciar. Os atalhos dos projetos web vêm de projects.web.ts, não daqui.
  */
 export const SYSTEM_APPS: readonly SystemApp[] = [
-  { app: { kind: 'projects' }, title: OS_TEXT.projects.title, glyph: 'folder' },
-  { app: { kind: 'computer' }, title: OS_TEXT.apps.computer.title, glyph: 'computer' },
-  { app: { kind: 'terminal' }, title: OS_TEXT.apps.terminal.title, glyph: 'terminal' },
-  { app: { kind: 'memory' }, title: OS_TEXT.apps.memory.title, glyph: 'puzzle' },
-  { app: { kind: 'credits' }, title: OS_TEXT.apps.credits.title, glyph: 'heart' },
+  { app: { kind: 'projects' }, title: (os) => os.projects.title, glyph: 'folder' },
+  { app: { kind: 'computer' }, title: (os) => os.apps.computer.title, glyph: 'computer' },
+  { app: { kind: 'terminal' }, title: (os) => os.apps.terminal.title, glyph: 'terminal' },
+  { app: { kind: 'memory' }, title: (os) => os.apps.memory.title, glyph: 'puzzle' },
+  { app: { kind: 'credits' }, title: (os) => os.apps.credits.title, glyph: 'heart' },
 ]

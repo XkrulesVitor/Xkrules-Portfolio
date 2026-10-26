@@ -25,6 +25,7 @@ REQUIRED = [
     'box_porriland', 'box_piter', 'box_memory_game', 'box_o_anel', 'box_racco', 'box_duel_arena',
     'cover_aldeia_dorme', 'cover_conquista_galactica',
     'cover_porriland', 'cover_piter', 'cover_memory_game', 'cover_o_anel', 'cover_racco', 'cover_duel_arena',
+    'cover_decor_root', 'cover_decor_heat', 'cover_decor_everdell',
     'screen_monitor_main', 'screen_monitor_vertical', 'screen_tv',
     'tv_backlight',
     'led_case', 'glass_pc', 'pc_fan_top', 'pc_fan_bottom', 'pc_rgb',

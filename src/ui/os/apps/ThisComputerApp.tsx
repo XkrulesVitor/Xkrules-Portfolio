@@ -1,17 +1,16 @@
 import { memo, useId } from 'react'
 import type { CSSProperties } from 'react'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
-import { OS_TEXT, type ComputerSpecId } from '@/content/os'
-import { ABOUT } from '@/content/about'
+import { COMPUTER_SHOWN_ITEMS, COMPUTER_SPEC_IDS, type ComputerSpecId, type OsText } from '@/content/os'
 import { SITE } from '@/content/site'
+import type { AboutContent } from '@/content/types'
+import { useContent } from '../../i18n/useLocale'
 import { fmt } from '../format'
 import { OsGlyph } from '../OsGlyph'
 import { OsTodoText } from '../OsTodoText'
 import scope from '../scope.module.css'
 import shared from '../shared.module.css'
 import styles from './ThisComputerApp.module.css'
-
-const TEXT = OS_TEXT.computer
 
 interface SpecRow {
   id: ComputerSpecId
@@ -25,13 +24,13 @@ interface SpecRow {
 }
 
 /** Itens de um grupo de habilidades de about.ts; vazio quando o grupo não existe mais. */
-function groupItems(label: string): readonly string[] {
-  return ABOUT.skills.find((group) => group.label === label)?.items ?? []
+function groupItems(about: AboutContent, label: string): readonly string[] {
+  return about.skills.find((group) => group.label === label)?.items ?? []
 }
 
 /** Valor da linha vindo de um grupo de habilidades; sem o grupo, um [TODO] explícito. */
-function groupValue(label: string, limit?: number): string {
-  const items = groupItems(label)
+function groupValue(about: AboutContent, TEXT: OsText['computer'], label: string, limit?: number): string {
+  const items = groupItems(about, label)
   if (items.length === 0) return fmt(TEXT.todo.group, { group: label })
   const shown = limit === undefined ? items : items.slice(0, limit)
   const rest = items.length - shown.length
@@ -43,31 +42,32 @@ function groupValue(label: string, limit?: number): string {
  * Monta a tabela só com fatos de about.ts e site.ts (e o nome do SO). O que falta vira [TODO: ...]
  * explícito: nada de texto inventado. A "piada" é só a metáfora de cada linha (campo `note`).
  */
-function buildRows(): SpecRow[] {
-  const cpuItems = groupItems(TEXT.skillGroups.cpu)
+function buildRows(os: OsText, about: AboutContent): SpecRow[] {
+  const TEXT = os.computer
+  const cpuItems = groupItems(about, TEXT.skillGroups.cpu)
   const primaryLink = SITE.links[0]
 
   const values: Record<ComputerSpecId, Omit<SpecRow, 'id' | 'label' | 'note'>> = {
     device: { value: SITE.author },
-    system: { value: OS_TEXT.name },
+    system: { value: os.name },
     cpu: {
-      value: groupValue(TEXT.skillGroups.cpu, TEXT.shownItems),
+      value: groupValue(about, TEXT, TEXT.skillGroups.cpu, COMPUTER_SHOWN_ITEMS),
       detail: cpuItems.length > 0 ? fmt(TEXT.cores, { n: cpuItems.length }) : undefined,
     },
-    gpu: { value: groupValue(TEXT.skillGroups.gpu), detail: TEXT.gpuNote },
+    gpu: { value: groupValue(about, TEXT, TEXT.skillGroups.gpu), detail: TEXT.gpuNote },
     // about.ts não traz anos de experiência: fica pendente, à vista.
     memory: { value: TEXT.todo.memory },
-    storage: { value: ABOUT.headline },
-    workshop: { value: groupValue(TEXT.skillGroups.workshop) },
-    peripherals: { value: groupValue(TEXT.skillGroups.peripherals) },
-    lab: { value: groupValue(TEXT.skillGroups.lab) },
+    storage: { value: about.headline },
+    workshop: { value: groupValue(about, TEXT, TEXT.skillGroups.workshop) },
+    peripherals: { value: groupValue(about, TEXT, TEXT.skillGroups.peripherals) },
+    lab: { value: groupValue(about, TEXT, TEXT.skillGroups.lab) },
     network: primaryLink
       ? { value: primaryLink.label, href: primaryLink.href }
       : { value: TEXT.todo.links },
-    location: { value: ABOUT.location ?? TEXT.todo.location },
+    location: { value: about.location ?? TEXT.todo.location },
   }
 
-  return TEXT.specs.map((spec) => ({ ...spec, ...values[spec.id] }))
+  return COMPUTER_SPEC_IDS.map((id) => ({ id, ...TEXT.specs[id], ...values[id] }))
 }
 
 /**
@@ -75,8 +75,10 @@ function buildRows(): SpecRow[] {
  * memória = anos de experiência...). Só fatos de about.ts e site.ts; o que falta é [TODO] visível.
  */
 export const ThisComputerApp = memo(function ThisComputerApp() {
-  const rows = buildRows()
-  const cores = groupItems(TEXT.skillGroups.cpu)
+  const { os, about } = useContent()
+  const TEXT = os.computer
+  const rows = buildRows(os, about)
+  const cores = groupItems(about, TEXT.skillGroups.cpu)
   const specsId = useId()
   const coresId = useId()
 
@@ -89,7 +91,7 @@ export const ThisComputerApp = memo(function ThisComputerApp() {
         <div className={styles.who}>
           <p className={styles.eyebrow}>{TEXT.eyebrow}</p>
           <h2 className={styles.name}>{SITE.author}</h2>
-          <p className={styles.os}>{OS_TEXT.name}</p>
+          <p className={styles.os}>{os.name}</p>
         </div>
       </header>
 
@@ -112,7 +114,7 @@ export const ThisComputerApp = memo(function ThisComputerApp() {
                     <span className={styles.linkArrow} aria-hidden="true">
                       <ArrowUpRightIcon weight="regular" />
                     </span>
-                    <span className={shared.srOnly}>{OS_TEXT.detail.newTab}</span>
+                    <span className={shared.srOnly}>{os.detail.newTab}</span>
                   </a>
                 ) : (
                   <OsTodoText text={row.value} />

@@ -1,10 +1,17 @@
 // Motor de comandos do Terminal do SO: funções PURAS (sem React, sem DOM, sem eval). Recebe a linha
 // digitada e devolve linhas de saída; quem tem efeito (abrir janela, limpar tela) é o componente,
-// que lê `open` e `clear` do resultado. Textos em content/os.ts; fatos do autor em about.ts e site.ts.
-import { OS_TEXT } from '@/content/os'
-import { ABOUT } from '@/content/about'
+// que lê `open` e `clear` do resultado. Textos em content/os.ts (no idioma do contexto); fatos do autor
+// em about.ts e site.ts. O terminal responde no idioma ativo; o nome dos comandos é o mesmo nos dois.
+import { LOCALE_INFO, type Locale } from '@/content/i18n'
+import {
+  COMPUTER_SHOWN_ITEMS,
+  TERMINAL_ART,
+  TERMINAL_COMMANDS,
+  TERMINAL_IDENTITY,
+  type OsText,
+} from '@/content/os'
 import { SITE } from '@/content/site'
-import type { WebProject } from '@/content/types'
+import type { AboutContent, WebProject } from '@/content/types'
 import { fmt } from '../format'
 
 export type TermTone = 'normal' | 'dim' | 'ok' | 'error' | 'accent'
@@ -37,9 +44,14 @@ export interface TermResult {
 export interface TermContext {
   readonly projects: readonly WebProject[]
   readonly now: Date
+  /** Textos do SO no idioma ativo. */
+  readonly os: OsText
+  /** Conteúdo "Sobre" no idioma ativo (habilidades, formação). */
+  readonly about: AboutContent
+  readonly locale: Locale
 }
 
-const COMMAND_NAMES: readonly string[] = OS_TEXT.terminal.commands.map((command) => command.name)
+const COMMAND_NAMES: readonly string[] = TERMINAL_COMMANDS.map((command) => command.name)
 
 /** Minúsculas e sem acento: `Memória` casa com `memoria`. */
 function normalize(value: string): string {
@@ -90,43 +102,49 @@ function resolveProject(query: string, projects: readonly WebProject[]): WebProj
   return prefixed.length === 1 ? prefixed[0] : null
 }
 
-/** Grupo de habilidades de about.ts pelo rótulo. */
-function skillItems(label: string): readonly string[] {
-  return ABOUT.skills.find((group) => group.label === label)?.items ?? []
+/** Grupo de habilidades de about.ts pelo rótulo (no idioma do contexto). */
+function skillItems(ctx: TermContext, label: string): readonly string[] {
+  return ctx.about.skills.find((group) => group.label === label)?.items ?? []
 }
 
-function stackSummary(): string {
-  const items = skillItems(OS_TEXT.computer.skillGroups.cpu).slice(0, OS_TEXT.computer.shownItems)
-  return items.length > 0 ? items.join(', ') : fmt(OS_TEXT.computer.todo.group, { group: 'stack' })
+function stackSummary(ctx: TermContext): string {
+  const computer = ctx.os.computer
+  const items = skillItems(ctx, computer.skillGroups.cpu).slice(0, COMPUTER_SHOWN_ITEMS)
+  return items.length > 0 ? items.join(', ') : fmt(computer.todo.group, { group: 'stack' })
 }
 
-function runHelp(): TermResult {
+function runHelp(ctx: TermContext): TermResult {
   return {
     lines: [
-      text(OS_TEXT.terminal.helpTitle),
-      ...OS_TEXT.terminal.commands.map(
-        (command): TermLine => ({ kind: 'pair', name: command.usage, text: command.description }),
+      text(ctx.os.terminal.helpTitle),
+      ...TERMINAL_COMMANDS.map(
+        (command): TermLine => ({
+          kind: 'pair',
+          name: command.usage,
+          text: ctx.os.terminal.commandHelp[command.name],
+        }),
       ),
     ],
   }
 }
 
-function runWhoami(): TermResult {
+function runWhoami(ctx: TermContext): TermResult {
   return {
     lines: [
-      text(OS_TEXT.terminal.whoami.user, 'accent'),
+      text(TERMINAL_IDENTITY.user, 'accent'),
       text(SITE.author),
-      text(ABOUT.headline, 'dim'),
-      text(fmt(OS_TEXT.terminal.whoami.stack, { stack: stackSummary() }), 'dim'),
+      text(ctx.about.headline, 'dim'),
+      text(fmt(ctx.os.terminal.whoami.stack, { stack: stackSummary(ctx) }), 'dim'),
     ],
   }
 }
 
 function runProjects(ctx: TermContext): TermResult {
-  if (ctx.projects.length === 0) return { lines: [text(OS_TEXT.terminal.projects.empty, 'dim')] }
+  const t = ctx.os.terminal.projects
+  if (ctx.projects.length === 0) return { lines: [text(t.empty, 'dim')] }
   return {
     lines: [
-      text(OS_TEXT.terminal.projects.title),
+      text(t.title),
       ...ctx.projects.map(
         (project): TermLine => ({
           kind: 'project',
@@ -135,20 +153,21 @@ function runProjects(ctx: TermContext): TermResult {
           year: project.year,
         }),
       ),
-      text(OS_TEXT.terminal.projects.hint, 'dim'),
+      text(t.hint, 'dim'),
     ],
   }
 }
 
 function runOpen(args: readonly string[], ctx: TermContext): TermResult {
+  const t = ctx.os.terminal.open
   const query = args.join(' ')
-  if (!query) return { lines: [text(OS_TEXT.terminal.open.usage, 'dim')] }
+  if (!query) return { lines: [text(t.usage, 'dim')] }
   const project = resolveProject(query, ctx.projects)
   if (!project) {
     return {
       lines: [
         text(
-          fmt(OS_TEXT.terminal.open.notFound, {
+          fmt(t.notFound, {
             slug: query,
             slugs: ctx.projects.map((p) => p.slug).join(', '),
           }),
@@ -158,44 +177,45 @@ function runOpen(args: readonly string[], ctx: TermContext): TermResult {
     }
   }
   return {
-    lines: [text(fmt(OS_TEXT.terminal.open.opening, { title: project.title }), 'ok')],
+    lines: [text(fmt(t.opening, { title: project.title }), 'ok')],
     open: project.slug,
   }
 }
 
-function runLinks(): TermResult {
+function runLinks(ctx: TermContext): TermResult {
+  const t = ctx.os.terminal.links
   return {
     lines: [
-      text(OS_TEXT.terminal.links.title),
+      text(t.title),
       ...SITE.links.map((link): TermLine => ({ kind: 'link', label: link.label, href: link.href })),
-      { kind: 'link', label: OS_TEXT.terminal.links.source, href: SITE.sourceUrl },
+      { kind: 'link', label: t.source, href: SITE.sourceUrl },
     ],
   }
 }
 
-const DATE_FORMAT = new Intl.DateTimeFormat(OS_TEXT.locale, {
-  dateStyle: 'full',
-  timeStyle: 'medium',
-})
-
 function runDate(ctx: TermContext): TermResult {
-  return { lines: [text(DATE_FORMAT.format(ctx.now))] }
+  const format = new Intl.DateTimeFormat(LOCALE_INFO[ctx.locale].intl, {
+    dateStyle: 'full',
+    timeStyle: 'medium',
+  })
+  return { lines: [text(format.format(ctx.now))] }
 }
 
 function runNeofetch(ctx: TermContext): TermResult {
-  const labels = OS_TEXT.terminal.neofetch
-  const gpu = skillItems(OS_TEXT.computer.skillGroups.gpu).join(', ')
+  const labels = ctx.os.terminal.neofetch
+  const computer = ctx.os.computer
+  const gpu = skillItems(ctx, computer.skillGroups.gpu).join(', ')
   const rows: NeofetchRow[] = [
     { key: labels.os, value: labels.osValue },
     { key: labels.shell, value: labels.shellValue },
-    { key: labels.stack, value: stackSummary() },
-    { key: labels.gpu, value: gpu || fmt(OS_TEXT.computer.todo.group, { group: labels.gpu }) },
+    { key: labels.stack, value: stackSummary(ctx) },
+    { key: labels.gpu, value: gpu || fmt(computer.todo.group, { group: labels.gpu }) },
     { key: labels.projects, value: fmt(labels.projectsValue, { n: ctx.projects.length }) },
-    { key: labels.education, value: ABOUT.headline },
+    { key: labels.education, value: ctx.about.headline },
   ]
   const github = SITE.links.find((link) => link.kind === 'github')
   if (github) rows.push({ key: labels.github, value: github.href.replace(/^https?:\/\//, '') })
-  return { lines: [{ kind: 'neofetch', art: OS_TEXT.terminal.art, rows }] }
+  return { lines: [{ kind: 'neofetch', art: TERMINAL_ART, rows }] }
 }
 
 /** Interpreta uma linha de comando. Nunca lança e nunca avalia código: só um `switch` fechado. */
@@ -207,15 +227,15 @@ export function runCommand(raw: string, ctx: TermContext): TermResult {
 
   switch (name) {
     case 'help':
-      return runHelp()
+      return runHelp(ctx)
     case 'whoami':
-      return runWhoami()
+      return runWhoami(ctx)
     case 'projects':
       return runProjects(ctx)
     case 'open':
       return runOpen(args, ctx)
     case 'links':
-      return runLinks()
+      return runLinks(ctx)
     case 'date':
       return runDate(ctx)
     case 'clear':
@@ -226,9 +246,9 @@ export function runCommand(raw: string, ctx: TermContext): TermResult {
       const suggestion = suggestCommand(name)
       return {
         lines: [
-          text(fmt(OS_TEXT.terminal.unknown, { cmd: parts[0] }), 'error'),
+          text(fmt(ctx.os.terminal.unknown, { cmd: parts[0] }), 'error'),
           ...(suggestion
-            ? [text(fmt(OS_TEXT.terminal.suggestion, { cmd: suggestion }), 'dim')]
+            ? [text(fmt(ctx.os.terminal.suggestion, { cmd: suggestion }), 'dim')]
             : []),
         ],
       }

@@ -141,6 +141,14 @@
   font-size: calc(var(--px) * 26);
 }
 
+/* Ícone real do projeto: o ladrilho (44 px, cantos de 12 px) vira só a caixa da imagem, que traz a forma
+   dela e a própria sombra (drop-shadow, em OsGlyph.module.css). O font-size iguala o lado: a imagem mede 1em. */
+.cardGlyphIcon {
+  background: none;
+  box-shadow: none;
+  font-size: calc(var(--px) * 44);
+}
+
 .cardMain {
   position: relative;
   display: flex;

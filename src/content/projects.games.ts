@@ -1,3 +1,7 @@
+// `GAME_PROJECTS` vale o português; `GAME_PROJECTS_BY_LOCALE` traz os dois idiomas: os dados (slug, ano, cor,
+// capa, `play`, URLs) são compartilhados e o texto em inglês (`en/projects.games.ts`) é aplicado por cima.
+import { GAME_TEXT_EN } from './en/projects.games.ts'
+import type { ByLocale } from './i18n.ts'
 import type { GameProject } from './types'
 
 // Ordem do painel. Tabuleiro: a da estante, da esquerda para a direita. Digital: primeiro os que rodam
@@ -198,3 +202,43 @@ export const GAME_PROJECTS: readonly GameProject[] = [
     links: [{ label: 'Baixar a Cubio', href: 'https://www2.playcubio.com/br', kind: 'site' }],
   },
 ]
+
+/** Texto de um jogo que muda com o idioma (os campos opcionais existem aqui quando existem no português). */
+export interface GameText {
+  title: string
+  genre?: string
+  context?: string
+  award?: string
+  role?: string
+  players?: string
+  playTime?: string
+  summary: string
+  details?: readonly string[]
+  /** Texto alternativo da capa. */
+  coverAlt?: string
+  /** Rótulos dos links, na ordem de `links`. */
+  linkLabels?: readonly string[]
+}
+
+/** O jogo com o texto trocado; tudo que não é texto continua o do jogo-base. */
+function localizeGame(game: GameProject, text: GameText): GameProject {
+  return {
+    ...game,
+    title: text.title,
+    genre: text.genre,
+    context: text.context,
+    award: text.award,
+    role: text.role,
+    players: text.players,
+    playTime: text.playTime,
+    summary: text.summary,
+    details: text.details,
+    cover: game.cover && text.coverAlt ? { ...game.cover, alt: text.coverAlt } : game.cover,
+    links: game.links.map((link, i) => ({ ...link, label: text.linkLabels?.[i] ?? link.label })),
+  }
+}
+
+export const GAME_PROJECTS_BY_LOCALE: ByLocale<readonly GameProject[]> = {
+  pt: GAME_PROJECTS,
+  en: GAME_PROJECTS.map((game) => localizeGame(game, GAME_TEXT_EN[game.slug])),
+}

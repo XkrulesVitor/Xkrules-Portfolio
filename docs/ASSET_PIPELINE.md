@@ -24,7 +24,7 @@ Complementa [ARCHITECTURE.md](./ARCHITECTURE.md) §12 e [REFERENCES.md](./REFERE
 ```
 art/blender/
   main.py        # orquestra: limpa a cena, constrói, materiais, luzes, UV, bake, export, previews
-  kit.py         # primitivas chanfradas (caixa com bevel, cilindro, prancha, alça), conversão de eixos
+  kit.py         # primitivas chanfradas (caixa com bevel, cilindro, prancha, alça, polígono simples extrudado `poly` com cor por face), conversão de eixos
   props/         # um módulo por zona: room.py, desk.py, games.py, maker.py, bed.py, decor.py
   materials.py   # paleta (cores sólidas; quem dá o acabamento é a luz)
   lights.py      # rig noturno, rig diurno e rig do lightmap (R/G/B)
@@ -53,7 +53,7 @@ art/previews/    # home.jpg, desk.jpg, shelf.jpg, digital.jpg, printer.jpg, chai
 | `art/build/manifest.json` | Nós por categoria, bounding boxes no mundo (Y-up), triângulos por nó, tempo de cada etapa |
 
 **Categorias de nó (pelo prefixo do nome):**
-- **baked** (padrão): o runtime aplica o `BakedMaterial` compartilhado. São os `zone_*` e os nós vivos (`chair_root`, `printer_*` menos `printer_led`, `box_*`, `cover_*`, `clock_*`). Cada nó vivo é **um mesh só** (partes unidas), com pivô no lugar certo; é baked na posição de repouso e movido em runtime, como a cadeira de Bruno Simon.
+- **baked** (padrão): o runtime aplica o `BakedMaterial` compartilhado. São os `zone_*` e os nós vivos (`chair_root`, `printer_*` menos `printer_led`, `box_*`, `cover_*` e `cover_decor_*`, `clock_*`). Cada nó vivo é **um mesh só** (partes unidas), com pivô no lugar certo; é baked na posição de repouso e movido em runtime, como a cadeira de Bruno Simon.
 - `screen_*`: plano com UV 0..1 para vídeo, canvas ou `Html`. Fora do atlas.
 - `emit_*`, `led_*`, `pc_rgb`, `pc_fan_*`, `tv_backlight`: emissivos. No Blender têm shader de emissão e **iluminam a cena no bake**. No runtime recebem material emissivo com `toneMapped: false`. Fora do atlas.
 - `glass_*`: transparentes (`glass_pc`, `glass_window`). Fora do atlas.
@@ -71,6 +71,14 @@ box_aldeia_dorme · box_conquista_galactica   # caixas dos board games (estante,
 box_porriland · box_piter · box_memory_game · box_o_anel · box_racco · box_duel_arena   # estojos dos jogos digitais (tampo do rack)
 cover_<slug>                     # um por caixa, FILHO de box_<slug>: quadro cinza (#e6e6e6) rente à frente,
                                  # baked; o runtime aplica a arte da capa com a luz do bake (CoverMaterial)
+cover_decor_root · cover_decor_heat · cover_decor_everdell
+                                 # quadros das caixas DECORATIVAS da estante (Root e Heat em pé na prateleira 2,
+                                 # Everdell deitado na 3; artes em content/decor.ts). A caixa é estática, fundida
+                                 # em zone_games: só o quadro é nó (baked, cinza #e6e6e6, SEM pai, sem spring).
+                                 # Em pé fica 1 mm à frente da caixa (+Z); deitado, 1 mm acima da tampa (+Y), com o
+                                 # topo da arte para o fundo da estante (-Z). O CoverMaterial acha o plano da arte
+                                 # pelo eixo mais fino da bounding box e calcula a UV da arte pela posição local do
+                                 # quadro (a UV0 do glb é a do atlas do bake)
 screen_monitor_main              # plano da tela, centro = LAYOUT.monitorMain.center, normal +X
 screen_monitor_vertical
 screen_tv                        # TV acima do rack
@@ -78,7 +86,10 @@ tv_backlight                     # fita de LED rosa atrás da TV
 led_case · glass_pc · pc_fan_top · pc_fan_bottom · pc_rgb
 clock_hour · clock_minute · clock_second   # ponteiros; pivô no centro do relógio
 fx_mug_steam                     # plano vertical acima da caneca
-emit_window_city                 # cidade noturna vista pela janela
+emit_window_city                 # cidade noturna vista pela janela (junto dela vai emit_window_city_cool, as janelinhas azuladas).
+                                 # Os dois planos ficam DENTRO da espessura da parede, entre o vidro e a face externa e atrás
+                                 # da luz da lua do rig noturno, e só têm quadradinhos dentro da abertura: a cidade só aparece
+                                 # pelo vidro (um painel maior vazava para o ar ao lado da parede na órbita da câmera HOME)
 ```
 
 Pivôs: `chair_root` no centro da base; telas no centro do plano com a normal para fora; `printer_part` na base (cresce em Y); ponteiros no eixo do relógio.
@@ -101,18 +112,20 @@ Pivôs: `chair_root` no centro da base; telas no centro do plano com a normal pa
 
 ## 6. Orçamento
 
-| Item | Limite |
-|---|---|
-| `room.glb` (meshopt) | ≤ 4 MB |
-| Triângulos | ≤ 250k |
-| Texturas WebP somadas | ≤ 2 MB |
-| Draw calls em runtime | ≤ 60 (todos os baked dividem um material) |
+| Item | Limite | Atual (`manifest.json` do bake final de 2026-10-24) |
+|---|---|---|
+| `room.glb` (meshopt) | ≤ 4 MB | 773 412 bytes (≈ 0,74 MB) |
+| Triângulos | ≤ 250k | 58 014 |
+| Texturas WebP somadas | ≤ 2 MB | 873 800 bytes (≈ 0,83 MB) |
+| Draw calls em runtime | ≤ 60 (todos os baked dividem um material) | 56 meshes no glb, um draw call cada |
+
+Os 56 meshes passam do limite de 45 que o checklist do §7 (e o `manifest.json`, via `budget.meshes_max`) ainda usa; ficam dentro do teto de 60 draw calls desta tabela. Por isso as caixas decorativas da estante (Root, Heat, Everdell e a Ever Tree) são estáticas, fundidas em `zone_games`: só o quadro de cada capa é nó.
 
 ## 7. Checklist de aceite de um bake
 
 - [ ] `npm run art` termina sem erro e gera os quatro arquivos do §3.
 - [ ] Todos os nomes do §4 existem no glb (`manifest.json`), sem `.001`.
-- [ ] Contagem de meshes no glb ≤ 45 (draw calls).
+- [ ] Contagem de meshes no glb ≤ 45 (draw calls). **Hoje são 56**, acima deste limite e abaixo do teto de 60 do §6: os dois números divergem e o `export.py` grava `meshes_max: 45` no manifest.
 - [ ] O centro de `screen_monitor_main` bate com `LAYOUT.monitorMain.center` (erro < 1 cm).
 - [ ] Previews em `art/previews/` sem buracos de luz, sem manchas pretas de UV sobreposta, sem objetos atravessados.
 - [ ] Orçamento do §6 respeitado.

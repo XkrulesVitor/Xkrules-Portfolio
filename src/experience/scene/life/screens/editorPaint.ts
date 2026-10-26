@@ -1,4 +1,5 @@
-import { EDITOR_CODE, SCREEN_TEXT } from '@/content/screens'
+import { LOCALES, type Locale } from '@/content/i18n'
+import { EDITOR_CODE_BY_LOCALE, SCREEN_TEXT_BY_LOCALE } from '@/content/screens'
 import { withAlpha } from './canvasScreen'
 import { tokenizeLines, type Token, type TokenKind } from './codeHighlight'
 
@@ -44,20 +45,33 @@ const CURSOR_BLINK_HZ = 1.1
 /** Fração da altura útil em que o cursor fica (a rolagem o mantém ali). */
 const CURSOR_ANCHOR = 0.72
 
-const TOKENS: readonly (readonly Token[])[] = tokenizeLines(EDITOR_CODE)
-/** Índice do primeiro caractere de cada linha no texto inteiro (linhas separadas por `\n`). */
-const LINE_START: readonly number[] = (() => {
-  const starts: number[] = []
+/** O código de um idioma, já tokenizado (só os comentários mudam entre os idiomas). */
+interface CodeLayout {
+  lines: readonly string[]
+  tokens: readonly (readonly Token[])[]
+  /** Índice do primeiro caractere de cada linha no texto inteiro (linhas separadas por `\n`). */
+  lineStart: readonly number[]
+  totalChars: number
+}
+
+function buildLayout(lines: readonly string[]): CodeLayout {
+  const lineStart: number[] = []
   let at = 0
-  for (const line of EDITOR_CODE) {
-    starts.push(at)
+  for (const line of lines) {
+    lineStart.push(at)
     at += line.length + 1
   }
-  return starts
-})()
-const TOTAL_CHARS = EDITOR_CODE.reduce((sum, line) => sum + line.length + 1, 0)
+  return { lines, tokens: tokenizeLines(lines), lineStart, totalChars: at }
+}
+
+/** Um layout por idioma, calculado uma vez no carregamento do módulo. */
+const LAYOUTS = Object.fromEntries(
+  LOCALES.map((locale): [Locale, CodeLayout] => [locale, buildLayout(EDITOR_CODE_BY_LOCALE[locale])]),
+) as Record<Locale, CodeLayout>
 
 export interface EditorState {
+  /** Idioma do código e dos textos da moldura (aba, status). Trocar só muda o que é desenhado. */
+  locale: Locale
   /** Caracteres já digitados (inteiro). */
   chars: number
   /** Tempo (s) até o próximo caractere. */
@@ -72,21 +86,22 @@ export interface EditorState {
   time: number
 }
 
-export function createEditorState(): EditorState {
-  return { chars: 0, nextIn: 1 / TYPE_CPS, hold: 0, scroll: 0, charW: 0, time: 0 }
+export function createEditorState(locale: Locale = 'pt'): EditorState {
+  return { locale, chars: 0, nextIn: 1 / TYPE_CPS, hold: 0, scroll: 0, charW: 0, time: 0 }
 }
 
 /** Estado do editor "já digitado" (modo reduced-motion: quadro estático). */
-export function createStaticEditorState(): EditorState {
-  const state = createEditorState()
-  state.chars = TOTAL_CHARS
+export function createStaticEditorState(locale: Locale = 'pt'): EditorState {
+  const state = createEditorState(locale)
+  state.chars = LAYOUTS[locale].totalChars
   return state
 }
 
 /** Avança digitação, rolagem e cursor em `dt` segundos. */
 export function stepEditor(state: EditorState, dt: number): void {
+  const totalChars = LAYOUTS[state.locale].totalChars
   state.time += dt
-  if (state.chars >= TOTAL_CHARS) {
+  if (state.chars >= totalChars) {
     state.hold += dt
     if (state.hold >= HOLD_AFTER_DONE) {
       state.chars = 0
@@ -97,38 +112,38 @@ export function stepEditor(state: EditorState, dt: number): void {
     return
   }
   state.nextIn -= dt
-  while (state.nextIn <= 0 && state.chars < TOTAL_CHARS) {
+  while (state.nextIn <= 0 && state.chars < totalChars) {
     const typed = state.chars
     state.chars += 1
     // `chars` já conta o caractere recém-digitado; pausa depois de uma quebra de linha.
-    state.nextIn += isNewlineAt(typed) ? NEWLINE_PAUSE : 1 / TYPE_CPS
+    state.nextIn += isNewlineAt(LAYOUTS[state.locale], typed) ? NEWLINE_PAUSE : 1 / TYPE_CPS
   }
 }
 
 /** O caractere de índice `index` do texto inteiro é uma quebra de linha? */
-function isNewlineAt(index: number): boolean {
-  // Uma linha termina no índice LINE_START[i] + length(i).
-  const line = lineOf(index)
-  return index === LINE_START[line] + EDITOR_CODE[line].length
+function isNewlineAt(layout: CodeLayout, index: number): boolean {
+  // Uma linha termina no índice lineStart[i] + length(i).
+  const line = lineOf(layout, index)
+  return index === layout.lineStart[line] + layout.lines[line].length
 }
 
 /** Linha que contém o caractere de índice `index` (busca binária). */
-function lineOf(index: number): number {
+function lineOf(layout: CodeLayout, index: number): number {
   let lo = 0
-  let hi = LINE_START.length - 1
+  let hi = layout.lineStart.length - 1
   while (lo < hi) {
     const mid = (lo + hi + 1) >> 1
-    if (LINE_START[mid] <= index) lo = mid
+    if (layout.lineStart[mid] <= index) lo = mid
     else hi = mid - 1
   }
   return lo
 }
 
 /** Linha e coluna (0-based) do cursor, dado quantos caracteres já foram digitados. */
-function cursorPosition(chars: number): { line: number; col: number } {
-  const clamped = Math.min(chars, TOTAL_CHARS - 1)
-  const line = lineOf(clamped)
-  const col = Math.min(chars - LINE_START[line], EDITOR_CODE[line].length)
+function cursorPosition(layout: CodeLayout, chars: number): { line: number; col: number } {
+  const clamped = Math.min(chars, layout.totalChars - 1)
+  const line = lineOf(layout, clamped)
+  const col = Math.min(chars - layout.lineStart[line], layout.lines[line].length)
   return { line, col }
 }
 
@@ -136,12 +151,14 @@ const textTop = TAB_H
 const textHeight = EDITOR_HEIGHT - TAB_H - STATUS_H
 
 export function paintEditor(ctx: CanvasRenderingContext2D, state: EditorState, animated: boolean): void {
+  const layout = LAYOUTS[state.locale]
+  const text = SCREEN_TEXT_BY_LOCALE[state.locale].editor
   if (state.charW === 0) {
     ctx.font = FONT_MONO
     state.charW = ctx.measureText('M').width
   }
   const { charW } = state
-  const { line: curLine, col: curCol } = cursorPosition(state.chars)
+  const { line: curLine, col: curCol } = cursorPosition(layout, state.chars)
 
   // Rolagem: o cursor fica na parte baixa da área útil.
   const cursorY = curLine * LINE_H
@@ -177,8 +194,8 @@ export function paintEditor(ctx: CanvasRenderingContext2D, state: EditorState, a
     ctx.fillText(String(i + 1), GUTTER_W - 12, y)
     ctx.textAlign = 'left'
 
-    const visibleChars = i === curLine ? curCol : EDITOR_CODE[i].length
-    for (const token of TOKENS[i]) {
+    const visibleChars = i === curLine ? curCol : layout.lines[i].length
+    for (const token of layout.tokens[i]) {
       if (token.col >= visibleChars) break
       const text = token.col + token.text.length > visibleChars ? token.text.slice(0, visibleChars - token.col) : token.text
       if (text.trim() === '') continue
@@ -208,9 +225,9 @@ export function paintEditor(ctx: CanvasRenderingContext2D, state: EditorState, a
   ctx.textBaseline = 'middle'
   ctx.textAlign = 'left'
   ctx.fillStyle = '#e8ecff'
-  ctx.fillText(SCREEN_TEXT.editor.fileName, 24, TAB_H / 2 + 4)
+  ctx.fillText(text.fileName, 24, TAB_H / 2 + 4)
   ctx.fillStyle = '#4a5680'
-  ctx.fillText(SCREEN_TEXT.editor.siblingTab, 196, TAB_H / 2 + 4)
+  ctx.fillText(text.siblingTab, 196, TAB_H / 2 + 4)
 
   // Barra de status.
   ctx.fillStyle = '#10183a'
@@ -219,11 +236,11 @@ export function paintEditor(ctx: CanvasRenderingContext2D, state: EditorState, a
   ctx.font = '500 13px system-ui, "Segoe UI", sans-serif'
   ctx.textAlign = 'left'
   ctx.fillText(
-    SCREEN_TEXT.editor.status.replace('{line}', String(curLine + 1)).replace('{col}', String(curCol + 1)),
+    text.status.replace('{line}', String(curLine + 1)).replace('{col}', String(curCol + 1)),
     14,
     EDITOR_HEIGHT - STATUS_H / 2,
   )
   ctx.textAlign = 'right'
   ctx.fillStyle = '#7f8bb5'
-  ctx.fillText(SCREEN_TEXT.editor.language, EDITOR_WIDTH - 14, EDITOR_HEIGHT - STATUS_H / 2)
+  ctx.fillText(text.language, EDITOR_WIDTH - 14, EDITOR_HEIGHT - STATUS_H / 2)
 }

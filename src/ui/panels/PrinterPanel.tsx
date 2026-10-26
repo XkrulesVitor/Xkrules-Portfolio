@@ -1,13 +1,23 @@
 import { CubeIcon, PrinterIcon } from '@phosphor-icons/react'
-import { PRINT_SHOWCASE } from '@/content/projects.print'
-import { UI_TEXT } from '@/content/site'
+import { LOCALE_INFO, type Locale } from '@/content/i18n'
+import type { UiText } from '@/content/site'
 import type { PrintProject, PrintShowcase } from '@/content/types'
+import { useContent } from '../i18n/useLocale'
 import { Carousel, fmt, GlassCard, LinkButton, SmartImage, Tag, TodoText } from '../primitives'
 import { PanelIcon } from './PanelIcon'
 import { PanelSection } from './PanelSection'
 import { PanelShell } from './PanelShell'
 
-const NUMBER = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 })
+/** Um formatador de números por idioma (criados uma vez, sob demanda). */
+const NUMBER_FORMATS = new Map<Locale, Intl.NumberFormat>()
+function numberFormat(locale: Locale): Intl.NumberFormat {
+  let format = NUMBER_FORMATS.get(locale)
+  if (!format) {
+    format = new Intl.NumberFormat(LOCALE_INFO[locale].intl, { maximumFractionDigits: 2 })
+    NUMBER_FORMATS.set(locale, format)
+  }
+  return format
+}
 
 interface Spec {
   key: string
@@ -15,10 +25,10 @@ interface Spec {
   value: string
 }
 
-/** Parâmetros de fatiamento presentes na peça, já formatados (pt-BR) e com unidade. */
-function slicerSpecs(slicer: PrintProject['slicer']): Spec[] {
+/** Parâmetros de fatiamento presentes na peça, já formatados no idioma ativo e com unidade. */
+function slicerSpecs(slicer: PrintProject['slicer'], t: UiText['printer'], locale: Locale): Spec[] {
   if (!slicer) return []
-  const t = UI_TEXT.printer
+  const NUMBER = numberFormat(locale)
   const specs: Spec[] = []
   if (slicer.printer) specs.push({ key: 'printer', label: t.spec.printer, value: slicer.printer })
   if (slicer.layerHeightMm !== undefined) {
@@ -38,9 +48,10 @@ function slicerSpecs(slicer: PrintProject['slicer']): Spec[] {
 }
 
 function PieceSlide({ piece }: { piece: PrintProject }) {
-  const t = UI_TEXT.printer
+  const { ui, locale } = useContent()
+  const t = ui.printer
   const cover = piece.images[0]
-  const specs = slicerSpecs(piece.slicer)
+  const specs = slicerSpecs(piece.slicer, t, locale)
 
   return (
     <GlassCard variant="inset" padding="none" className="h-full overflow-hidden">
@@ -86,7 +97,7 @@ function PieceSlide({ piece }: { piece: PrintProject }) {
  * (linhas horizontais que somem para cima) e uma varredura de brilho lenta.
  */
 function EmptyShowcase() {
-  const t = UI_TEXT.printer
+  const t = useContent().ui.printer
   return (
     <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-dashed border-[var(--glass-border-strong)] bg-white/[0.03]">
       <div
@@ -116,14 +127,16 @@ function EmptyShowcase() {
 }
 
 interface PrinterPanelProps {
-  /** Conteúdo. Padrão: content/projects.print.ts. */
+  /** Conteúdo. Padrão: content/projects.print.ts, no idioma ativo. */
   showcase?: PrintShowcase
   autoFocus?: boolean
 }
 
 /** Painel do hotspot `printer` (Reino de Amestris): descrição, vitrine de peças e links. */
-export function PrinterPanel({ showcase = PRINT_SHOWCASE, autoFocus }: PrinterPanelProps) {
-  const t = UI_TEXT.printer
+export function PrinterPanel({ showcase: given, autoFocus }: PrinterPanelProps) {
+  const content = useContent()
+  const t = content.ui.printer
+  const showcase = given ?? content.print
   const pieces = showcase.projects
 
   return (

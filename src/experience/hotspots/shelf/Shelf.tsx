@@ -8,6 +8,7 @@ import { MediaPlaceholder } from '../../scene/placeholders/MediaPlaceholder'
 import { ShelfPlaceholder } from '../../scene/placeholders/ShelfPlaceholder'
 import type { Vec3 } from '../../scene/placeholders/parts'
 import { BakedGameBoxes } from './BakedGameBoxes'
+import { BoardGameFx } from './BoardGameFx'
 import { GameBox } from './GameBox'
 import { GameCovers } from './GameCovers'
 import { ShelfParticles } from './ShelfParticles'
@@ -85,6 +86,7 @@ export function Shelf() {
         </>
       )}
       <ShelfParticles />
+      <BoardGameFx />
       <TvGameHtml />
     </group>
   )

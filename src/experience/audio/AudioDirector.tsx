@@ -44,23 +44,33 @@ declare global {
  * - por frame (refs, sem setState): ajusta o volume do zumbido pela distância da câmera ao PC e o do
  *   ambiente pela distância ao centro do quarto. Fora de áudio ligado, não gasta nada;
  * - por evento (assinaturas do store): estática da TV no hover da zona de jogos e ao trocar de
- *   sub-vista dentro dela. Também replica `muted` do store no motor.
+ *   sub-vista dentro dela. Também replica `muted`, `volumes` e `playing` do store no motor (a
+ *   música lo-fi é gerada e agendada pelo próprio motor, sem depender do frame).
  * Só LÊ a câmera; quem a move é o `CameraRig`.
  */
 export function AudioDirector() {
   const camera = useThree((s) => s.camera)
 
-  // Mudo do store -> motor. `fireImmediately` aplica o estado inicial (mudo). Com um jogo na TV o
-  // quarto silencia (o som é o do jogo), sem mexer na preferência `muted` do visitante.
-  useEffect(
-    () =>
-      useExperienceStore.subscribe(
-        (s) => s.muted || s.playing !== null,
-        (silent) => audio.setMuted(silent),
-        { fireImmediately: true },
-      ),
-    [],
-  )
+  // Som do store -> motor. `fireImmediately` aplica o estado inicial (mudo/volumes salvos).
+  // - `muted`: mudo geral.
+  // - `volumes`: Música, Ambiente e Efeitos (o motor traduz para o ganho de cada bus).
+  // - `playing`: com um jogo na TV, Música e Ambiente calam (o som é o do jogo), sem mexer nas
+  //   preferências do visitante; ao desligar o jogo, voltam.
+  useEffect(() => {
+    const store = useExperienceStore
+    const stops = [
+      store.subscribe((s) => s.muted, (muted) => audio.setMuted(muted), { fireImmediately: true }),
+      store.subscribe((s) => s.volumes, (volumes) => audio.setVolumes(volumes), {
+        fireImmediately: true,
+      }),
+      store.subscribe((s) => s.playing !== null, (playing) => audio.setGameActive(playing), {
+        fireImmediately: true,
+      }),
+    ]
+    return () => {
+      for (const stop of stops) stop()
+    }
+  }, [])
 
   // Estática da TV: hover na zona de jogos e troca de vista dentro dela.
   useEffect(() => {

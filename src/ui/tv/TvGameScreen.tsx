@@ -1,7 +1,7 @@
 import { useRef, useState, type CSSProperties, type HTMLAttributes } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { UI_TEXT } from '@/content/site'
 import type { GamePlay, GameProject } from '@/content/types'
+import { useUiText } from '../i18n/useLocale'
 import { EASE, fmt, SmartImage } from '../primitives'
 
 /**
@@ -45,7 +45,7 @@ function frameStyle(play: TvPlay): CSSProperties {
 }
 
 function TvGame({ game, play }: { game: GameProject; play: TvPlay }) {
-  const t = UI_TEXT.tvGame
+  const t = useUiText().tvGame
   const [loaded, setLoaded] = useState(false)
   const frameRef = useRef<HTMLIFrameElement>(null)
   const accent = game.accent ?? 'var(--color-accent-mint)'

@@ -53,7 +53,54 @@ export function fillBrown(out: Float32Array, random: Random = Math.random, targe
   }
 }
 
+/** Estalos médios por segundo do chiado de vinil e "poeira" (estalos minúsculos e densos). */
+export const CRACKLE_POPS_PER_S = 9
+export const CRACKLE_DUST_PER_S = 60
+
+/**
+ * Chiado de vinil: estalos esparsos de força muito desigual (poucos fortes, muitos fracos), cada um um
+ * pulso que morre em poucos milissegundos, mais uma "poeira" de estalos minúsculos. Os estalos que
+ * passam do fim voltam ao começo (módulo): o buffer é circular, então o loop não tem emenda. O pico
+ * fica em [-1, 1]; quem toca escolhe o nível.
+ */
+export function fillCrackle(out: Float32Array, sampleRate: number, random: Random = Math.random): void {
+  const n = out.length
+  out.fill(0)
+  if (n === 0) return
+  const seconds = n / sampleRate
+  const stamp = (amplitude: number, tau: number, omega: number) => {
+    const start = Math.floor(random() * n)
+    const length = Math.min(n, Math.ceil(tau * 6))
+    const sign = random() < 0.5 ? -1 : 1
+    for (let k = 0; k < length; k++) {
+      out[(start + k) % n] += sign * amplitude * Math.exp(-k / tau) * Math.cos(omega * k)
+    }
+  }
+  const pops = Math.max(1, Math.round(seconds * CRACKLE_POPS_PER_S))
+  for (let i = 0; i < pops; i++) {
+    const strength = random()
+    stamp(0.03 + strength * strength * strength * 0.85, 2 + random() * 10, random() * Math.PI * 0.6)
+  }
+  const dust = Math.round(seconds * CRACKLE_DUST_PER_S)
+  for (let i = 0; i < dust; i++) {
+    const strength = random()
+    stamp(strength * strength * 0.06, 1.5, 0)
+  }
+  for (let i = 0; i < n; i++) {
+    if (out[i] > 1) out[i] = 1
+    else if (out[i] < -1) out[i] = -1
+  }
+}
+
 export type NoiseKind = 'white' | 'brown'
+
+/** Buffer mono de chiado de vinil (loop circular). */
+export function createCrackleBuffer(ctx: BaseAudioContext, seconds: number): AudioBuffer {
+  const length = Math.max(1, Math.floor(ctx.sampleRate * seconds))
+  const buffer = ctx.createBuffer(1, length, ctx.sampleRate)
+  fillCrackle(buffer.getChannelData(0), ctx.sampleRate)
+  return buffer
+}
 
 /** Cria um buffer mono de ruído no contexto (real ou offline). */
 export function createNoiseBuffer(

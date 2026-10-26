@@ -21,7 +21,8 @@ import {
 } from '@phosphor-icons/react'
 import type { Icon, IconWeight } from '@phosphor-icons/react'
 import { OS_PROJECT_GLYPHS, type OsGlyphKey } from '@/content/os'
-import type { LinkKind } from '@/content/types'
+import type { LinkKind, MediaImage } from '@/content/types'
+import styles from './OsGlyph.module.css'
 
 const GLYPHS: Record<OsGlyphKey, Icon> = {
   folder: FolderOpenIcon,
@@ -66,6 +67,37 @@ interface OsGlyphProps {
 export function OsGlyph({ name, weight = 'duotone' }: OsGlyphProps) {
   const Glyph = GLYPHS[name]
   return <Glyph weight={weight} aria-hidden="true" />
+}
+
+interface AppGlyphProps {
+  /** Glifo desenhado, usado quando não há `icon`. */
+  name: OsGlyphKey
+  /** Ícone real do projeto (`WebProject.icon`). Tem prioridade sobre o glifo. */
+  icon?: MediaImage
+  weight?: IconWeight
+}
+
+/**
+ * Glifo de um app ou projeto: a imagem do projeto quando existe, o ícone desenhado quando não.
+ * Os dois medem 1em (o tamanho vem do `font-size` do pai). A imagem é decorativa (alt vazio): o
+ * título do app sempre aparece ao lado.
+ */
+export function AppGlyph({ name, icon, weight }: AppGlyphProps) {
+  if (!icon) return <OsGlyph name={name} weight={weight} />
+  return (
+    // <img> simples: o src é conteúdo (pode ser SVG ou URL absoluta) e next/image exigiria
+    // images.remotePatterns e dangerouslyAllowSVG no next.config.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className={styles.image}
+      src={icon.src}
+      alt=""
+      width={icon.width}
+      height={icon.height}
+      decoding="async"
+      draggable={false}
+    />
+  )
 }
 
 interface LinkGlyphProps {

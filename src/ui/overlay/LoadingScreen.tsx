@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { SITE, UI_TEXT } from '@/content/site'
+import { SITE } from '@/content/site'
+import { useDocumentLocale } from '../i18n/useDocumentLocale'
+import { useUiText } from '../i18n/useLocale'
 import { Kbd } from '../primitives/Kbd'
 import { useReduceMotion } from '../primitives/motion'
 import styles from './LoadingScreen.module.css'
@@ -52,8 +54,12 @@ export function LoadingScreen({ visible, progress, ready, onEnter }: LoadingScre
   const [elapsed] = useState(msSinceBootStart)
   const showButton = ready && onEnter !== undefined
   const percent = Math.round(Math.min(100, Math.max(0, progress)))
-  const boot = UI_TEXT.loading.boot
+  // Nasce no idioma detectado (o HTML do servidor é em português; a hidratação troca em seguida).
+  const text = useUiText().loading
+  const boot = text.boot
   const progressIndex = boot.lines.length + 1
+  // Esta tela é a primeira coisa que existe no cliente: ela leva o idioma para <html lang> e o título.
+  useDocumentLocale()
 
   useEffect(() => {
     if (showButton) buttonRef.current?.focus({ preventScroll: true })
@@ -82,7 +88,7 @@ export function LoadingScreen({ visible, progress, ready, onEnter }: LoadingScre
             {/* Linhas só de ambientação: nada nelas é conteúdo, então ficam fora da árvore de acessibilidade. */}
             <ul aria-hidden="true" className="mt-5 space-y-0.5">
               {boot.lines.map((line, i) => (
-                <li key={line.label} className={`${styles.line} flex items-baseline gap-2`} style={lineStyle(i + 1)}>
+                <li key={i} className={`${styles.line} flex items-baseline gap-2`} style={lineStyle(i + 1)}>
                   <span className="text-ink/80">{line.label}</span>
                   <span className="flex-1 -translate-y-1 border-b border-dotted border-ink/25" />
                   <span className={line.tone === 'warn' ? 'text-todo' : 'text-accent-mint'}>{line.status}</span>
@@ -92,12 +98,12 @@ export function LoadingScreen({ visible, progress, ready, onEnter }: LoadingScre
 
             <div className={`${styles.line} mt-5`} style={lineStyle(progressIndex)}>
               <p className="flex items-baseline justify-between text-ink/80">
-                <span>{UI_TEXT.loading.title}</span>
+                <span>{text.title}</span>
                 <span className="text-accent-mint tabular-nums">{percent}%</span>
               </p>
               <div
                 role="progressbar"
-                aria-label={UI_TEXT.loading.progressLabel}
+                aria-label={text.progressLabel}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={percent}
@@ -109,7 +115,7 @@ export function LoadingScreen({ visible, progress, ready, onEnter }: LoadingScre
 
             {/* A tela de leitor só ouve a mudança relevante (pronto), não cada porcentagem. */}
             <p role="status" className="sr-only">
-              {showButton ? UI_TEXT.loading.ready : ''}
+              {showButton ? text.ready : ''}
             </p>
 
             <div className="mt-6 flex min-h-12 flex-wrap items-center gap-x-5 gap-y-3">
@@ -121,10 +127,10 @@ export function LoadingScreen({ visible, progress, ready, onEnter }: LoadingScre
                     onClick={onEnter}
                     className="cursor-pointer border border-accent-mint/70 bg-accent-mint/10 px-7 py-2.5 font-medium tracking-[0.18em] text-accent-mint uppercase transition-colors hover:bg-accent-mint/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-mint"
                   >
-                    {UI_TEXT.loading.enter}
+                    {text.enter}
                   </button>
                   <span aria-hidden="true" className="flex items-center gap-2 text-ink/60">
-                    {UI_TEXT.loading.ready}
+                    {text.ready}
                     <Kbd>{boot.enterKey}</Kbd>
                   </span>
                 </>
@@ -135,6 +141,9 @@ export function LoadingScreen({ visible, progress, ready, onEnter }: LoadingScre
                 </span>
               )}
             </div>
+
+            {/* Avisa antes do clique que entrar liga o som (e onde mudar). */}
+            {showButton ? <p className="mt-3 max-w-[52ch] text-xs leading-5 text-ink/50">{boot.soundNote}</p> : null}
           </div>
         </motion.div>
       ) : null}

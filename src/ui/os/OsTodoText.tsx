@@ -1,4 +1,4 @@
-import { OS_TEXT } from '@/content/os'
+import { useOsText } from '../i18n/useLocale'
 import shared from './shared.module.css'
 
 // Um único grupo de captura: no `split`, os marcadores caem nos índices ímpares.
@@ -10,12 +10,13 @@ const TODO_SPLIT = /(\[TODO:[^\]]*\])/
  * `TodoText` das primitivas usa rem e não escalaria com o monitor.
  */
 export function OsTodoText({ text }: { text: string }) {
+  const hint = useOsText().todoHint
   const parts = text.split(TODO_SPLIT)
   return (
     <>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
-          <mark key={i} title={OS_TEXT.todoHint} className={shared.todo}>
+          <mark key={i} title={hint} className={shared.todo}>
             {part}
           </mark>
         ) : (

@@ -2,8 +2,7 @@ import { useLayoutEffect } from 'react'
 import { useThree } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { SRGBColorSpace, type Mesh, type Object3D, type Texture } from 'three'
-import type { GameSlug } from '@/content/types'
-import { GAME_COVERS, GAME_COVER_URLS } from '../../scene/baked/assets'
+import { COVER_URLS, DECOR_COVER_ENTRIES, GAME_COVERS } from '../../scene/baked/assets'
 import { BakedMaterial } from '../../scene/baked/BakedMaterial'
 import { createCoverMaterial } from '../../scene/baked/CoverMaterial'
 import { useRoomNode } from '../../scene/baked/RoomContext'
@@ -37,8 +36,8 @@ function applyCover(mesh: Mesh, art: Texture): () => void {
   }
 }
 
-function CoverArt({ slug, art }: { slug: GameSlug; art: Texture }) {
-  const node = useRoomNode(GAME_BOX_NODES[slug].cover)
+function CoverArt({ nodeName, art }: { nodeName: string; art: Texture }) {
+  const node = useRoomNode(nodeName)
   useLayoutEffect(() => {
     if (!node || !isMesh(node)) return
     return applyCover(node, art)
@@ -47,14 +46,24 @@ function CoverArt({ slug, art }: { slug: GameSlug; art: Texture }) {
 }
 
 /**
+ * Nó do quadro de cada capa, na MESMA ordem de `COVER_URLS` (assets.ts): primeiro os jogos (o quadro é
+ * filho da caixa e anda junto no spring), depois a decoração (quadros soltos sobre caixas estáticas).
+ */
+const COVER_NODE_NAMES: readonly string[] = [
+  ...GAME_COVERS.map((cover) => GAME_BOX_NODES[cover.slug].cover),
+  ...DECOR_COVER_ENTRIES.map((decor) => decor.node),
+]
+
+/**
  * Artes das capas no quarto baked (ARCHITECTURE §6.4): cada `cover_<slug>` do glb (filho da caixa,
- * então anda junto no spring) recebe o `CoverMaterial` com a capa de content/projects.games.ts. As
- * texturas vêm pré-carregadas na tela de loading (`preload.ts`). Sem a capa ou sem o nó, o quadro
+ * então anda junto no spring) recebe o `CoverMaterial` com a capa de content/projects.games.ts, e cada
+ * `cover_decor_<id>` (Root, Heat e Everdell, caixas decorativas da estante) recebe a de content/decor.ts.
+ * As texturas vêm pré-carregadas na tela de loading (`preload.ts`). Sem a capa ou sem o nó, o quadro
  * fica com o bake (cinza iluminado). Não desenha nada.
  */
 export function GameCovers() {
   const gl = useThree((s) => s.gl)
-  const textures = useTexture(GAME_COVER_URLS)
+  const textures = useTexture(COVER_URLS)
 
   useLayoutEffect(() => {
     const anisotropy = Math.min(MAX_COVER_ANISOTROPY, gl.capabilities.getMaxAnisotropy())
@@ -63,8 +72,8 @@ export function GameCovers() {
 
   return (
     <>
-      {GAME_COVERS.map((cover, i) => (
-        <CoverArt key={cover.slug} slug={cover.slug} art={textures[i]} />
+      {COVER_NODE_NAMES.map((nodeName, i) => (
+        <CoverArt key={nodeName} nodeName={nodeName} art={textures[i]} />
       ))}
     </>
   )

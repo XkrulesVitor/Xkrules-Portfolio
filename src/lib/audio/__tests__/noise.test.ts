@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { fillBrown, fillWhite, rms } from '../noise.ts'
+import { fillBrown, fillCrackle, fillWhite, rms } from '../noise.ts'
 
 // PRNG determinístico (mulberry32): os testes não podem depender de Math.random.
 function seeded(seed: number): () => number {
@@ -66,5 +66,37 @@ describe('noise: ruído marrom', () => {
     fillBrown(tiny, seeded(1))
     assert.equal(tiny.length, 3)
     fillBrown(new Float32Array(0), seeded(1))
+  })
+})
+
+describe('noise: chiado de vinil', () => {
+  const SR = 44_100
+
+  it('fica em [-1, 1], é determinístico e é esparso: quase tudo é silêncio com estalos pontuais', () => {
+    const a = new Float32Array(SR * 2)
+    const b = new Float32Array(SR * 2)
+    fillCrackle(a, SR, seeded(4))
+    fillCrackle(b, SR, seeded(4))
+    assert.deepEqual(a, b)
+    let loud = 0
+    let quiet = 0
+    let peak = 0
+    for (const v of a) {
+      assert.ok(v >= -1 && v <= 1)
+      peak = Math.max(peak, Math.abs(v))
+      if (Math.abs(v) > 0.1) loud++
+      if (Math.abs(v) < 0.02) quiet++
+    }
+    assert.ok(peak > 0.15, 'tem de haver estalos audíveis')
+    assert.ok(loud / a.length < 0.01, 'estalos fortes são raros')
+    assert.ok(quiet / a.length > 0.9, 'o resto é quase silêncio')
+  })
+
+  it('o loop é circular: estalos que passam do fim voltam ao começo, sem corte', () => {
+    // Um buffer minúsculo força os estalos a atravessarem a emenda; nada pode lançar nem sair de [-1, 1].
+    const tiny = new Float32Array(300)
+    fillCrackle(tiny, SR, seeded(2))
+    for (const v of tiny) assert.ok(v >= -1 && v <= 1)
+    fillCrackle(new Float32Array(0), SR, seeded(2))
   })
 })

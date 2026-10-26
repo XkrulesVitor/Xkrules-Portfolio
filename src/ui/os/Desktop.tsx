@@ -1,8 +1,8 @@
 import { memo, useCallback, useId, useReducer, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
-import { OS_MEMORY_PROJECT_SLUG, OS_TEXT, type OsGlyphKey } from '@/content/os'
-import { WEB_PROJECTS } from '@/content/projects.web'
-import type { WebProject } from '@/content/types'
+import { OS_MEMORY_PROJECT_SLUG, type OsGlyphKey, type OsText } from '@/content/os'
+import type { MediaImage, WebProject } from '@/content/types'
+import { useContent } from '../i18n/useLocale'
 import { CreditsApp } from './apps/CreditsApp'
 import { MemoryGameApp } from './apps/MemoryGameApp'
 import { ProjectsApp } from './apps/ProjectsApp'
@@ -31,6 +31,7 @@ import {
 import styles from './Desktop.module.css'
 
 export interface DesktopProps {
+  /** Projetos. Padrão: content/projects.web.ts, no idioma ativo. */
   projects?: readonly WebProject[]
   /** Janelas abertas na montagem (padrão: nenhuma). */
   initialWindows?: readonly AppRef[]
@@ -45,6 +46,8 @@ export interface DesktopProps {
 interface AppMeta {
   title: string
   glyph: OsGlyphKey
+  /** Ícone real do projeto (`WebProject.icon`): tem prioridade sobre o glifo onde o SO o aceita. */
+  icon?: MediaImage
   accent?: string
   /** O corpo da janela não rola e o app preenche a altura (terminal, jogo). */
   fill?: boolean
@@ -54,23 +57,28 @@ interface AppMeta {
 const REBOOT_WINDOWS: readonly AppRef[] = [{ kind: 'projects' }]
 
 /** Título, glifo e cor de um app. `null` quando o projeto não existe mais na lista. */
-function describeApp(app: AppRef, projects: readonly WebProject[]): AppMeta | null {
+function describeApp(app: AppRef, projects: readonly WebProject[], os: OsText): AppMeta | null {
   switch (app.kind) {
     case 'projects':
-      return { title: OS_TEXT.projects.title, glyph: 'folder' }
+      return { title: os.projects.title, glyph: 'folder' }
     case 'project': {
       const project = projects.find((p) => p.slug === app.slug)
       if (!project) return null
-      return { title: project.title, glyph: projectGlyph(project.slug), accent: project.accent }
+      return {
+        title: project.title,
+        glyph: projectGlyph(project.slug),
+        icon: project.icon,
+        accent: project.accent,
+      }
     }
     case 'computer':
-      return { title: OS_TEXT.apps.computer.title, glyph: 'computer' }
+      return { title: os.apps.computer.title, glyph: 'computer' }
     case 'terminal':
-      return { title: OS_TEXT.apps.terminal.title, glyph: 'terminal', fill: true }
+      return { title: os.apps.terminal.title, glyph: 'terminal', fill: true }
     case 'memory':
-      return { title: OS_TEXT.apps.memory.title, glyph: 'puzzle', accent: '#b583ff', fill: true }
+      return { title: os.apps.memory.title, glyph: 'puzzle', accent: '#b583ff', fill: true }
     case 'credits':
-      return { title: OS_TEXT.apps.credits.title, glyph: 'heart', accent: '#f78fd0' }
+      return { title: os.apps.credits.title, glyph: 'heart', accent: '#f78fd0' }
   }
 }
 
@@ -113,7 +121,11 @@ const STAGE_STYLE: CssVars = { '--taskbar-h': `${TASKBAR_HEIGHT_PCT}%` }
  * Estado das janelas local (useReducer): não toca o store global. "Desligar" também é local:
  * a tela do SO apaga, e religar a recomeça com a janela Projetos; nada fora do SO muda.
  */
-export function Desktop({ projects = WEB_PROJECTS, initialWindows, launch = null, className }: DesktopProps) {
+export function Desktop({ projects: given, initialWindows, launch = null, className }: DesktopProps) {
+  // Textos e projetos no idioma ativo: trocar o idioma re-renderiza o SO sem fechar nenhuma janela.
+  const content = useContent()
+  const os = content.os
+  const projects = given ?? content.web
   const [wm, dispatch] = useReducer(wmReducer, initialWindows, initWm)
   const [startOpen, setStartOpen] = useState(false)
   const [power, setPower] = useState<'on' | PowerPhase>('on')
@@ -186,13 +198,14 @@ export function Desktop({ projects = WEB_PROJECTS, initialWindows, launch = null
 
   const activeId = getActiveId(wm)
   const windows = wm.windows.flatMap((win) => {
-    const meta = describeApp(win.app, projects)
+    const meta = describeApp(win.app, projects, os)
     return meta ? [{ win, meta }] : []
   })
   const entries: TaskbarEntry[] = windows.map(({ win, meta }) => ({
     id: win.id,
     title: meta.title,
     glyph: meta.glyph,
+    icon: meta.icon,
     accent: meta.accent,
     active: win.id === activeId,
     minimized: win.minimized,
@@ -204,7 +217,7 @@ export function Desktop({ projects = WEB_PROJECTS, initialWindows, launch = null
     <div
       ref={desktopRef}
       role="region"
-      aria-label={OS_TEXT.desktop.label}
+      aria-label={os.desktop.label}
       tabIndex={-1}
       className={[styles.desktop, className].filter(Boolean).join(' ')}
     >
@@ -216,11 +229,11 @@ export function Desktop({ projects = WEB_PROJECTS, initialWindows, launch = null
               <div className={styles.rings} />
             </div>
 
-            <ul className={styles.icons} role="list" aria-label={OS_TEXT.desktop.shortcuts}>
+            <ul className={styles.icons} role="list" aria-label={os.desktop.shortcuts}>
               {SYSTEM_APPS.map((entry) => (
                 <DesktopIcon
                   key={entry.app.kind}
-                  label={entry.title}
+                  label={entry.title(os)}
                   glyph={entry.glyph}
                   tone="glass"
                   onOpen={() => openApp(entry.app)}
@@ -231,13 +244,14 @@ export function Desktop({ projects = WEB_PROJECTS, initialWindows, launch = null
             <ul
               className={`${styles.icons} ${styles.iconsProjects}`}
               role="list"
-              aria-label={OS_TEXT.desktop.projectShortcuts}
+              aria-label={os.desktop.projectShortcuts}
             >
               {projects.map((project) => (
                 <DesktopIcon
                   key={project.slug}
                   label={project.title}
                   glyph={projectGlyph(project.slug)}
+                  icon={project.icon}
                   accent={project.accent}
                   onOpen={() => openProject(project.slug)}
                 />
@@ -252,6 +266,7 @@ export function Desktop({ projects = WEB_PROJECTS, initialWindows, launch = null
                     id={win.id}
                     title={meta.title}
                     glyph={meta.glyph}
+                    icon={meta.icon}
                     accent={meta.accent}
                     geometry={win.geometry}
                     z={win.z}

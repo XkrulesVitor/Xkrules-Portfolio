@@ -1,4 +1,8 @@
 // Textos globais do site e strings de UI (chrome). Conteúdo só aqui.
+// `SITE` e `UI_TEXT` valem o português (o server component `app/page.tsx` e o `layout.tsx` os usam
+// direto); `SITE_BY_LOCALE` e `UI_TEXT_BY_LOCALE` trazem os dois idiomas. O inglês está em `en/site.ts`.
+import { SITE_TEXT_EN, UI_TEXT_EN } from './en/site.ts'
+import type { ByLocale, Widened } from './i18n.ts'
 import type { ExternalLink } from './types'
 
 export const SITE = {
@@ -27,6 +31,25 @@ export const SITE = {
   ] as readonly ExternalLink[],
 } as const
 
+/** Parte do `SITE` que muda com o idioma (o resto de `SITE` é compartilhado). */
+export interface SiteText {
+  title: string
+  description: string
+  /** Idioma no formato do OpenGraph. */
+  ogLocale: string
+  ogImageAlt: string
+}
+
+export const SITE_BY_LOCALE: ByLocale<SiteText> = {
+  pt: {
+    title: SITE.title,
+    description: SITE.description,
+    ogLocale: SITE.ogLocale,
+    ogImageAlt: SITE.ogImage.alt,
+  },
+  en: SITE_TEXT_EN,
+}
+
 export const UI_TEXT = {
   loading: {
     title: 'Carregando o diorama',
@@ -44,10 +67,12 @@ export const UI_TEXT = {
         { label: 'Verificando memória', status: 'OK', tone: 'ok' },
         { label: 'Detectando placa de vídeo (WebGL)', status: 'OK', tone: 'ok' },
         { label: 'Montando teclado e mouse', status: 'OK', tone: 'ok' },
-        { label: 'Sintetizador de áudio', status: 'MUDO', tone: 'warn' },
-      ],
+        { label: 'Sintetizador de áudio', status: 'LO-FI', tone: 'ok' },
+      ] as readonly { label: string; status: string; tone: 'ok' | 'warn' }[],
       /** Tecla que aciona o botão "Entrar" (ele já nasce com o foco). */
       enterKey: 'Enter',
+      /** Aviso sob o botão: entrar liga a música baixinha, e o visitante manda no som pelo HUD. */
+      soundNote: 'Ao entrar toca uma música lo-fi baixinha. Ajuste ou silencie no botão Som, no canto superior direito.',
     },
   },
   hud: {
@@ -59,12 +84,42 @@ export const UI_TEXT = {
       toNight: 'Noite',
       toNightAria: 'Mudar para o tema escuro (noite)',
     },
-    /** Botão de som: como o de tema, descreve a AÇÃO (para onde vai trocar). Mudo por padrão. */
+    /**
+     * Som (menu do HUD). O botão do HUD mostra o ESTADO (ligado ou mudo) e abre um menu com o mudo geral
+     * e um volume por categoria. Os botões de ação (`toOn`, `toOff`) descrevem a AÇÃO.
+     */
     sound: {
-      toOn: 'Som',
-      toOnAria: 'Ligar o som do quarto',
-      toOff: 'Mudo',
-      toOffAria: 'Deixar o quarto mudo',
+      /** Texto do botão do HUD com o som ligado e mudo. */
+      on: 'Som',
+      off: 'Mudo',
+      /** aria-label do botão do HUD; `{state}` vira `stateOn` ou `stateOff`. */
+      triggerAria: 'Ajustes de som, {state}',
+      stateOn: 'ligado',
+      stateOff: 'mudo',
+      /** Nome acessível do menu e título visível dele. */
+      menuLabel: 'Ajustes de som',
+      title: 'Som do quarto',
+      /** Mudo geral: o texto é o nome acessível e descreve a AÇÃO. */
+      toOn: 'Ligar o som',
+      toOff: 'Deixar mudo',
+      /** Valor de um slider; `{value}` é a porcentagem (0 a 100). */
+      volumeValue: '{value}%',
+      /** Um slider por categoria de som. */
+      categories: {
+        music: { label: 'Música', hint: 'Lo-fi tocando baixinho' },
+        ambient: { label: 'Ambiente', hint: 'Zumbido do PC e ar do quarto' },
+        effects: { label: 'Efeitos', hint: 'Cliques do teclado e do mouse, estática da TV' },
+      },
+      /** Nota no fim do menu. */
+      gamesNote:
+        'Nos jogos da TV, música e ambiente pausam e o som é o do próprio jogo. O volume dele só se ajusta dentro do jogo.',
+    },
+    /**
+     * Seletor de idioma do HUD. O nome acessível do grupo vem daqui; o de cada botão é o nome do
+     * idioma escrito nele mesmo (`LOCALE_INFO` em i18n.ts).
+     */
+    language: {
+      label: 'Idioma',
     },
   },
   back: {
@@ -177,3 +232,8 @@ export const UI_TEXT = {
     controlsLabel: 'Controles do jogo',
   },
 } as const
+
+/** Forma do texto de interface, sem os literais do `as const`: o inglês é escrito contra ela. */
+export type UiText = Widened<typeof UI_TEXT>
+
+export const UI_TEXT_BY_LOCALE: ByLocale<UiText> = { pt: UI_TEXT, en: UI_TEXT_EN }

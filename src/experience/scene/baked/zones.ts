@@ -1,3 +1,4 @@
+import { DECOR_COVERS } from '@/content/decor'
 import type { HotspotId } from '@/content/types'
 import { GAME_BOX_NODES } from '../../hotspots/shelf/gameBoxNodes'
 
@@ -17,8 +18,14 @@ export const HOTSPOT_OUTLINE_NODES: Readonly<Record<HotspotId, readonly string[]
     'printer_bed',
     'printer_part',
   ],
-  // Caixas e quadros das capas (`cover_*` é filho de `box_*`, mas o Outline não pega filhos).
-  shelf: ['zone_games', 'screen_tv', ...Object.values(GAME_BOX_NODES).flatMap((n) => [n.node, n.cover])],
+  // Caixas e quadros das capas (`cover_*` é filho de `box_*`, mas o Outline não pega filhos) e os quadros
+  // das capas da decoração (Root, Heat, Everdell): as caixas delas são estáticas, dentro de `zone_games`.
+  shelf: [
+    'zone_games',
+    'screen_tv',
+    ...Object.values(GAME_BOX_NODES).flatMap((n) => [n.node, n.cover]),
+    ...DECOR_COVERS.map((decor) => decor.node),
+  ],
 }
 
 /**

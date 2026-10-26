@@ -1,6 +1,17 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
+import { isLocale, type Locale } from '../content/i18n.ts'
 import type { GameKind, HotspotId, PcApp } from '../content/types'
+import { applyDocumentLang, detectInitialLocale, writeStoredLocale } from '../lib/locale.ts'
+import {
+  changedVolumes,
+  initialSound,
+  normalizeVolume,
+  readSoundPrefs,
+  writeSoundPrefs,
+  type SoundCategory,
+  type Volumes,
+} from '../lib/audio/volumes.ts'
 
 export type { HotspotId }
 
@@ -28,10 +39,25 @@ export interface ExperienceState {
   /** Tema dia/noite (ARCHITECTURE §12.3). O 3D faz damp de `uNightMix` até o alvo, sem setState no frame. */
   theme: Theme
   /**
-   * Som do quarto (ARCHITECTURE §12 / V.5). Começa `true`: mudo por padrão, e o AudioContext só nasce
-   * no primeiro clique do botão de som (gesto do usuário). O áudio (`lib/audio`) segue este valor.
+   * Mudo geral (ARCHITECTURE §12 / V.5). Começa `true` e o AudioContext só nasce num gesto do usuário:
+   * o clique em "Entrar" (que liga o som, se o visitante nunca escolheu) ou o menu de som do HUD. A
+   * escolha fica salva no localStorage. O áudio (`lib/audio`) segue este valor.
    */
   muted: boolean
+  /**
+   * O visitante já escolheu ligar ou silenciar (salvo de uma visita anterior ou nesta sessão). Sem
+   * escolha, o "Entrar" liga o som sozinho; com escolha, ela é respeitada.
+   */
+  soundChosen: boolean
+  /** Volume de cada categoria (0..1), salvo no localStorage. A curva de ganho está em `lib/audio/volumes.ts`. */
+  volumes: Volumes
+  /**
+   * Idioma da interface (`pt` | `en`). No navegador começa em `?lang=` > localStorage > idioma do
+   * navegador (`lib/locale.ts`); no servidor é `pt`. Quem lê em React usa `ui/i18n/useLocale`, que
+   * devolve `pt` na hidratação (o HTML do servidor é em português) e troca logo depois; o 3D lê
+   * `getState().locale` no frame, sem assinar.
+   */
+  locale: Locale
   /** Único canal UI -> 3D além de `focus` (ARCHITECTURE §6.4). */
   highlightBox: string | null
   /**
@@ -61,6 +87,12 @@ export interface ExperienceState {
   setQuality(quality: Quality): void
   toggleTheme(): void
   toggleMuted(): void
+  /** Volume de uma categoria de som (limitado a 0..1, em passos de 1%). Persistido. */
+  setVolume(category: SoundCategory, value: number): void
+  /** Chamado no clique em "Entrar": liga o som se o visitante nunca escolheu (sem gravar a escolha). */
+  enterWithSound(): void
+  /** Troca o idioma: grava no localStorage e atualiza `<html lang>`. Idioma inválido é ignorado. */
+  setLocale(locale: Locale): void
   setHighlightBox(slug: string | null): void
   /** Liga o jogo na TV. Só em `focused` + `shelf` + vista `digital`. */
   startGame(slug: string): void
@@ -73,6 +105,18 @@ export interface ExperienceState {
   openOnPc(app: PcApp): void
 }
 
+/** Grava a escolha de som. O mudo só entra se o visitante o escolheu; dos volumes, só o que mudou. */
+function persistSound(s: Pick<ExperienceState, 'muted' | 'soundChosen' | 'volumes'>): void {
+  const volumes = changedVolumes(s.volumes)
+  writeSoundPrefs({
+    ...(s.soundChosen ? { muted: s.muted } : {}),
+    ...(Object.keys(volumes).length > 0 ? { volumes } : {}),
+  })
+}
+
+// Preferência salva (só no browser: no servidor e nos testes do node volta o padrão).
+const sound = initialSound(readSoundPrefs())
+
 export const useExperienceStore = create<ExperienceState>()(
   subscribeWithSelector((set, get) => ({
     mode: 'loading',
@@ -81,7 +125,10 @@ export const useExperienceStore = create<ExperienceState>()(
     hovered: null,
     quality: 'high',
     theme: 'night',
-    muted: true,
+    muted: sound.muted,
+    soundChosen: sound.soundChosen,
+    volumes: sound.volumes,
+    locale: detectInitialLocale(),
     highlightBox: null,
     playing: null,
     pcLaunch: null,
@@ -152,7 +199,35 @@ export const useExperienceStore = create<ExperienceState>()(
 
     toggleTheme: () => set((s) => ({ theme: s.theme === 'night' ? 'day' : 'night' })),
 
-    toggleMuted: () => set((s) => ({ muted: !s.muted })),
+    toggleMuted: () => {
+      const s = get()
+      const next = { muted: !s.muted, soundChosen: true }
+      set(next)
+      persistSound({ ...next, volumes: s.volumes })
+    },
+
+    setVolume: (category, value) => {
+      const s = get()
+      const v = normalizeVolume(value)
+      if (s.volumes[category] === v) return
+      const volumes = { ...s.volumes, [category]: v }
+      set({ volumes })
+      persistSound({ muted: s.muted, soundChosen: s.soundChosen, volumes })
+    },
+
+    enterWithSound: () => {
+      const s = get()
+      if (s.soundChosen || !s.muted) return
+      set({ muted: false })
+    },
+
+    setLocale: (locale) => {
+      if (!isLocale(locale)) return
+      // Clicar no idioma que já está ativo também vale como escolha: fica salva para as próximas visitas.
+      writeStoredLocale(locale)
+      applyDocumentLang(locale)
+      if (get().locale !== locale) set({ locale })
+    },
 
     setHighlightBox: (slug) => {
       const s = get()

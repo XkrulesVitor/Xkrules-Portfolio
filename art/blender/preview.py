@@ -263,10 +263,15 @@ def quick_previews(ctx, out_dir: str, names=None):
         o.hide_render = o.get('cat') in ('fx',)
     os.makedirs(out_dir, exist_ok=True)
     pres = ctx.lay['presets']
-    for label, key in PREVIEWS:
-        if names and label not in names:
+    jobs = [(label, pres[key]) for label, key in PREVIEWS if not names or label in names]
+    # câmeras extras: PREVIEW_CAM="nome=px,py,pz,tx,ty,tz;..." (posição e alvo no layout, Y-up) -> q_<nome>.png
+    for item in os.environ.get('PREVIEW_CAM', '').split(';'):
+        if '=' not in item:
             continue
-        p = pres[key]
+        nm, vals = item.split('=')
+        v = [float(x) for x in vals.split(',')[:6]]
+        jobs.append((nm.strip(), {'position': v[:3], 'target': v[3:6]}))
+    for label, p in jobs:
         cam.location = L(p['position'])
         d = L(p['target']) - L(p['position'])
         cam.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()

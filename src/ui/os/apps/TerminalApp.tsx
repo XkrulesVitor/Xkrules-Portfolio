@@ -1,8 +1,8 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
-import { OS_TEXT } from '@/content/os'
-import { WEB_PROJECTS } from '@/content/projects.web'
+import { TERMINAL_IDENTITY, type OsText } from '@/content/os'
 import type { WebProject } from '@/content/types'
+import { useContent } from '../../i18n/useLocale'
 import { fmt } from '../format'
 import scope from '../scope.module.css'
 import shared from '../shared.module.css'
@@ -10,6 +10,7 @@ import { complete, runCommand, type TermLine, type TermTone } from './terminalCo
 import styles from './TerminalApp.module.css'
 
 interface TerminalAppProps {
+  /** Projetos. Padrão: content/projects.web.ts, no idioma ativo. */
   projects?: readonly WebProject[]
   /** Abre a janela de um projeto (comando `open` e clique na lista de `projects`). */
   onOpenProject: (slug: string) => void
@@ -28,19 +29,23 @@ const TONE_CLASS: Record<TermTone, string> = {
   accent: styles.toneAccent,
 }
 
-const WELCOME: readonly TermLine[] = OS_TEXT.terminal.welcome.map(
-  (value, i): TermLine => ({ kind: 'text', text: value, tone: i === 0 ? 'accent' : 'dim' }),
-)
+/** Mensagem de boas-vindas no idioma em que o terminal abriu (o que já foi impresso não muda de idioma). */
+function welcomeLines(os: OsText): readonly TermLine[] {
+  return os.terminal.welcome.map(
+    (value, i): TermLine => ({ kind: 'text', text: value, tone: i === 0 ? 'accent' : 'dim' }),
+  )
+}
 
 function createEntries(lines: readonly TermLine[], from: number): Entry[] {
   return lines.map((line, i) => ({ id: from + i, line }))
 }
 
 function Prompt() {
-  return <span className={styles.prompt}>{OS_TEXT.terminal.prompt}</span>
+  return <span className={styles.prompt}>{TERMINAL_IDENTITY.prompt}</span>
 }
 
 function Line({ line, onOpenProject }: { line: TermLine; onOpenProject: (slug: string) => void }) {
+  const os = useContent().os
   switch (line.kind) {
     case 'input':
       return (
@@ -64,7 +69,7 @@ function Line({ line, onOpenProject }: { line: TermLine; onOpenProject: (slug: s
             {line.label}
           </a>{' '}
           <span className={styles.toneDim}>{line.href}</span>
-          <span className={shared.srOnly}>{OS_TEXT.detail.newTab}</span>
+          <span className={shared.srOnly}>{os.detail.newTab}</span>
         </div>
       )
     case 'project':
@@ -87,7 +92,7 @@ function Line({ line, onOpenProject }: { line: TermLine; onOpenProject: (slug: s
           </pre>
           <dl className={styles.rows}>
             <div className={styles.rowHead}>
-              <span className={styles.toneAccent}>{OS_TEXT.terminal.host}</span>
+              <span className={styles.toneAccent}>{TERMINAL_IDENTITY.host}</span>
             </div>
             {line.rows.map((row) => (
               <div key={row.key} className={styles.row}>
@@ -107,14 +112,17 @@ function Line({ line, onOpenProject }: { line: TermLine; onOpenProject: (slug: s
  * janela devolve o foco ao campo (sem atrapalhar a seleção de texto). Sem tratar Esc.
  */
 export const TerminalApp = memo(function TerminalApp({
-  projects = WEB_PROJECTS,
+  projects: given,
   onOpenProject,
 }: TerminalAppProps) {
-  const [entries, setEntries] = useState<Entry[]>(() => createEntries(WELCOME, 0))
+  const content = useContent()
+  const os = content.os
+  const projects = given ?? content.web
+  const [entries, setEntries] = useState<Entry[]>(() => createEntries(welcomeLines(os), 0))
   const [value, setValue] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
-  const nextId = useRef(WELCOME.length)
+  const nextId = useRef(os.terminal.welcome.length)
   const history = useRef<string[]>([])
   // -1 = digitando; 0.. = posição no histórico (0 = o comando mais recente).
   const cursor = useRef(-1)
@@ -149,7 +157,14 @@ export const TerminalApp = memo(function TerminalApp({
     }
     if (history.current[0] !== command) history.current.unshift(command)
 
-    const result = runCommand(command, { projects, now: new Date() })
+    // As respostas saem no idioma ativo agora; as linhas que já estavam na tela continuam como foram impressas.
+    const result = runCommand(command, {
+      projects,
+      now: new Date(),
+      os,
+      about: content.about,
+      locale: content.locale,
+    })
     if (result.clear) {
       setEntries([])
       return
@@ -190,7 +205,7 @@ export const TerminalApp = memo(function TerminalApp({
       else if (result.candidates.length > 1) {
         append([
           { kind: 'input', text: value },
-          { kind: 'text', text: fmt(OS_TEXT.terminal.candidates, { list: result.candidates.join('  ') }), tone: 'dim' },
+          { kind: 'text', text: fmt(os.terminal.candidates, { list: result.candidates.join('  ') }), tone: 'dim' },
         ])
       }
     } else if (event.key === 'l' && event.ctrlKey) {
@@ -211,7 +226,7 @@ export const TerminalApp = memo(function TerminalApp({
     // O clique só devolve o foco ao campo (que já é focável pelo teclado): não é um controle.
     <div className={`${scope.scope} ${styles.root}`} onClick={handleClick}>
       <div ref={scrollRef} className={styles.screen}>
-        <div role="log" aria-live="polite" aria-label={OS_TEXT.terminal.outputLabel}>
+        <div role="log" aria-live="polite" aria-label={os.terminal.outputLabel}>
           {entries.map(({ id, line }) => (
             <Line key={id} line={line} onOpenProject={onOpenProject} />
           ))}
@@ -223,7 +238,7 @@ export const TerminalApp = memo(function TerminalApp({
             className={styles.input}
             type="text"
             value={value}
-            aria-label={OS_TEXT.terminal.inputLabel}
+            aria-label={os.terminal.inputLabel}
             spellCheck={false}
             autoComplete="off"
             autoCapitalize="off"

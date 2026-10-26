@@ -1,8 +1,7 @@
 import { CornersOutIcon, GameControllerIcon } from '@phosphor-icons/react'
 import { AnimatePresence, motion } from 'motion/react'
-import { GAME_PROJECTS } from '@/content/projects.games'
-import { UI_TEXT } from '@/content/site'
 import { useExperienceStore } from '@/store/useExperienceStore'
+import { useContent } from '../i18n/useLocale'
 import { cx, EASE, fmt, FOCUS_RING, LinkButton, usePress } from '../primitives'
 import { TV_GAME_FRAME_ID } from '../tv/TvGameScreen'
 
@@ -17,10 +16,10 @@ function enterFullscreen() {
  * jogo, "Tela cheia" e o link do itch.io. Só com o jogo ligado e a câmera em foco.
  */
 export function TvGameBar() {
-  const t = UI_TEXT.tvGame
-  const game = useExperienceStore((s) =>
-    s.mode === 'focused' && s.playing ? GAME_PROJECTS.find((g) => g.slug === s.playing) : undefined,
-  )
+  const { ui, games } = useContent()
+  const t = ui.tvGame
+  const playingSlug = useExperienceStore((s) => (s.mode === 'focused' ? s.playing : null))
+  const game = playingSlug ? games.find((g) => g.slug === playingSlug) : undefined
   const press = usePress({ lift: false })
   const itch = game?.links.find((link) => link.kind === 'itch')
 

@@ -1,5 +1,8 @@
-import { SCREEN_TEXT } from '@/content/screens'
+import type { ScreenText } from '@/content/screens'
 import { withAlpha } from './canvasScreen'
+
+/** Textos do papel de parede no idioma ativo (rótulos dos atalhos, marca, "Iniciar"). */
+export type WallpaperText = ScreenText['wallpaper']
 
 /**
  * Papel de parede do monitor horizontal fora de foco, no estilo do XKrules OS (`ui/os/Desktop.module.css`):
@@ -51,8 +54,12 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.roundRect(x, y, w, h, r)
 }
 
-/** Fundo + grade + anéis + atalhos + marca. Tudo o que não muda com a hora. */
-export function createWallpaperBase(width: number, height: number): HTMLCanvasElement | null {
+/** Fundo + grade + anéis + atalhos + marca. Tudo o que não muda com a hora (mas muda com o idioma). */
+export function createWallpaperBase(
+  width: number,
+  height: number,
+  text: WallpaperText,
+): HTMLCanvasElement | null {
   const base = document.createElement('canvas')
   base.width = width
   base.height = height
@@ -129,7 +136,7 @@ export function createWallpaperBase(width: number, height: number): HTMLCanvasEl
   // Atalhos decorativos (coluna da esquerda).
   const iconSize = 46 * k
   const cell = 86 * k
-  SCREEN_TEXT.wallpaper.icons.forEach((label, i) => {
+  text.icons.forEach((label, i) => {
     const x = 28 * k
     const y = 28 * k + i * cell
     const accent = ICON_ACCENTS[i % ICON_ACCENTS.length]
@@ -156,17 +163,24 @@ export function createWallpaperBase(width: number, height: number): HTMLCanvasEl
   ctx.shadowBlur = 28 * k
   ctx.fillStyle = TEXT
   ctx.font = `700 ${Math.round(64 * k)}px ${FONT_SANS}`
-  ctx.fillText(SCREEN_TEXT.wallpaper.brand, 0.54 * width, 0.47 * height)
+  ctx.fillText(text.brand, 0.54 * width, 0.47 * height)
   ctx.shadowBlur = 0
   ctx.fillStyle = withAlpha(BLUE, 0.9)
   ctx.font = `500 ${Math.round(22 * k)}px ${FONT_SANS}`
-  ctx.fillText(SCREEN_TEXT.wallpaper.tagline.toUpperCase(), 0.54 * width, 0.47 * height + 40 * k)
+  ctx.fillText(text.tagline.toUpperCase(), 0.54 * width, 0.47 * height + 40 * k)
 
   return base
 }
 
 /** Barra de tarefas com o relógio. Chamado ao menos uma vez por minuto. */
-function paintTaskbar(ctx: CanvasRenderingContext2D, width: number, height: number, now: Date) {
+function paintTaskbar(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  now: Date,
+  text: WallpaperText,
+  clockLocale: string,
+) {
   const k = width / DESIGN_WIDTH
   const barH = 44 * k
   const y = height - barH
@@ -190,18 +204,24 @@ function paintTaskbar(ctx: CanvasRenderingContext2D, width: number, height: numb
   ctx.font = `600 ${Math.round(15 * k)}px ${FONT_SANS}`
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
-  ctx.fillText(SCREEN_TEXT.wallpaper.start, 40 * k, y + barH / 2 + k)
+  ctx.fillText(text.start, 40 * k, y + barH / 2 + k)
 
   // Relógio.
-  const time = now.toLocaleTimeString(SCREEN_TEXT.wallpaper.clockLocale, { hour: '2-digit', minute: '2-digit' })
+  const time = now.toLocaleTimeString(clockLocale, { hour: '2-digit', minute: '2-digit' })
   ctx.textAlign = 'right'
   ctx.font = `600 ${Math.round(16 * k)}px ${FONT_SANS}`
   ctx.fillText(time, width - 16 * k, y + barH / 2 + k)
 }
 
-/** Desenha o wallpaper completo (camada estática + barra com a hora de `now`). */
-export function paintWallpaper(screen: { ctx: CanvasRenderingContext2D; width: number; height: number }, base: HTMLCanvasElement, now: Date) {
+/** Desenha o wallpaper completo (camada estática + barra com a hora de `now`, no locale do relógio). */
+export function paintWallpaper(
+  screen: { ctx: CanvasRenderingContext2D; width: number; height: number },
+  base: HTMLCanvasElement,
+  now: Date,
+  text: WallpaperText,
+  clockLocale: string,
+) {
   const { ctx, width, height } = screen
   ctx.drawImage(base, 0, 0)
-  paintTaskbar(ctx, width, height, now)
+  paintTaskbar(ctx, width, height, now, text, clockLocale)
 }

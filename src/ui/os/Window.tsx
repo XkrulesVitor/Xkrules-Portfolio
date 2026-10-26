@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode, RefObject } from 'react'
 import { motion, useIsPresent } from 'motion/react'
 import { CopyIcon, MinusIcon, SquareIcon, XIcon } from '@phosphor-icons/react'
-import { OS_TEXT, type OsGlyphKey } from '@/content/os'
+import type { OsGlyphKey } from '@/content/os'
+import type { MediaImage } from '@/content/types'
+import { useOsText } from '../i18n/useLocale'
 import type { CssVars } from './cssVars'
 import { pointerDeltaPct } from './desktopPointer'
-import { OsGlyph } from './OsGlyph'
+import { AppGlyph } from './OsGlyph'
 import { ResizeHandles } from './ResizeHandles'
 import { useOsMotion } from './useOsMotion'
 import { TASKBAR_HEIGHT_PCT, type ResizeEdges, type WindowGeometry } from './windowManager'
@@ -15,6 +17,8 @@ interface WindowProps {
   id: string
   title: string
   glyph: OsGlyphKey
+  /** Ícone real do projeto: substitui o glifo na barra de título quando existe. */
+  icon?: MediaImage
   /** Cor de destaque do projeto (hex). Sem ela vale o mint do SO. */
   accent?: string
   /** Retângulo em % do desktop. */
@@ -63,6 +67,7 @@ export function Window({
   id,
   title,
   glyph,
+  icon,
   accent,
   geometry,
   z,
@@ -80,6 +85,7 @@ export function Window({
   children,
 }: WindowProps) {
   const { reduced, duration, ease } = useOsMotion()
+  const os = useOsText()
   // Durante a animação de saída a janela ainda está no DOM: já a tira da árvore de acessibilidade.
   const isPresent = useIsPresent()
   const hidden = minimized || !isPresent
@@ -144,7 +150,7 @@ export function Window({
     ...(accent ? { '--accent': accent } : null),
   }
 
-  const maximizeLabel = maximized ? OS_TEXT.window.restore : OS_TEXT.window.maximize
+  const maximizeLabel = maximized ? os.window.restore : os.window.maximize
 
   return (
     <div
@@ -189,7 +195,7 @@ export function Window({
           onDoubleClick={() => onToggleMaximize(id)}
         >
           <span className={styles.titleGlyph} aria-hidden="true">
-            <OsGlyph name={glyph} />
+            <AppGlyph name={glyph} icon={icon} />
           </span>
           <span className={styles.title}>{title}</span>
           <div
@@ -200,8 +206,8 @@ export function Window({
             <button
               type="button"
               className={styles.control}
-              aria-label={OS_TEXT.window.minimize}
-              title={OS_TEXT.window.minimize}
+              aria-label={os.window.minimize}
+              title={os.window.minimize}
               onClick={() => onMinimize(id)}
             >
               <MinusIcon weight="regular" aria-hidden="true" />
@@ -222,8 +228,8 @@ export function Window({
             <button
               type="button"
               className={`${styles.control} ${styles.controlClose}`}
-              aria-label={OS_TEXT.window.close}
-              title={OS_TEXT.window.close}
+              aria-label={os.window.close}
+              title={os.window.close}
               onClick={() => onClose(id)}
             >
               <XIcon weight="regular" aria-hidden="true" />

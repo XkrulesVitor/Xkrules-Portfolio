@@ -2,7 +2,8 @@
 
 Âncoras do layout: rack (centro e tamanho), TV (centro da tela, normal +Z) e estante (origem no piso,
 centro da largura, meio da profundidade, frente em +Z). As caixas `box_*` são nós vivos nas posições
-exatas de `hotspots/shelf/Shelf.tsx`.
+exatas de `hotspots/shelf/Shelf.tsx`. As caixas de DECORAÇÃO (Root, Heat e Everdell com a Ever Tree,
+`_decor_games`) são estáticas, fundidas em `zone_games`; só a capa de cada uma (`cover_decor_*`) é um nó.
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ def build(ctx):
     _shelf_frame(ctx)
     _shelf_leds(ctx)
     _shelf_contents(ctx)
+    _decor_games(ctx)
     _live_boxes(ctx)
 
 
@@ -154,7 +156,8 @@ def _shelf_leds(ctx):
 
 
 def _shelf_contents(ctx):
-    """Decoração fixa: pilhas, caixas em pé e deitadas, dados, miniaturas, meeples. Ver ARCHITECTURE §6.4."""
+    """Decoração fixa: pilhas, caixas em pé e deitadas, dados, miniaturas, meeples. Ver ARCHITECTURE §6.4.
+    Root, Heat e o Everdell (caixas com capa real) não estão aqui: ver `_decor_games`."""
     sx, sy, sz = ctx.LAYOUT['shelf']
     r = random.Random(17)
     p = Prop('shelf_items', 'games', tier=1.4)
@@ -182,9 +185,7 @@ def _shelf_contents(ctx):
     stand(0.42, b1, 0.3, 0.36, 0.09, pal[3], rz=-4)
     p.cyl(0.04, 0.1, (sx + 0.7, b1, sz + 0.1), hx('#9aa3b5'), anchor='b', seg=12, r2=0.03, bevel=0.003)
     p.cyl(0.04, 0.08, (sx + 0.78, b1, sz + 0.06), hx('#b58b6a'), anchor='b', seg=12, r2=0.03, bevel=0.003)
-    # --- prateleira 2: Root e Heat (decoração) e peças soltas entre as caixas autorais
-    stand(0.3, b2, 0.34, 0.46, 0.1, '#d9a441', z=0.08)
-    stand(0.66, b2, 0.34, 0.46, 0.1, '#c8412f', z=0.08)
+    # --- prateleira 2: peças soltas entre as caixas autorais e as de decoração (Root e Heat: `_decor_games`)
     for k, (col, dx) in enumerate((('#d64545', -0.01), ('#3fb8c9', 0.04), ('#f2c14e', 0.09))):
         # meeples: corpo em cone + cabeça + braços
         mx = sx - 0.07 + 0.03 + dx
@@ -193,9 +194,7 @@ def _shelf_contents(ctx):
         p.box((0.04, 0.008, 0.01), (mx, b2 + 0.02, sz + 0.2), hx(col), bevel=0.002, seg=1)
     for x, z, col, ry in ((0.02, 0.17, '#f2efe8', 20), (0.06, 0.2, '#d64545', 50)):
         p.box((0.028, 0.028, 0.028), (sx + x + 0.0, b2, sz + z), hx(col), bevel=0.004, seg=2, anchor='b', ry=ry)
-    # --- prateleira 3
-    flat(-0.45, b3, 0.5, 0.08, 0.4, pal[3], ry=-2)
-    flat(-0.45, b3 + 0.08, 0.46, 0.08, 0.38, pal[4], ry=3)
+    # --- prateleira 3 (o Everdell deitado, com a árvore, ocupa a esquerda: `_decor_games`)
     p.box((0.16, 0.28, 0.16), (sx + 0.15, b3, sz + 0.03), hx('#6b4f3a'), bevel=0.008, seg=2, anchor='b')      # torre de dados
     p.box((0.07, 0.1, 0.012), (sx + 0.15, b3 + 0.04, sz + 0.115), hx('#1a1612'), bevel=0.004, seg=1, anchor='b')
     p.box((0.18, 0.016, 0.18), (sx + 0.15, b3 + 0.28, sz + 0.03), hx('#8a6a4f'), bevel=0.005, seg=1, anchor='b')
@@ -224,6 +223,123 @@ def _shelf_contents(ctx):
 # Albedo do quadro da capa: cinza neutro claro. O bake dele guarda só a luz que chega à frente da caixa;
 # o runtime multiplica a arte por essa luz e divide por este albedo (`COVER_ALBEDO` do CoverMaterial.ts).
 COVER_GREY = '#e6e6e6'
+
+
+def _cover_quad(ctx, name, pos, size, bevel, face='+z', parent=None):
+    """Quadro cinza da capa, nó vivo `name` com pivô no centro da caixa (`pos`, `size` = largura, altura, profundidade).
+
+    `face='+z'`: caixa em pé, quadro 1 mm à frente da face da frente. `face='+y'`: caixa deitada, quadro 1 mm acima
+    da tampa. Em ambos fica dentro do chanfro (sobra uma moldura fina da cor da caixa). O runtime acha o plano da
+    arte pela caixa delimitadora (CoverMaterial.ts); a capa deitada tem o topo da arte para o fundo da estante."""
+    x, y, z = pos
+    w, h, d = size
+    cover = Prop(name, None, pivot=pos, tier=1.6)
+    if face == '+y':
+        cover.box((w - 2 * bevel, 0.001, d - 2 * bevel), (x, y + h / 2 + 0.0005, z), hx(COVER_GREY), bevel=0, seg=1,
+                  keep='+y')
+    else:
+        cover.box((w - 2 * bevel, h - 2 * bevel, 0.001), (x, y, z + d / 2 + 0.0005), hx(COVER_GREY), bevel=0, seg=1,
+                  keep='+z')
+    return ctx.add_live(cover, parent=parent)
+
+
+def _wavy(rx, rz, seed, n=56, scallops=11, amp=0.06):
+    """Contorno ondulado (folhagem): elipse deformada por duas ondas lentas e por `scallops` ondinhas. Estrelado
+    em relação ao centro (uma reta por ele corta o contorno em dois pontos), requisito do `cut` de `Prop.poly`."""
+    r = random.Random(seed)
+    p1, p2, p3 = (r.uniform(0, 2 * math.pi) for _ in range(3))
+    pts = []
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        k = 1 + 0.10 * math.cos(2 * a + p1) + 0.06 * math.cos(3 * a + p2) + amp * math.cos(scallops * a + p3)
+        pts.append((rx * k * math.cos(a), rz * k * math.sin(a)))
+    return pts
+
+
+def _decor_games(ctx):
+    """Board games de DECORAÇÃO da estante, com a capa real (não são do dono do portfólio).
+
+    - Root (horizontal, 4:3: 0,36 x 0,273) e Heat: Pedal to the Metal (quadrada) em pé na prateleira 2, à direita das caixas
+      autorais, na mesma profundidade delas (z = +0.08).
+    - Everdell (quadrada, DEITADA) na prateleira 3, no lugar da pilha de caixas, com a Ever Tree de papelão montada
+      em cima: duas tábuas de tronco cruzadas, três plataformas de folhagem de contorno ondulado (meio verde, meio
+      outono) e a copa com os três medalhões de estação.
+
+    As caixas são ESTÁTICAS (fundidas em `zone_games`): nada nelas se move, então um nó por caixa só gastaria draw
+    call (a contagem de meshes já passa do orçamento). A capa de cada uma é um quadro separado
+    (`cover_decor_<id>`, nó baked) para o runtime pôr a arte (`content/decor.ts`) com a luz assada. Tudo cabe na
+    folga da estante: Root e Heat têm 1,5 cm de ar entre si e do painel lateral; a árvore tem ~42 cm de altura
+    sobre a tampa (topo a 1,88 m, a prateleira 4 começa em 1,955 m) e cabe nos 40 cm de profundidade livre."""
+    sx, sy, sz = ctx.LAYOUT['shelf']
+    b2, b3 = 0.705, 1.355
+    p = Prop('shelf_decor', 'games', tier=1.4)
+    label = hx('#d9b866', 0.95)
+    covers = []
+
+    # --- Root e Heat em pé (mesma profundidade das caixas autorais da prateleira 2)
+    for name, w, h, d, cx, col in (('root', 0.36, 0.273, 0.09, 0.29, '#46503f'),
+                                   ('heat', 0.34, 0.34, 0.10, 0.655, '#d8c79a')):
+        pos = (sx + cx, b2 + h / 2, sz + 0.08)
+        p.box((w, h, d), pos, hx(col), bevel=0.006, seg=1)
+        covers.append((f'cover_decor_{name}', pos, (w, h, d), 0.006, '+z'))
+
+    # --- Everdell deitado: tampa a 10 cm do tampo, capa para cima
+    ew, eh, ed = 0.38, 0.10, 0.38
+    ex, ez = sx - 0.45, sz + 0.0
+    epos = (ex, b3 + eh / 2, ez)
+    p.box((ew, eh, ed), epos, hx('#2b3a3a'), bevel=0.006, seg=1)
+    p.box((ew * 0.62, eh * 0.34, 0.003), (ex, b3 + eh * 0.52, ez + ed / 2), label, bevel=0, seg=1, keep='+z')   # etiqueta na lateral
+    covers.append(('cover_decor_everdell', epos, (ew, eh, ed), 0.006, '+y'))
+    _ever_tree(p, ex, b3 + eh, ez)
+    ctx.add_static(p)
+
+    # capas: quadros soltos (sem pai), um nó baked cada
+    for name, pos, size, bevel, face in covers:
+        _cover_quad(ctx, name, pos, size, bevel, face)
+
+
+def _ever_tree(p, tx, y0, tz):
+    """A Ever Tree do Everdell, em estilo diorama (cores sólidas, chanfro): `(tx, y0, tz)` = centro da base, sobre a
+    tampa da caixa. Tábuas de tronco em cruz, três plataformas de folhagem ovais de contorno ondulado e a copa
+    de medalhões. Alturas (m, acima da tampa): plataformas em 0.092, 0.178 e 0.258; topo da copa em ~0.42."""
+    wood, wood_b, edge = hx('#8c5a30'), hx('#74462a'), hx('#6a4224')
+
+    # tronco: perfil com base aberta (raízes) que afina para cima. Tábua A de frente para +Z; B girada 90 graus
+    half = [(0.165, 0.0), (0.15, 0.025), (0.11, 0.055), (0.075, 0.10), (0.058, 0.16), (0.05, 0.24), (0.048, 0.29)]
+    prof_a = half + [(-x, y) for x, y in reversed(half)]
+    short = [(x, y) for x, y in half if y <= 0.16] + [(0.05, 0.20)]
+    prof_b = short + [(-x, y) for x, y in reversed(short)]
+    p.poly(prof_a, 0.02, (tx, y0, tz), wood, plane='xy', bevel=0.003)
+    p.poly(prof_b, 0.02, (tx, y0, tz), wood_b, plane='xy', bevel=0.003, ry=90)
+
+    # plataformas de folhagem: metade verde, metade outono (o corte passa pelo centro; ângulos diferentes)
+    def leaf(top_a, top_b, a_deg):
+        nx, nz = -math.sin(math.radians(a_deg)), math.cos(math.radians(a_deg))
+
+        def f(normal, c):
+            if normal.y < 0.25:                    # lateral e fundo: madeira à mostra
+                return edge
+            return top_a if c.x * nx + c.z * nz >= 0 else top_b
+        return f
+
+    for k, (rx, rz, y, ry, cut, ca, cb) in enumerate((
+            (0.215, 0.160, 0.092, 0, 25, '#6fa845', '#d8782c'),
+            (0.170, 0.132, 0.178, 40, 115, '#85ba4c', '#e08a33'),
+            (0.115, 0.094, 0.258, -25, -40, '#78b34a', '#c96a28'))):
+        p.poly(_wavy(rx, rz, 40 + k), 0.014, (tx, y0 + y, tz), leaf(hx(ca), hx(cb), cut), plane='xz', bevel=0.003, ry=ry,
+               cut=cut)
+
+    # copa: os três medalhões (primavera, verão, outono) assentados direto no topo da tábua A; os dois laterais
+    # ficam um pouco atrás do central, que cobre a borda deles
+    def medal(col):
+        def f(normal, c):
+            return hx(col) if abs(normal.z) > 0.5 else edge
+        return f
+
+    for dx, dy, dz, col in ((-0.066, 0.322, -0.013, '#7fbf45'), (0.066, 0.322, -0.013, '#e07b30'),
+                            (0.0, 0.350, 0.0, '#b7d95a')):
+        p.poly(_wavy(0.046, 0.050, 60 + int(dx * 100), n=28, scallops=7, amp=0.07), 0.013, (tx + dx, y0 + dy, tz + dz),
+               medal(col), plane='xy', bevel=0.002)
 
 
 def _live_boxes(ctx):
@@ -264,8 +380,4 @@ def _live_boxes(ctx):
         b.box(size, pos, hx(col), bevel=bevel, seg=1)
         box = ctx.add_live(b)
         # quadro da capa: 1 mm à frente da face, dentro do chanfro (sobra uma moldura fina da cor da caixa)
-        zf = z + d / 2
-        cover = Prop(f'cover_{slug}', None, pivot=pos, tier=1.6)
-        cover.box((w - 2 * bevel, h - 2 * bevel, 0.001), (x, y, zf + 0.0005), hx(COVER_GREY), bevel=0, seg=1,
-                  keep='+z')
-        ctx.add_live(cover, parent=box)
+        _cover_quad(ctx, f'cover_{slug}', pos, size, bevel, parent=box)

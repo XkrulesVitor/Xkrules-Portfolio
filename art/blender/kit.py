@@ -86,7 +86,8 @@ class Prop:
         t.faces.index_update()
         flat = flat if flat is not None else {f.index for f in t.faces if len(f.verts) > 4}
         bm = self.bm
-        if self.jitter:
+        per_face = callable(color)           # cor por face: color(face_do_bmesh_temporário) -> (r, g, b, 1)
+        if self.jitter and not per_face:
             k = 1.0 + self.rng.uniform(-self.jitter, self.jitter)
             color = (color[0] * k, color[1] * k, color[2] * k, 1.0)
         tv = tier if tier is not None else self.tier
@@ -102,8 +103,9 @@ class Prop:
                 continue
             nf.smooth = f.index not in flat
             nf[self.tier_layer] = tv
+            fc = color(f) if per_face else color
             for lp in nf.loops:
-                lp[self.col] = color
+                lp[self.col] = fc
         for e in t.edges:
             ne = bm.edges.get((vm[e.verts[0].index], vm[e.verts[1].index]))
             if ne is not None:
@@ -250,6 +252,55 @@ class Prop:
                             profile=0.5, affect='EDGES', clamp_overlap=True)
         t.faces.index_update()
         self._merge(t, color, tier, {f.index for f in t.faces if max(abs(f.normal.x), abs(f.normal.y), abs(f.normal.z)) > 0.9999})
+        return self
+
+    def poly(self, pts, h, at, color, plane='xz', bevel=0.003, seg=1, rx=0.0, ry=0.0, rz=0.0, cut=None, tier=None,
+             order='yxz'):
+        """Prisma de um polígono SIMPLES (convexo ou côncavo: folhagem de contorno ondulado, tábuas com perfil).
+
+        `pts` = contorno 2D. `plane='xz'`: pontos (x, z), sobe de y = 0 a y = h, com a base em `at`. `plane='xy'`:
+        pontos (x, y) relativos a `at`, extrudado em z de -h/2 a +h/2 (tábua em pé de frente para +Z; gire com
+        `ry` para virar a tábua). O chanfro vai só nas arestas dos dois contornos (as de ângulo > 60 graus).
+        `color` pode ser uma cor ou uma função `color(normal, centro) -> cor` chamada por face (normal e centro no
+        espaço LOCAL, antes do giro): serve para pintar o topo de verde e a borda de madeira. `cut` = ângulo (graus,
+        no plano do polígono) de uma reta pelo centro que PARTE o polígono e as faces dele em duas metades, para
+        pintar cada metade de uma cor (a folha meio verde, meio outono) sem a vala que um chanfro deixaria."""
+        t = bmesh.new()
+        if plane == 'xz':
+            lo = [t.verts.new((x, 0.0, z)) for x, z in pts]
+            hi = [t.verts.new((x, h, z)) for x, z in pts]
+            axis = 1
+        else:
+            lo = [t.verts.new((x, y, -h / 2)) for x, y in pts]
+            hi = [t.verts.new((x, y, h / 2)) for x, y in pts]
+            axis = 2
+        n = len(lo)
+        t.faces.new(list(reversed(lo)))
+        t.faces.new(hi)
+        for i in range(n):
+            j = (i + 1) % n
+            t.faces.new((lo[i], lo[j], hi[j], hi[i]))
+        bmesh.ops.recalc_face_normals(t, faces=list(t.faces))
+        b = min(bevel, 0.45 * h)
+        if b > 2e-4:
+            rim = [e for e in t.edges if len(e.link_faces) == 2 and e.calc_face_angle(0.0) > math.radians(60)]
+            bmesh.ops.bevel(t, geom=rim, offset=b, segments=seg, profile=0.5, affect='EDGES', clamp_overlap=True)
+        if cut is not None:
+            a = math.radians(cut)
+            normal = (-math.sin(a), 0.0, math.cos(a)) if plane == 'xz' else (-math.sin(a), math.cos(a), 0.0)
+            geom = list(t.verts) + list(t.edges) + list(t.faces)
+            bmesh.ops.bisect_plane(t, geom=geom, dist=1e-6, plane_co=(0.0, 0.0, 0.0), plane_no=normal)
+        if callable(color):
+            t.faces.ensure_lookup_table()
+            t.faces.index_update()
+            table = {f.index: color(f.normal.copy(), f.calc_center_median()) for f in t.faces}
+            col = lambda f: table[f.index]          # noqa: E731
+        else:
+            col = color
+        t.faces.index_update()
+        flat = {f.index for f in t.faces if len(f.verts) > 4 or max(abs(f.normal.x), abs(f.normal.y), abs(f.normal.z)) > 0.9999}
+        self._place(t, at, rx, ry, rz, order)
+        self._merge(t, col, tier, flat)
         return self
 
     def quad(self, p0, p1, p2, p3, color, tier=None):

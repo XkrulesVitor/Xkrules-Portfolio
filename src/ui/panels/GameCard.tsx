@@ -11,9 +11,9 @@ import {
   UsersThreeIcon,
 } from '@phosphor-icons/react'
 import { AnimatePresence, motion } from 'motion/react'
-import { UI_TEXT } from '@/content/site'
 import type { GameProject } from '@/content/types'
 import { useExperienceStore } from '@/store/useExperienceStore'
+import { useUiText } from '../i18n/useLocale'
 import {
   cx,
   EASE,
@@ -52,7 +52,7 @@ function Cover({ game }: { game: GameProject }) {
  * Pílula cheia na cor do jogo: é a ação principal do cartão.
  */
 function PlayButton({ game }: { game: GameProject }) {
-  const t = UI_TEXT.games.play
+  const t = useUiText().games.play
   const press = usePress({ lift: false })
   const play = game.play
   if (!play) return null
@@ -99,7 +99,7 @@ function Meta({ label, children }: { label: string; children: ReactNode }) {
  * usa teclado nunca veria o destaque de jogos sem link.
  */
 export function GameCard({ game }: { game: GameProject }) {
-  const t = UI_TEXT.games
+  const t = useUiText().games
   const titleId = useId()
   const detailsId = useId()
   const reduce = useReduceMotion()

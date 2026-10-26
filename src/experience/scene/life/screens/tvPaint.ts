@@ -1,5 +1,8 @@
-import { SCREEN_TEXT } from '@/content/screens'
+import type { ScreenText } from '@/content/screens'
 import { mixHex, withAlpha } from './canvasScreen'
+
+/** Textos da TV no idioma ativo (logo, "PRESS START", "1P"). */
+export type TvText = ScreenText['tv']
 
 /**
  * Desenhos da TV da zona de jogos (ARCHITECTURE §6.5): logo quicando (ociosa), estática retrô (hover
@@ -148,7 +151,12 @@ function setLetterSpacing(ctx: CanvasRenderingContext2D, px: number) {
   if ('letterSpacing' in ctx) (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${px}px`
 }
 
-export function paintLogo(ctx: CanvasRenderingContext2D, logo: LogoState, overlay: HTMLCanvasElement | null): void {
+export function paintLogo(
+  ctx: CanvasRenderingContext2D,
+  logo: LogoState,
+  overlay: HTMLCanvasElement | null,
+  text: TvText,
+): void {
   const bg = ctx.createLinearGradient(0, 0, 0, TV_HEIGHT)
   bg.addColorStop(0, BG_MID)
   bg.addColorStop(1, BG_DEEP)
@@ -172,7 +180,7 @@ export function paintLogo(ctx: CanvasRenderingContext2D, logo: LogoState, overla
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   setLetterSpacing(ctx, 7)
-  ctx.fillText(SCREEN_TEXT.tv.logo, logo.x + LOGO_W / 2 + 3, logo.y + LOGO_H / 2 + 3)
+  ctx.fillText(text.logo, logo.x + LOGO_W / 2 + 3, logo.y + LOGO_H / 2 + 3)
   setLetterSpacing(ctx, 0)
   ctx.restore()
 
@@ -203,6 +211,7 @@ export function paintTitle(
   overlay: HTMLCanvasElement | null,
   time: number,
   animated: boolean,
+  text: TvText,
 ): void {
   const { accent } = screen
   const cx = TV_WIDTH / 2
@@ -233,9 +242,9 @@ export function paintTitle(
   setLetterSpacing(ctx, 5)
   ctx.fillStyle = withAlpha('#ffffff', 0.55)
   ctx.textAlign = 'left'
-  ctx.fillText(SCREEN_TEXT.tv.logo, 40, 58)
+  ctx.fillText(text.logo, 40, 58)
   ctx.textAlign = 'right'
-  ctx.fillText(SCREEN_TEXT.tv.player, TV_WIDTH - 40, 58)
+  ctx.fillText(text.player, TV_WIDTH - 40, 58)
   setLetterSpacing(ctx, 0)
 
   // Título (cabe em 880 px) com brilho do jogo.
@@ -266,7 +275,7 @@ export function paintTitle(
       ctx.font = `700 30px ${FONT_SANS}`
       setLetterSpacing(ctx, 9)
       ctx.fillStyle = withAlpha('#ffffff', 0.92)
-      ctx.fillText(SCREEN_TEXT.tv.pressStart, cx + 4, TV_HEIGHT * 0.84)
+      ctx.fillText(text.pressStart, cx + 4, TV_HEIGHT * 0.84)
       setLetterSpacing(ctx, 0)
     }
   }

@@ -33,7 +33,8 @@
 }
 
 .tile,
-.tileGlass {
+.tileGlass,
+.tileIcon {
   position: relative;
   display: grid;
   place-items: center;
@@ -45,7 +46,8 @@
 }
 
 .icon:hover .tile,
-.icon:hover .tileGlass {
+.icon:hover .tileGlass,
+.icon:hover .tileIcon {
   transform: translateY(calc(var(--px) * -2));
 }
 
@@ -71,6 +73,13 @@
   box-shadow:
     0 calc(var(--px) * 8) calc(var(--px) * 18) rgb(0 0 0 / 0.32),
     inset 0 1px 0 rgb(255 255 255 / 0.28);
+}
+
+/* Ícone real do projeto: mesmo ladrilho (56 px, cantos de 15 px), mas a imagem É o ladrilho. Sem fundo
+   colorido nem sombra de caixa: a imagem traz a forma dela e a sombra (drop-shadow, em OsGlyph.module.css)
+   acompanha o recorte. O font-size iguala o lado do ladrilho, e a imagem mede 1em. */
+.tileIcon {
+  font-size: calc(var(--px) * 56);
 }
 
 .label {

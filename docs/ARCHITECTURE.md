@@ -24,6 +24,8 @@ Relacionados: [ASSET_PIPELINE.md](./ASSET_PIPELINE.md) · [BACKLOG.md](./BACKLOG
 | Iluminação | 100% **baked** no Blender por script (§12): `baked-night`, `baked-day` e `lightmap` RGB misturados no `BakedMaterial` + materiais **emissivos** para telas e LEDs. Zero luzes dinâmicas com sombra | É o que faz as referências serem bonitas, e roda a 60 fps |
 | Arte 3D | Cena **gerada por Python no Blender 4.4 (headless)** a partir do `layout.ts`; estilo diorama "quadradinho" detalhado, com bevel em tudo (§12) | Reprodutível, revisável em PR e executável por agentes; o grey-box vira fallback (`?greybox`) |
 | Loading | `useProgress` + `useGLTF.preload` de todos os `.glb` na tela de loading, depois voo de câmera de introdução | Cache completo antes da interação |
+| Áudio | 100% **sintetizado** em Web Audio, sem arquivo de som: música lo-fi gerada, ambiente, zumbido do PC e cliques. Três buses de volume (Música, Ambiente, Efeitos). O `AudioContext` nasce no clique em "Entrar" e o visitante entra com som, salvo escolha anterior dele (§12.5) | Zero peso de download e zero direito autoral; o som ainda acompanha a câmera e o jogo da TV |
+| Idiomas | Português (padrão) e inglês, trocados em runtime por `store.locale`. O server (SEO, `<noscript>`, OpenGraph) fica em pt-BR (§13) | Uma rota só, sem i18n de roteamento; o idioma é preferência do visitante |
 | Estilo | Tailwind v4 (já instalado) + tokens CSS no `globals.css` | Glassmorphism via utilitários e variáveis |
 | Sub-vistas | Hotspot pode ter `views` no registry; `store.view` escolhe câmera e lado do painel sem sair do foco | A zona de jogos troca entre estante (Tabuleiro) e TV + console (Digital) pela aba do painel |
 | Dev tooling | `leva` (afinar presets de câmera), `r3f-perf` (medir), `gltfjsx` (gerar componentes tipados) | Só em dev |
@@ -57,7 +59,8 @@ src/
 │  │  ├─ layout.tsx           # guarda de NODE_ENV + rolagem local
 │  │  ├─ ui/                  # page.tsx + Preview.tsx ('use client'): primitivas e painéis
 │  │  └─ os/                  # page.tsx + Preview.tsx ('use client'): SO do monitor
-│  ├─ page.tsx                # SERVER component: SEO + <noscript> fallback + <ExperienceLoader/>
+│  ├─ page.tsx                # SERVER component: SEO + <noscript> fallback + <ExperienceLoader/> (sempre em pt-BR, §13)
+│  ├─ icon.svg · favicon.ico · apple-icon.png   # favicon: monograma XK (SVG com 3 níveis de detalhe por media query), .ico 16/32/48 e 180 px; o Next os detecta pelo nome do arquivo
 │  └─ globals.css             # tokens de design (cores, glass, blur), reset
 │
 ├─ experience/                # TUDO que roda dentro/ao redor do <Canvas> (client-only)
@@ -76,7 +79,7 @@ src/
 │  │  ├─ chair/   Chair.tsx · useChairSpring.ts
 │  │  ├─ desk/    Desk.tsx · Screens.tsx (emissive) · MonitorHtml.tsx (<Html transform>)
 │  │  ├─ printer/ Printer.tsx · usePrinterAnimation.ts
-│  │  └─ shelf/   Shelf.tsx · GameBox.tsx · GameCovers.tsx · ShelfParticles.tsx · TvGameHtml.tsx (<Html transform>)
+│  │  └─ shelf/   Shelf.tsx · GameBox.tsx · GameCovers.tsx · ShelfParticles.tsx · TvGameHtml.tsx (<Html transform>) · BoardGameFx.tsx + fx/ (caça imperial e meeples, §6.4)
 │  ├─ camera/
 │  │  ├─ CameraRig.tsx        # <CameraControls makeDefault> + subscribe no store
 │  │  ├─ presets.ts           # HOME + 1 preset por hotspot (position, target, limites)
@@ -85,25 +88,29 @@ src/
 │  │  ├─ useHotspot.ts        # hook único: {hovered, focused, bind} para qualquer hotspot
 │  │  └─ useKeyboard.ts       # Esc → home
 │  ├─ audio/
-│  │  └─ AudioDirector.tsx    # ganhos por distância da câmera e gatilhos do store (motor em src/lib/audio, Web Audio sintetizado)
+│  │  └─ AudioDirector.tsx    # lado 3D do áudio: volume do zumbido e do ambiente pela distância da câmera, estática da TV, e replica `muted`, `volumes` e `playing` do store no motor (src/lib/audio, §12.5)
 │  └─ models/                 # componentes GERADOS por gltfjsx (não editar à mão)
 │
 ├─ ui/                        # DOM 2D, FORA do Canvas
 │  ├─ overlay/
 │  │  ├─ Overlay.tsx          # roteia painel por store.focus; pointer-events controlado
-│  │  ├─ Hud.tsx              # logo, dica "arraste para explorar", botão som
+│  │  ├─ Hud.tsx              # só em idle: logo, dica "arraste para explorar" e, no canto superior direito, Som, Tema e Idioma
+│  │  ├─ SoundMenu.tsx        # botão de som do HUD + popover: mudo geral e sliders de Música, Ambiente e Efeitos (§12.5)
+│  │  ├─ LanguageSwitch.tsx   # seletor "PT | EN" do HUD (§13)
 │  │  ├─ BackButton.tsx       # "← Voltar" (Esc); com jogo na TV vira "← Sair do jogo"
 │  │  ├─ TvGameBar.tsx        # barra do jogo na TV: título, "Tela cheia", "Abrir no itch.io" (§6.6)
-│  │  └─ LoadingScreen.tsx    # barra useProgress + botão "Entrar"
+│  │  └─ LoadingScreen.tsx    # boot estilo BIOS: barra useProgress + botão "Entrar" (que cria o AudioContext e liga o som, §12.5)
 │  ├─ panels/
 │  │  ├─ AboutPanel.tsx       # chair
 │  │  ├─ PrinterPanel.tsx     # printer (carrossel de fotos, specs, link loja)
 │  │  └─ GamesPanel.tsx       # shelf (abas: tabuleiro / digital)
 │  ├─ os/                     # UI que renderiza DENTRO do monitor (via <Html transform>)
-│  │  ├─ Desktop.tsx · Taskbar.tsx · Window.tsx
-│  │  └─ apps/ ProjectsApp.tsx · ProjectWindow.tsx
+│  │  ├─ Desktop.tsx · Taskbar.tsx · Window.tsx · DesktopIcon.tsx
+│  │  ├─ OsGlyph.tsx          # `AppGlyph`: ícone real do projeto (`WebProject.icon`) ou, sem ele, o glifo Phosphor (§6.2)
+│  │  └─ apps/ ProjectsApp.tsx · ProjectWindow.tsx · ProjectMedia.tsx
 │  ├─ tv/                     # UI que renderiza DENTRO da TV (via <Html transform>, §6.6)
 │  │  └─ TvGameScreen.tsx     # wrapper fixo 1280×716 px: iframe do jogo + tela "Ligando..."
+│  ├─ i18n/                   # useLocale.ts (useLocale, useContent, useUiText, useOsText) · useDocumentLocale.ts (§13)
 │  └─ primitives/             # GlassCard, Tabs, Carousel, IconButton, Kbd
 │
 ├─ store/
@@ -113,22 +120,28 @@ src/
 ├─ content/                   # DADOS tipados; painéis são 100% data-driven
 │  ├─ hotspots.ts             # registry: id, label, preset de câmera, painel
 │  ├─ about.ts
-│  ├─ projects.web.ts         # Inatel², CP2eJR Corporative, ...
+│  ├─ projects.web.ts         # Inatel², CP2eJR Corporative, Portfólio Gabriela, ... (cada um com `icon?`, §6.2)
 │  ├─ projects.print.ts       # Reino de Amestris
 │  ├─ projects.games.ts       # Aldeia Dorme, Conquista Galáctica, PorriLand, Piter, O Anel...
+│  ├─ decor.ts                # capas dos board games de decoração da estante: Root, Heat e Everdell (§6.4)
 │  ├─ os.ts                   # textos do SO fictício do monitor
+│  ├─ screens.ts              # textos e código das telas desenhadas em canvas (TV, papel de parede, editor)
 │  ├─ site.ts                 # identidade, links globais e UI_TEXT (chrome)
+│  ├─ i18n.ts · locales.ts    # `Locale`, `LOCALE_INFO`, `Widened` · `contentFor(locale)` (§13)
+│  ├─ en/                     # textos em inglês (um arquivo por módulo acima), escritos com `satisfies Widened<typeof PT>`
 │  └─ types.ts
 │
 ├─ lib/
 │  ├─ device.ts               # isTouch, prefersReducedMotion, gpuTier (simples)
 │  ├─ math.ts                 # helpers pequenos (clamp, mapRange)
+│  ├─ locale.ts               # detecção e persistência do idioma (§13)
+│  ├─ audio/                  # motor de áudio sintetizado (Web Audio): engine, music, score, voices, mix, volumes, noise (§12.5)
 │  └─ constants.ts
 │
 public/
 ├─ models/    *.glb (draco/meshopt) — ver ASSET_PIPELINE.md
 ├─ textures/  *.ktx2 / *.webp
-├─ media/     imagens/vídeos dos projetos
+├─ media/     imagens/vídeos dos projetos (`games/` capas, `web/<slug>/icon.*` ícones do SO, `decor/` capas da decoração da estante)
 └─ draco/     decoder (copiado de three/examples/jsm/libs/draco/gltf/)
 docs/
 scripts/      optimize-models.mjs (gltf-transform)
@@ -138,6 +151,7 @@ scripts/      optimize-models.mjs (gltf-transform)
 - Nada em `src/ui/**` importa `three` ou `@react-three/*`. Comunicação apenas via `store` e `content`.
 - Nada em `src/experience/**` renderiza DOM fixo (exceto `MonitorHtml` e `TvGameHtml`, via drei `Html`).
 - `src/content/**` não importa React. São dados puros + tipos.
+- `src/lib/audio/**` e `src/lib/locale.ts` não importam `three`, `@react-three/*` nem React: `ui/**`, `experience/**` e o store os importam.
 
 ---
 
@@ -155,7 +169,10 @@ interface ExperienceState {
   hovered: HotspotId | null
   quality: 'high' | 'medium' | 'low'
   theme: 'night' | 'day'            // tema do quarto baked (§12.3); padrão 'night'
-  muted: boolean                    // padrão true; o AudioContext só nasce no primeiro clique do botão de som
+  muted: boolean                    // mudo geral; começa true e o "Entrar" o desliga se o visitante nunca escolheu (§12.5)
+  soundChosen: boolean              // o visitante já escolheu ligar ou silenciar (salvo): o "Entrar" respeita a escolha
+  volumes: Volumes                  // { music, ambient, effects } em 0..1; padrão 0,35 / 0,5 / 0,8; salvo no localStorage
+  locale: Locale                    // 'pt' | 'en'; ?lang= > localStorage > navigator.language (§13); no server é 'pt'
   playing: string | null            // slug do jogo rodando na TV (§6.6); só em focused + shelf + vista digital
   pcLaunch: { app: PcApp; id: number } | null  // último pedido de abrir um app do XkrulesOS (§6.6); o id cresce a cada pedido
   // ações
@@ -167,7 +184,10 @@ interface ExperienceState {
   onCameraRest(): void                // transitioning → focused | idle
   setQuality(q): void
   toggleTheme(): void
-  toggleMuted(): void
+  toggleMuted(): void                 // marca soundChosen e grava a escolha
+  setVolume(category: SoundCategory, value: number): void   // 0..1 em passos de 1%; grava
+  enterWithSound(): void              // chamado pelo "Entrar": tira do mudo se soundChosen é false; não grava a escolha
+  setLocale(locale: Locale): void     // grava no localStorage e atualiza <html lang>; idioma inválido é ignorado
   startGame(slug: string): void       // liga o jogo na TV; só em focused + shelf + vista digital; limpa o highlightBox
   stopGame(): void                    // desliga o jogo; a câmera volta para a vista Digital, com o painel
   openOnPc(app: PcApp): void          // idle | focused → transitioning(focus='desk') + pcLaunch (exceção da guarda 1)
@@ -184,10 +204,13 @@ interface ExperienceState {
 7. `startGame` só vale em `focused` + `shelf` + vista `digital` e limpa o `highlightBox`. `playing` volta a `null` em `stopGame`, `setView`, `requestHome`, `requestFocus`, `openOnPc` e em `setMode` que saia de `focused`: um jogo nunca sobrevive à troca de vista nem à saída da zona.
 8. `openOnPc` é uma **exceção deliberada à guarda 1**, porque o pedido vem de um botão e não de um clique na cena. De `idle`, ou de `focused` em qualquer hotspot, ele vai direto a `transitioning` com `focus = 'desk'` e grava o `pcLaunch`. Com a mesa já em foco, só incrementa o `id` do `pcLaunch`. É ignorado em `loading`, `intro` e `transitioning`.
 9. `pcLaunch.id` cresce a cada pedido e o `pcLaunch` nunca é limpo: o `Desktop` guarda o último `id` atendido e abre a janela uma vez por id.
+10. O som tem mais de um estado: `muted` (mudo geral), `soundChosen` (escolha do visitante) e `volumes` por categoria. Só `toggleMuted` marca `soundChosen`, e o `muted` só é gravado depois disso; `enterWithSound` liga o som sem gravar nada, e só se o visitante nunca escolheu. `setVolume` grava só os volumes que diferem do padrão. A preferência fica em `portfolio3d:sound:v1` (§12.5).
+11. O `AudioContext` não nasce mais só no botão de som: nasce em qualquer gesto que o peça, o "Entrar" ou o mudo geral do menu de som. Antes do gesto o motor guarda a intenção (`muted`, `volumes`) e a aplica ao nascer.
+12. `locale` nunca é `null`. `setLocale` ignora idioma inválido e grava a escolha mesmo quando o idioma clicado já é o ativo (§13).
 
 **Quem lê o quê**
 - Componentes 3D leem o store com `useExperienceStore(selector)` para JSX, e com `useExperienceStore.subscribe(selector, cb)` / `getState()` dentro de `useFrame` para valores por frame.
-- URL: em `focused` sincronizar `?focus=<id>&view=<vista>` via `history.replaceState` (shallow). Na carga, se houver `?focus`, pular o intro e ir direto ao preset da vista.
+- URL: em `focused` sincronizar `?focus=<id>&view=<vista>` via `history.replaceState` (shallow). Na carga, se houver `?focus`, pular o intro e ir direto ao preset da vista. O `?lang=pt|en` está sempre presente (§13).
 
 ---
 
@@ -296,7 +319,7 @@ Personagem: mesh estático com pose sentada (rig opcional; se houver animação 
 | Estado | Implementação |
 |---|---|
 | Idle | telas com `MeshBasicMaterial` preto + `envMap`/`MeshReflectorMaterial` sutil (desligada) |
-| Hover | `useFrame`: `damp(mat, 'emissiveIntensity', active ? 1.6 : 0, 0.25, dt)` em monitor e monitor vertical; o PC gamer acende os fans e a fita RGB (`pc_fan_*`, `pc_rgb`) e o LED do gabinete pulsa (`sin(t*4)`). A TV não é mais da mesa; zumbido da ventoinha cresce com a proximidade da câmera (V.5, mudo por padrão) |
+| Hover | `useFrame`: `damp(mat, 'emissiveIntensity', active ? 1.6 : 0, 0.25, dt)` em monitor e monitor vertical; o PC gamer acende os fans e a fita RGB (`pc_fan_*`, `pc_rgb`) e o LED do gabinete pulsa (`sin(t*4)`). A TV não é mais da mesa; o zumbido da ventoinha (bus Ambiente) cresce com a proximidade da câmera ao PC (§12.5) |
 | Click | preset `desk` perpendicular à tela. Quando `mode === 'focused'`, `MonitorHtml` troca `pointerEvents` de `none` → `auto` e o SO fictício (`ui/os/*`) ganha interação |
 | Voltar | janelas minimizam (motion), câmera recua |
 
@@ -316,6 +339,8 @@ Personagem: mesh estático com pose sentada (rig opcional; se houver animação 
 Regra anti-distorção: o wrapper tem **tamanho fixo em px** (1280×720) e todo o layout interno usa unidades relativas a esse wrapper (`%`, `cqw` via `container-type: size`). Nunca usar `vw/vh` dentro do monitor. O `transform` do drei escala o bloco todo junto com o 3D; resize da janela não muda o layout interno.
 
 Antes do focus, a tela mostra um "wallpaper" estático (mesh emissivo com textura), e o `Html` fica com `visible=false`/opacidade 0 para poupar CSS3D. Ao chegar, faz crossfade.
+
+**Ícones dos projetos.** `WebProject` (`content/types.ts`) ganhou o campo opcional `icon?: MediaImage`: o ícone real do projeto, quadrado (~256 px), em `public/media/web/<slug>/icon.webp` ou `.svg`. Os ícones foram baixados do GitHub do dono; o do Jogo da Memória é a capa do jogo, porque o repositório só tem um `.ico`. O SO resolve o ícone no `AppGlyph` (`ui/os/OsGlyph.tsx`): com `icon`, mostra a imagem; sem ele, mostra o glifo Phosphor que `OS_PROJECT_GLYPHS` (`content/os.ts`) mapeia por slug (slug sem entrada usa o glifo genérico de app). O mesmo ícone aparece na área de trabalho (`DesktopIcon`), na barra de tarefas (`Taskbar`), na barra de título (`Window`), nos cartões do `ProjectsApp` e no cabeçalho do `ProjectMedia`. A imagem é decorativa (`alt` vazio, `<img>` simples, sem `next/image`): o nome do app sempre aparece ao lado, e o `alt` real do ícone fica no conteúdo. Na lista de `projects.web.ts`, o `portfolio-gab` (Portfólio Gabriela) entrou e o `dicionario-c04a` saiu.
 
 ### 6.3 `printer` — Reino de Amestris
 | Estado | Implementação |
@@ -341,7 +366,7 @@ A zona de jogos é UM hotspot com DUAS sub-vistas (§5). A aba do `GamesPanel` �
 | Hover | `GameBox` usa spring `z: active ? 0.08 : 0` (projeta para fora); a TV mostra estática retrô (§6.5) |
 | Click | a hitbox clicada define a vista; `ShelfParticles` (drei `Sparkles`, count ≤ 80) monta junto da vista ativa |
 | Troca de aba | `setView` → a câmera voa entre estante e TV sem sair do foco e o painel desliza para o outro lado |
-| UI | hover num jogo do painel → `store.highlightBox = slug` → a `GameBox` correspondente faz spring extra |
+| UI | hover num jogo do painel → `store.highlightBox = slug` → a `GameBox` correspondente faz spring extra; nas duas caixas autorais da estante, dispara também a animação da caixa (abaixo) |
 | Jogar | o cartão de um jogo com `play` (`content/types.ts`) mostra "Jogar na TV" (`startGame(slug)`) ou "Jogar no PC" (`openOnPc(app)`); ver §6.6 |
 | Voltar | partículas desmontam, caixas voltam, câmera recua |
 
@@ -350,10 +375,25 @@ A zona de jogos é UM hotspot com DUAS sub-vistas (§5). A aba do `GamesPanel` �
 Conteúdo físico (o slug é o mesmo de `content/projects.games.ts` e dos nós `box_<slug>` e `cover_<slug>`; na estante, a ordem da esquerda para a direita é a do painel; no rack, a ordem dos estojos é a do bake, e o painel Digital lista primeiro os jogáveis na TV, depois o do PC e por último os sem versão jogável):
 - **Board games autorais** (`aldeia_dorme`, `conquista_galactica`): caixas quadradas de 36 cm na prateleira 2 da estante.
 - **Jogos digitais** (`porriland`, `piter`, `memory_game`, `o_anel`, `racco`, `duel_arena`): estojos quadrados de 13 cm (como os de CD) de pé no tampo do rack, ao lado do console.
-- **Capas**: as artes são quadradas (`cover` em `content/projects.games.ts`, em `public/media/games/`). Elas são a miniatura do cartão no painel e a textura da caixa no quarto. Cada `box_<slug>` do glb tem um filho `cover_<slug>`, um quadro cinza rente à frente que é assado como o resto do quarto. O `GameCovers` troca o material desse quadro pelo `CoverMaterial`, que multiplica a arte pela luz assada do quadro (dividida pelo albedo do cinza) e aplica as luzes de zona como o `BakedMaterial`. Assim a capa segue o tema dia/noite, a sombra da prateleira e o rosa da TV. As texturas entram no preload.
-- **Decoração da estante**: Root e Heat na prateleira 2; pilhas e miniaturas na 1; caixas deitadas, torre de dados, miniaturas e dados na 3; fileira de caixas na 4. Estática, fundida no `shelf_frame`.
+- **Capas**: as artes são quadradas (`cover` em `content/projects.games.ts`, em `public/media/games/`). Elas são a miniatura do cartão no painel e a textura da caixa no quarto. Cada `box_<slug>` do glb tem um filho `cover_<slug>`, um quadro cinza rente à frente que é assado como o resto do quarto. O `GameCovers` troca o material desse quadro pelo `CoverMaterial`, que multiplica a arte pela luz assada do quadro (dividida pelo albedo do cinza) e aplica as luzes de zona como o `BakedMaterial`. Assim a capa segue o tema dia/noite, a sombra da prateleira e o rosa da TV. O plano da arte sai da bounding box do próprio quadro, não de uma convenção do nó: o eixo mais fino é a normal. Quadro em pé: o topo da arte é +Y e a direita é `Y × normal` (na frente da estante, normal +Z, a direita é +X). Quadro deitado: o topo da arte aponta para o fundo da estante (-Z) e a direita é +X. `COVER_URLS` (`scene/baked/assets.ts`) é a lista única de capas, jogos primeiro e decoração depois, e é ela que o `preload.ts` e o `GameCovers` usam: as texturas entram no preload com a mesma chave de cache.
+- **Decoração da estante**: pilhas, caixas em pé e miniaturas na prateleira 1; Root, Heat, meeples e dados soltos na 2; Everdell deitado com a Ever Tree, torre de dados, miniaturas e dados na 3; fileira de caixas na 4; caixas deitadas, um troféu e uma planta pendente em cima. Estática, fundida no `zone_games`.
+  - **Caixas com capa real** (`content/decor.ts`, `public/media/decor/*.webp`; não são do dono e não têm cartão no painel): Root (horizontal, 4:3) e Heat: Pedal to the Metal (quadrada) em pé na prateleira 2, à direita das caixas autorais; Everdell (quadrada) **deitado** na prateleira 3, com a capa para cima.
+  - **Ever Tree**: a árvore de papelão do Everdell é modelada por script em cima da caixa (`_ever_tree` em `art/blender/props/games.py`): duas tábuas de tronco cruzadas, três plataformas de folhagem de contorno ondulado (metade verde, metade outono) e a copa com os três medalhões de estação. Tem ~42 cm de altura e fica abaixo da prateleira 4.
+  - **As caixas são estáticas**: ficam em `zone_games` e não são nós. Só o quadro da capa de cada uma é um nó baked solto (`cover_decor_root`, `cover_decor_heat`, `cover_decor_everdell`), sem pai e sem spring. O `GameCovers` aplica a arte neles e o contorno de hover da zona os lista (`HOTSPOT_OUTLINE_NODES.shelf` em `scene/baked/zones.ts`): o `Outline` só seleciona os objetos nomeados, e esses quadros são nós à parte de `zone_games`.
 
 O painel mostra no cartão a capa, o gênero, as etiquetas (prêmio, contexto, ano, ferramenta, jogadores e duração), o primeiro parágrafo e, atrás do "Ler mais", o resto da descrição. O ícone do cabeçalho acompanha a aba (dado no Tabuleiro, controle no Digital).
+
+**Animações das caixas (`BoardGameFx`).** Ao destacar uma das duas caixas autorais no painel, um efeito de ~3 s sai de trás dela. Os dois rodam em `src/experience/hotspots/shelf/fx/`:
+
+| Caixa (`highlightBox`) | Efeito | Duração |
+|---|---|---|
+| `conquista_galactica` ("Star Wars: Conquista Galáctica") | um caça imperial low-poly sai de trás da caixa, sobe por cima da borda, faz uma curva inclinada, dá um rasante pela frente da estante disparando **três lasers verdes**, rola e sai do quadro pela direita (`ImperialFighterFx`) | ~2,85 s (`FIGHTER_TOTAL`) |
+| `aldeia_dorme` ("Aldeia Dorme") | cinco meeples camponeses (chapéu de palha ou capuz) pulam de trás da caixa para o topo, quicam com squash and stretch, **cochilam** sob uma lua minguante, com os "z z z" subindo do vigia da lanterna, e pulam de volta para trás da caixa (`VillageMeeplesFx`) | ~3,05 s (`VILLAGE_TOTAL`) |
+
+- **Gatilho** (`useBoardGameFx`): o efeito começa quando `highlightBox` PASSA a ser o slug. Toca uma vez por destaque: um destaque novo com o efeito rodando é ignorado, e um depois do fim toca de novo. O efeito termina mesmo que o destaque saia no meio. Só é cortado (some em ~0,2 s) se a câmera deixar a vista Tabuleiro (voltar para HOME, trocar de aba). Com `prefers-reduced-motion` nunca começa.
+- **Sem luz real.** O quarto não tem luz dinâmica, então o efeito parece iluminado sem luz: meshes de runtime com `MeshMatcapMaterial` (matcap gerado em canvas, `flatShading` para o visual facetado), cor multiplicada por um tint noturno que acompanha `nightMix`, e brilhos (laser, motor, lanterna, lua, "z") em `MeshBasicMaterial`/`SpriteMaterial` com `toneMapped: false` e cor acima de 1 para passar do limiar do Bloom. Geometrias, matcaps e texturas são criados uma vez por montagem e descartados no unmount.
+- **Montagem.** O grupo do efeito fica `visible=false` fora da animação. Ele segue o nó `box_<slug>` do glb (a caixa sobe 15 cm no spring e o grupo sobe junto) ou, no grey-box, o mesh do `GameBox`. Nenhum mesh do efeito recebe raycast.
+- **Frame.** O relógio avança por `delta` (limitado a 0,05 s), sem `setState`: tudo é ref ou objeto mutável. A coreografia é lógica pura em `fx/fxTimeline.ts` (spline Catmull-Rom do caça, balística dos saltos, as duas linhas do tempo), sem three nem React, e é testada em `fx/__tests__/fxTimeline.test.ts`.
 
 ### 6.5 TV da zona de jogos
 A TV fica na parede acima do rack, é um componente próprio (`scene/WallTv.tsx`) e não tem hitbox: o clique nela cai na hitbox `digital` do rack. A mesa não mexe mais nela. O material segue o store:
@@ -390,7 +430,7 @@ O Duel Arena não tem build web: a Cubio está em alfa e o cartão dele aponta p
 - Saída: `Esc` na página chama `stopGame`. Com o foco dentro do iframe o jogo fica com o `Esc`, então o botão "Sair do jogo" é a saída garantida. Clicar fora da TV (`onPointerMissed`) **não** volta para HOME enquanto há jogo.
 - Render: o `ScenePause` troca o `frameloop` do R3F para `demand` (o `CameraControls` ainda invalida durante o voo e o resize redesenha) e volta a `always` quando o jogo acaba. O quarto parado não disputa GPU com o jogo.
 - Qualidade: o `PerformanceMonitor` do `QualityManager` (`Effects.tsx`) é desmontado, para os quadros esparsos do `demand` não rebaixarem o `quality`. Volta zerado quando o jogo acaba.
-- Áudio: o `AudioDirector` silencia o quarto (`muted || playing`) sem mexer na preferência `muted` do visitante.
+- Áudio: com `playing !== null` o `AudioDirector` liga `setGameActive` no motor e a Música e o Ambiente vão a zero por rampa (o jogo tem o próprio som); o bus de Efeitos segue disponível. `muted` e `volumes` do visitante não mudam, e Música e Ambiente voltam quando o jogo acaba (§12.5).
 
 **"Jogar no PC"** (Jogo da Memória): o cartão chama `openOnPc('memory')`. A câmera voa para a mesa (guarda 8, §3) e o `MonitorHtml` repassa o `pcLaunch` ao `MonitorScreen`, que o converte em `LaunchRequest` e o passa ao `Desktop` (prop `launch`). O `Desktop` trata cada `id` uma vez, durante o render (ajuste de estado por prop, sem efeito), e abre a janela `memory`. Se o SO estava desligado, ele liga junto.
 
@@ -411,7 +451,7 @@ O Duel Arena não tem build web: a Cubio está em alfa e o cartão dele aponta p
 **Estratégias**
 - Room: **um único `BakedMaterial`** (shader, §12.3) compartilhado por todos os nós baked; cor + luz + AO vêm do bake. Não usar `MeshStandardMaterial` no room. O AgX já vem aplicado na textura (o Blender aplica ao salvar o bake), então o `BakedMaterial` usa `toneMapped: false` e só converte para sRGB na saída.
 - Telas/LEDs: `MeshBasicMaterial` + `emissive`-like via `color` brilhante e `toneMapped: false` para estourar no Bloom (threshold 0.9).
-- Objetos animados (cadeira, partes da impressora, caixas, ponteiros) ficam no **mesmo `room.glb` e no mesmo atlas**, como nós separados: são baked na posição de repouso e movidos em runtime (ASSET_PIPELINE §3). O estático é unido em um mesh por zona (`zone_*`), o que mantém ~35 draw calls.
+- Objetos animados (cadeira, partes da impressora, caixas, ponteiros) ficam no **mesmo `room.glb` e no mesmo atlas**, como nós separados: são baked na posição de repouso e movidos em runtime (ASSET_PIPELINE §3). O estático é unido em um mesh por zona (`zone_*`). O `room.glb` atual tem 56 meshes (um draw call cada) e 58 mil triângulos (manifest do bake de 2026-10-24); as caixas decorativas da estante ficam estáticas dentro de `zone_games` justamente para não somar nós (ASSET_PIPELINE §6 e §7).
 - `<Canvas dpr={[1, 2]} gl={{ antialias: false, powerPreference: 'high-performance' }}>` + `<AdaptiveDpr pixelated />` + `<PerformanceMonitor onDecline={() => setQuality('medium')}>`. Antialias via `SMAA` no composer (mais barato que MSAA com Bloom).
 - `quality`: `high` = Bloom+DoF+dpr 2; `medium` = Bloom, dpr 1.5, sem DoF; `low` = sem composer, dpr 1.
 - `frameloop="always"` (há animações idle), mas parar o composer em `document.hidden`. Com um jogo rodando na TV o `ScenePause` passa para `demand` e o `PerformanceMonitor` sai de cena (§6.6).
@@ -483,7 +523,7 @@ npm i @phosphor-icons/react
 - Nunca `setState` dentro de `useFrame`. Use refs + damp/spring.
 - Nunca criar `new Vector3()`/`new Color()` dentro de `useFrame`; alocar no módulo ou `useMemo`.
 - Nomes de nós do glb seguem `ASSET_PIPELINE.md` (ex.: `chair_root`, `printer_head`). Componentes gerados por gltfjsx vão para `experience/models/` e **não são editados**; a lógica fica no wrapper do hotspot.
-- Conteúdo (textos, links, imagens) só em `src/content/*`. Componentes não têm strings de conteúdo hardcoded.
+- Conteúdo (textos, links, imagens) só em `src/content/*`. Componentes não têm strings de conteúdo hardcoded, e os textos de interface vêm dos hooks de idioma de `ui/i18n` (§13), nunca de `UI_TEXT` ou `OS_TEXT` direto.
 - Commits: `feat(scope): ...` (`scope` = fase ou hotspot: `camera`, `chair`, `os`, `ui`, `assets`).
 
 ---
@@ -503,11 +543,11 @@ Objetos por zona (posições das âncoras do `layout.ts`; decoração livre sem 
 
 | Zona | Objetos |
 |---|---|
-| Quarto | piso em tábuas, rodapé, tomadas, janela com persiana ou cortina e cidade (`emit_window_city`), quadros e pôsteres, relógio de parede com ponteiros (`clock_*`), ar-condicionado, planta grande (costela-de-adão), tapete |
+| Quarto | piso em tábuas, rodapé, tomadas, janela com persiana ou cortina e cidade (`emit_window_city*`, dentro da espessura da parede: só aparece pelo vidro), quadros e pôsteres, relógio de parede com ponteiros (`clock_*`), ar-condicionado, planta grande (costela-de-adão), tapete |
 | Mesa (`desk`) | dois monitores com moldura e suporte, teclado com teclas em grade, mouse e mousepad à direita, PC gamer com vidro e fans, headset no suporte, caneca com fumaça (`fx_mug_steam`), luminária ou light bar do monitor, caixas de som, suculenta, prateleira na parede com livros e figuras, fita de LED |
-| Jogos (`shelf`) | rack com portas, console e controle, capinhas (`box_*` digitais), TV fina com LED atrás (`tv_backlight`), soundbar; estante com caixas variadas em pé e deitadas, dados, miniaturas, meeples, caixas autorais (`box_*` tabuleiro) |
+| Jogos (`shelf`) | rack com portas, console e controle, capinhas (`box_*` digitais), TV fina com LED atrás (`tv_backlight`), soundbar; estante com caixas variadas em pé e deitadas, dados, miniaturas, meeples, caixas autorais (`box_*` tabuleiro), caixas decorativas com capa real (Root e Heat em pé na prateleira 2, Everdell deitado na 3) e a Ever Tree de papelão modelada por script em cima do Everdell |
 | Maker (`printer`) | bancada, impressora detalhada (estrutura, mesa, cabeça, eixo, carretel de filamento no suporte), carretéis num pegboard, alicate e paquímetro, peças impressas expostas |
-| Cama | cama de casal com edredom dobrado, dois travesseiros, criado-mudo com abajur e celular, chinelos |
+| Cama | cama de casal com edredom dobrado, dois travesseiros, criado-mudo com abajur e celular (sem chinelos: saíram da frente da cama) |
 | Cadeira (`chair`) | cadeira gamer com encosto alto, braços, base de 5 rodas (`chair_root`) |
 
 ### 12.3 Runtime
@@ -520,4 +560,73 @@ Objetos por zona (posições das âncoras do `layout.ts`; decoração livre sem 
 - **Luzes dinâmicas:** nenhuma na cena baked. O `Lights.tsx` só existe para o grey-box.
 
 ### 12.4 Vida na cena (o que roda em cima do bake)
-Cadeira com balanço idle somado ao giro do hover, telas com conteúdo (vídeo ou canvas: editor de código rolando no monitor vertical, descanso de tela com logo quicando na TV), fans e fitas de LED pulsando, relógio com hora real, fumaça da caneca, impressora animada, caixas com spring e destaque, partículas na zona de jogos, contorno no hover dos hotspots. Monitor do XkrulesOS com camadas de sujeira e reflexo por cima do HTML (Henry Heffernan).
+Cadeira com balanço idle somado ao giro do hover, telas com conteúdo (vídeo ou canvas: editor de código rolando no monitor vertical, descanso de tela com logo quicando na TV), fans e fitas de LED pulsando, relógio com hora real, fumaça da caneca, impressora animada, caixas com spring e destaque, partículas na zona de jogos, animações das caixas de board game (caça imperial da Conquista Galáctica e meeples da Aldeia Dorme, §6.4), contorno no hover dos hotspots. Monitor do XkrulesOS com camadas de sujeira e reflexo por cima do HTML (Henry Heffernan).
+
+### 12.5 Áudio (V.5)
+O som é **todo sintetizado** em Web Audio: nenhum arquivo de som, nenhum import de `three`/R3F. O motor fica em `src/lib/audio` (importável por `ui/**` e `experience/**`) e o `AudioDirector` (`src/experience/audio`) liga o 3D e o store a ele.
+
+| Arquivo (`src/lib/audio`) | Papel |
+|---|---|
+| `engine.ts` | `audio`, o único motor do app. `unlock()` cria o `AudioContext`, os buses, o master e o limitador (precisa de gesto); `setMuted`, `setVolumes`, `setGameActive`, `setFanLevel`, `setAmbientLevel`, `keyClick`, `mouseClick`, `tvStatic`, `getDebug`. Criá-lo não toca em `window`: seguro no SSR |
+| `volumes.ts` | folha pura: categorias `music`, `ambient` e `effects`, `DEFAULT_VOLUMES` (Música 0,35, Ambiente 0,5, Efeitos 0,8), curva de ganho do bus e a preferência salva (`portfolio3d:sound:v1`) |
+| `score.ts` | folha pura: a partitura (harmonia, condução de vozes, padrões) e o `Sequencer` com lookahead |
+| `music.ts` | toca a partitura com vozes sintetizadas (a música lo-fi) |
+| `voices.ts` | zumbido da ventoinha e ambiente (laços de ruído), cliques de tecla e de mouse, estática da TV |
+| `mix.ts` | `VOICE_GAIN`, alvos de loudness (`LEVEL_TARGETS_DB`), curvas de distância e o limitador de saturação suave |
+| `noise.ts` | ruído branco, marrom e o chiado de vinil |
+| `measure.ts` | só em dev: renderiza cada voz offline e mede o nível (`window.__audio.measure()`) |
+
+**Grafo.** Voz → **bus da categoria** → master → limitador (`WaveShaper` de saturação suave, joelho em 0,6) → destino. O master sobe e desce por rampa (`setTargetAtTime`), então ligar e desligar nunca estala.
+
+| Bus | O que passa |
+|---|---|
+| Música | a música lo-fi gerada |
+| Ambiente | o zumbido do PC (volume pela distância da câmera ao PC) e o ambiente noturno (pela distância ao centro do quarto) |
+| Efeitos | os cliques de tecla e de mouse no SO do monitor e a estática da TV |
+
+O ganho de cada bus segue o slider do visitante por uma curva quadrática, normalizada no volume padrão (no padrão vale 1; zero é silêncio exato). As vozes foram calibradas offline para esse padrão (`measureVoices`, contra os alvos de `LEVEL_TARGETS_DB`): o alvo da música é -36 dBFS de RMS, abaixo do zumbido do PC (-34).
+
+**A música.** Gerada em tempo real, em Fá maior, a 75 BPM. O ciclo tem 12 compassos, três frases de 4 (`Gm9 C9 Fmaj9 Dm9`, `Bbmaj9 Am9 Gm9 C9` e `Fmaj9 Bbmaj9 Am9 Dm9`: ii-V-I-vi, IV-iii-ii-V e I-IV-iii-vi) e volta ao início sem emenda. As vozes entram em camadas (teclado; depois baixo e chimbal; depois bumbo e caixa) e a cada ciclo muda o humor (melodia, bumbo, chimbal). Instrumentos: piano elétrico FM com tremolo e eco, baixo triangular, bateria com swing (caixa atrasada), chiado de vinil, "wow/flutter" de fita e passa-baixa quente.
+- **Agendamento com lookahead.** Um timer de 250 ms agenda as notas dos próximos 1,6 s pelo relógio do `AudioContext` (`currentTime`, não o do timer) e cria os nós só dessas notas, que se soltam sozinhos. O atraso do timer nunca estraga o ritmo.
+- **Só trabalha quando alguém ouve.** O gerador é criado na primeira vez que alguém o ouviria e só agenda notas com o som ligado, a aba visível, nenhum jogo na TV e o slider acima de 0,5%.
+
+**Entrada e preferência.**
+- O `AudioContext` precisa de um gesto. O clique em "Entrar" (`LoadingBridge`) o cria e chama `enterWithSound()`: o visitante **entra com som**, com a música baixinha nos volumes padrão, a menos que já tenha escolhido ligar ou silenciar (a escolha salva vale). A tela de loading avisa antes do clique (`boot.soundNote`). Sem Web Audio, o site segue mudo.
+- O botão de som do HUD abre o `SoundMenu`, um popover com o mudo geral e um slider por categoria. Ligar o som por ali também cria o `AudioContext`, dentro do clique.
+- A preferência fica no `localStorage`, na chave `portfolio3d:sound:v1`, `{ muted?, volumes? }`: o `muted` só entra se o visitante o escolheu, e de `volumes` só o que difere do padrão. JSON quebrado ou localStorage bloqueado voltam ao padrão sem erro (§3, guarda 10).
+
+**Silêncio automático.**
+- Aba escondida conta como mudo. Mudo ou aba escondida por mais de 450 ms **suspende o contexto**; ligar o retoma.
+- Com um jogo na TV (`playing`), Música e Ambiente vão a zero por rampa, sem mexer nas preferências (§6.6).
+- A estática da TV toca no hover da zona de jogos e ao trocar de sub-vista dentro dela, com volume pela distância à TV e um intervalo mínimo entre disparos.
+
+**Testes e debug.** `lib/audio/__tests__/{mix,noise,score,volumes}.test.ts` (`node --test`). Em dev, `window.__audio` expõe `debug()`, `measure()` e o `engine`.
+
+---
+
+## 13. Idiomas (português e inglês)
+
+O site tem dois idiomas, `pt` (padrão e idioma-fonte) e `en`, trocados em runtime, sem rota nova. **O server fica sempre em pt-BR**: `layout.tsx` (`<html lang="pt-BR">`, metadata, OpenGraph), `app/page.tsx` (`<h1>`, `<noscript>`) e o SEO usam os exports em português. O inglês só entra no cliente, depois da hidratação.
+
+| Peça | Onde | Papel |
+|---|---|---|
+| Tipos | `content/i18n.ts` | `Locale = 'pt' \| 'en'`, `LOCALES`, `DEFAULT_LOCALE`, `LOCALE_INFO` (`htmlLang`, `label`, `name`, `intl`), `ByLocale<T>`, `Widened<T>`. Folha pura, sem imports |
+| Textos em inglês | `content/en/*.ts` | `about`, `hotspots`, `os`, `projects.games`, `projects.print`, `projects.web`, `screens` e `site`, escritos com `satisfies Widened<typeof PT>`: chave faltando ou sobrando é erro de compilação |
+| Mapas por idioma | ao lado de cada export em português | `UI_TEXT_BY_LOCALE`, `OS_TEXT_BY_LOCALE`, `SCREEN_TEXT_BY_LOCALE`, `EDITOR_CODE_BY_LOCALE`, `SITE_BY_LOCALE`, `ABOUT_BY_LOCALE`, `GAME_PROJECTS_BY_LOCALE`, `WEB_PROJECTS_BY_LOCALE`, `PRINT_SHOWCASE_BY_LOCALE`, `HOTSPOTS_BY_LOCALE`. Os exports em português (`UI_TEXT`, `SITE`, `HOTSPOTS`...) continuam valendo `pt` |
+| Pacote | `content/locales.ts` | `contentFor(locale)` devolve tudo do idioma (`ui`, `os`, `screens`, `editorCode`, `site`, `about`, `games`, `web`, `print`, `hotspots`, `getHotspot`). Montado uma vez por idioma: a referência nunca muda, serve de dependência de memo |
+| Detecção | `lib/locale.ts` | módulo folha, testado com `node --test`: `pickLocale`, `detectInitialLocale`, `readStoredLocale`, `writeStoredLocale`, `applyDocumentLang` |
+| Store | `store.locale` e `setLocale` | §3 |
+| Hooks | `ui/i18n/useLocale.ts` | `useLocale`, `useContent`, `useUiText`, `useOsText` |
+| Documento | `ui/i18n/useDocumentLocale.ts` | `<html lang>` e `document.title` acompanham o idioma. Chamado pela `LoadingScreen`, o primeiro componente que existe no cliente |
+| URL | `experience/interaction/useUrlSync.ts` | mantém `?lang=` junto de `?focus` e `?view` |
+| Seletor | `ui/overlay/LanguageSwitch.tsx` | "PT \| EN" no HUD |
+
+**Regras**
+- **Só texto muda.** Slug, links, anos, cores, stack, imagens e `src` de ícones são compartilhados; o inglês é aplicado por cima do dado em português (`localizeWeb` em `projects.web.ts`, por exemplo). Títulos oficiais de jogos ficam como são.
+- **Detecção.** `?lang=` na URL, depois o `localStorage` (`portfolio3d:locale`), depois `navigator.language` (começa com `pt` é português; o resto é inglês). No server e nos testes do node vale `pt`. `setLocale` grava a escolha, atualiza `<html lang>` e ignora idioma inválido.
+- **Hidratação.** `useLocale` usa `useSyncExternalStore` com snapshot de server `pt`: o primeiro render bate com o HTML do servidor e, logo depois, troca para o idioma detectado.
+- **Componentes de `ui/**` não importam `UI_TEXT` nem `OS_TEXT` direto**: usam os hooks. O canvas lê o idioma sem passar pelo React: as telas desenhadas (TV, papel de parede e editor de código) usam `useExperienceStore.getState().locale` e se redesenham quando ele muda. O editor de código continua a digitação de onde estava. O relógio do papel de parede, o do SO, a data do terminal e os números do painel da impressora usam `LOCALE_INFO[locale].intl`.
+- **URL.** `?lang=` está sempre presente, gravado na montagem e a cada troca por `history.replaceState`. Um link copiado abre no mesmo idioma.
+- **HUD.** O `LanguageSwitch` fica no canto superior direito, em `idle`, junto de Som e Tema. É um grupo com um botão por idioma (`aria-pressed` no ativo); o nome acessível de cada botão é o idioma escrito nele mesmo ("Português (PT)") e cada botão leva o `lang` do próprio idioma.
+- **Texto novo.** Escreva em português e em `content/en/` (o compilador acusa o que faltar). Idioma novo: acrescente-o em `LOCALES` e preencha todo `ByLocale` (o compilador acusa o mapa que faltar) e `LOCALE_INFO`.
+- **Testes.** `content/__tests__/i18n.test.ts` (mesmas chaves, mesmos `{modelos}` e `[TODO: ...]`, dados idênticos nos dois idiomas, nomes antigos valem `pt`, referência estável) e `lib/__tests__/locale.test.ts` (URL > localStorage > navegador, persistência sem lançar).

@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
 import { UserCircleIcon } from '@phosphor-icons/react'
-import { OS_TEXT, type OsGlyphKey } from '@/content/os'
+import type { OsGlyphKey } from '@/content/os'
 import { SITE } from '@/content/site'
+import type { MediaImage } from '@/content/types'
+import { useOsText } from '../i18n/useLocale'
 import type { CssVars } from './cssVars'
-import { OsGlyph } from './OsGlyph'
+import { AppGlyph } from './OsGlyph'
 import { useClock } from './useClock'
 import styles from './Taskbar.module.css'
 
@@ -11,6 +13,8 @@ export interface TaskbarEntry {
   id: string
   title: string
   glyph: OsGlyphKey
+  /** Ícone real do projeto: aparece no lugar do glifo. */
+  icon?: MediaImage
   accent?: string
   /** Janela em primeiro plano (visível e no topo). */
   active: boolean
@@ -37,9 +41,10 @@ export function Taskbar({
   startMenu,
 }: TaskbarProps) {
   const { time, date } = useClock()
+  const os = useOsText()
 
   return (
-    <nav className={styles.taskbar} aria-label={OS_TEXT.taskbar.label}>
+    <nav className={styles.taskbar} aria-label={os.taskbar.label}>
       <div className={styles.startWrap}>
         <button
           type="button"
@@ -56,7 +61,7 @@ export function Taskbar({
         {startMenu}
       </div>
 
-      <ul className={styles.tasks} role="list" aria-label={OS_TEXT.taskbar.windows}>
+      <ul className={styles.tasks} role="list" aria-label={os.taskbar.windows}>
         {entries.map((entry) => {
           const style: CssVars | undefined = entry.accent ? { '--accent': entry.accent } : undefined
           return (
@@ -70,7 +75,7 @@ export function Taskbar({
                 onClick={() => onToggle(entry.id)}
               >
                 <span className={styles.taskGlyph} aria-hidden="true">
-                  <OsGlyph name={entry.glyph} />
+                  <AppGlyph name={entry.glyph} icon={entry.icon} />
                 </span>
                 <span className={styles.taskTitle}>{entry.title}</span>
               </button>
@@ -79,8 +84,8 @@ export function Taskbar({
         })}
       </ul>
 
-      <div className={styles.clock} title={OS_TEXT.taskbar.clock}>
-        <span className={styles.time}>{time || OS_TEXT.taskbar.clockPending}</span>
+      <div className={styles.clock} title={os.taskbar.clock}>
+        <span className={styles.time}>{time || os.taskbar.clockPending}</span>
         <span className={styles.date}>{date}</span>
       </div>
     </nav>

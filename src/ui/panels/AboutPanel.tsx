@@ -1,8 +1,7 @@
 import { MapPinIcon } from '@phosphor-icons/react'
-import { ABOUT } from '@/content/about'
-import { getHotspot } from '@/content/hotspots'
-import { SITE, UI_TEXT } from '@/content/site'
+import { SITE } from '@/content/site'
 import type { AboutContent } from '@/content/types'
+import { useContent } from '../i18n/useLocale'
 import { LinkButton, SmartImage, Tag, TodoText } from '../primitives'
 import { PanelSection } from './PanelSection'
 import { PanelShell } from './PanelShell'
@@ -32,14 +31,16 @@ function Avatar({ content }: { content: AboutContent }) {
 }
 
 interface AboutPanelProps {
-  /** Conteúdo. Padrão: content/about.ts. */
+  /** Conteúdo. Padrão: content/about.ts, no idioma ativo. */
   content?: AboutContent
   autoFocus?: boolean
 }
 
 /** Painel do hotspot `chair`: quem eu sou, habilidades e links. Data-driven (content/about.ts). */
-export function AboutPanel({ content = ABOUT, autoFocus }: AboutPanelProps) {
-  const t = UI_TEXT.about
+export function AboutPanel({ content: given, autoFocus }: AboutPanelProps) {
+  const { ui, about, getHotspot } = useContent()
+  const content = given ?? about
+  const t = ui.about
   const sourceLink = { label: t.sourceCode, href: SITE.sourceUrl, kind: 'repo' } as const
 
   return (

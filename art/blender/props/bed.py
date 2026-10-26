@@ -1,4 +1,4 @@
-"""props/bed.py — cama de casal, criado-mudo com abajur e chinelos (`zone_bed`).
+"""props/bed.py — cama de casal, criado-mudo com abajur e tapete aos pés da cama (`zone_bed`).
 
 Âncora: LAYOUT.bed = centro do estrado (3.12, 0, 2.35), 2.2 (x) x 1.8 (z), cabeceira em +X encostada na
 borda direita da ilha. Estática, sem hotspot.
@@ -115,9 +115,4 @@ def _extras(ctx):
     p.box((1.3, 0.012, 2.0), (rx, 0.0, rz), c('rug_b'), bevel=0.004, seg=1, anchor='b', keep='+y')
     p.box((1.1, 0.014, 1.8), (rx, 0.0, rz), c('rug_a'), bevel=0.004, seg=1, anchor='b', keep='+y')
     p.box((0.8, 0.016, 1.5), (rx, 0.0, rz), c('rug_b'), bevel=0.004, seg=1, anchor='b', keep='+y')
-    # chinelos
-    for k, (dz, ry) in enumerate(((-0.14, 8), (0.12, -6))):
-        sx, sz = rx + 0.1, rz + dz
-        p.box((0.24, 0.02, 0.1), (sx, 0.014, sz), c('white'), bevel=0.008, seg=2, anchor='b', ry=ry)
-        p.box((0.2, 0.04, 0.09), (sx + 0.02, 0.034, sz), c('pink'), bevel=0.018, seg=3, anchor='b', ry=ry)
     ctx.add_static(p)

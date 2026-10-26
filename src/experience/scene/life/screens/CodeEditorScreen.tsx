@@ -29,22 +29,23 @@ interface EditorScreenState {
   editor: ReturnType<typeof createEditorState>
   throttle: ReturnType<typeof createThrottle>
   level: number
-  /** O quadro estático (reduced-motion) já foi desenhado. */
+  /** O quadro estático (reduced-motion) já foi desenhado (no idioma de `editor.locale`). */
   staticPainted: boolean
 }
 
 /**
  * Tela do monitor vertical (`screen_monitor_vertical`, 9:16): editor de código escuro "digitando" e
  * rolando devagar, com cursor piscando. O canvas é redesenhado a no máximo 15 Hz (nada de redesenhar
- * todo frame). `prefers-reduced-motion`: um quadro estático (código completo, cursor aceso). Não
- * renderiza nada.
+ * todo frame). `prefers-reduced-motion`: um quadro estático (código completo, cursor aceso). O idioma
+ * (comentários do código, aba e barra de status) vem do store, lido com `getState()` no frame: trocar de
+ * idioma só muda o texto desenhado, sem reiniciar a digitação. Não renderiza nada.
  */
 export function CodeEditorScreen({ material, flipY = false }: ScreenProps) {
   const registry = useRoomRegistry()
   const reduced = useReducedMotionRef()
   const screen = useCanvasScreen(material, EDITOR_WIDTH, EDITOR_HEIGHT, flipY)
   const holder = useRef<EditorScreenState>({
-    editor: createEditorState(),
+    editor: createEditorState(useExperienceStore.getState().locale),
     throttle: createThrottle(),
     level: 1,
     staticPainted: false,
@@ -54,19 +55,22 @@ export function CodeEditorScreen({ material, flipY = false }: ScreenProps) {
     if (!material || !screen) return
     const state = holder.current
     const dt = Math.min(delta, 0.1)
+    const s = useExperienceStore.getState()
 
     if (reduced.current) {
-      if (!state.staticPainted) {
+      if (!state.staticPainted || state.editor.locale !== s.locale) {
         state.staticPainted = true
-        state.editor = createStaticEditorState()
+        state.editor = createStaticEditorState(s.locale)
         paintEditor(screen.ctx, state.editor, false)
         markScreenDirty(screen)
       }
     } else {
       if (state.staticPainted) {
         state.staticPainted = false
-        state.editor = createEditorState()
+        state.editor = createEditorState(s.locale)
       }
+      // Troca de idioma no meio da digitação: o texto novo continua de onde o cursor estava.
+      state.editor.locale = s.locale
       const elapsed = tickThrottle(state.throttle, delta)
       if (elapsed > 0) {
         stepEditor(state.editor, Math.min(elapsed, 0.25))
@@ -75,7 +79,6 @@ export function CodeEditorScreen({ material, flipY = false }: ScreenProps) {
       }
     }
 
-    const s = useExperienceStore.getState()
     const target = s.hovered === 'desk' ? HOVER_BOOST : 1
     damp(state, 'level', target, reduced.current ? 0.0001 : FADE_SMOOTH, dt)
     const night = registry.nightMix.current

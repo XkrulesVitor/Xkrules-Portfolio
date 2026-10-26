@@ -9,6 +9,9 @@ export const PRELOAD_LIST: readonly string[] = ['/models/room.glb']
 export const FOCUS_QUERY_PARAM = 'focus'
 export const VIEW_QUERY_PARAM = 'view'
 
+/** Parâmetro de URL do idioma (ex.: ?lang=en). Vale sobre o localStorage e o idioma do navegador. */
+export const LANG_QUERY_PARAM = 'lang'
+
 /**
  * Largura máxima do painel lateral DOM, em px. PRECISA bater com o `w-[min(440px,92cqw)]` do
  * `ui/panels/PanelShell.tsx`: o enquadramento responsivo da câmera (`experience/camera/framing.ts`)

@@ -1,3 +1,7 @@
+// `HOTSPOTS` e `getHotspot` valem o português; `HOTSPOTS_BY_LOCALE` e `getHotspotIn` trazem o idioma pedido
+// (só `label` e `description` mudam; o inglês está em `en/hotspots.ts`).
+import { HOTSPOT_TEXT_EN } from './en/hotspots.ts'
+import type { ByLocale, Locale } from './i18n.ts'
 import type { HotspotDef, HotspotId, HotspotView, PanelSide, PresetKey } from './types'
 
 export const HOTSPOTS: readonly HotspotDef[] = [
@@ -68,4 +72,19 @@ export function resolveFocus(
   const hotspot = getHotspot(id)
   const v = resolveView(id, view)
   return v ? { preset: v.preset, side: v.side } : { preset: hotspot.preset, side: hotspot.side }
+}
+
+/** Texto de um hotspot que muda com o idioma. */
+export type HotspotText = Pick<HotspotDef, 'label' | 'description'>
+
+export const HOTSPOTS_BY_LOCALE: ByLocale<readonly HotspotDef[]> = {
+  pt: HOTSPOTS,
+  en: HOTSPOTS.map((hotspot) => ({ ...hotspot, ...HOTSPOT_TEXT_EN[hotspot.id] })),
+}
+
+/** O hotspot com o texto no idioma pedido. */
+export function getHotspotIn(locale: Locale, id: HotspotId): HotspotDef {
+  const found = HOTSPOTS_BY_LOCALE[locale].find((h) => h.id === id)
+  if (!found) throw new Error(`Hotspot desconhecido: ${id}`)
+  return found
 }

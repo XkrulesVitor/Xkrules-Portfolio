@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
-import { UI_TEXT } from '@/content/site'
+import { useUiText } from '../i18n/useLocale'
 import { cx } from './cx'
 import { fmt } from './format'
 import { IconButton } from './IconButton'
@@ -31,7 +31,7 @@ interface CarouselProps {
   children: ReactNode
   /** Mostra uma "espiada" do próximo slide (cada slide ocupa 86% da largura). */
   peek?: boolean
-  /** Sobrescreve os textos padrão (UI_TEXT.carousel), ex.: "Peça {n} de {total}". */
+  /** Sobrescreve os textos padrão (`carousel` do texto de interface), ex.: "Peça {n} de {total}". */
   labels?: Partial<CarouselLabels>
   className?: string
 }
@@ -48,11 +48,12 @@ interface Nav {
  * "Slide N de M" a cada troca.
  */
 export function Carousel({ label, children, peek = false, labels, className }: CarouselProps) {
+  const defaults = useUiText().carousel
   const text: CarouselLabels = {
-    prev: labels?.prev ?? UI_TEXT.carousel.prev,
-    next: labels?.next ?? UI_TEXT.carousel.next,
-    slide: labels?.slide ?? UI_TEXT.carousel.slide,
-    goTo: labels?.goTo ?? UI_TEXT.carousel.goTo,
+    prev: labels?.prev ?? defaults.prev,
+    next: labels?.next ?? defaults.next,
+    slide: labels?.slide ?? defaults.slide,
+    goTo: labels?.goTo ?? defaults.goTo,
   }
   const slides = Children.toArray(children)
   const count = slides.length

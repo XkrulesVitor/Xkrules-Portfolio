@@ -19,6 +19,8 @@ export const VOICE_GAIN = {
   key: 0.12,
   mouse: 0.14,
   tvStatic: 0.075,
+  /** Música lo-fi inteira (soma de teclado, baixo, bateria e vinil), no volume padrão. */
+  music: 0.12,
 } as const
 
 /** Alvos de loudness FINAL (dBFS, com o master), conferidos por `measureVoices`. Referência de calibragem. */
@@ -33,7 +35,32 @@ export const LEVEL_TARGETS_DB = {
   mouse: -24,
   /** Pico da estática da TV. */
   tvStatic: -24,
+  /** RMS da música no volume padrão: bem baixinha, abaixo do zumbido do PC. */
+  music: -36,
 } as const
+
+/** Rampa (s) dos buses de categoria ao mexer num slider ou silenciar música e ambiente (jogo na TV). */
+export const BUS_RAMP_S = 0.08
+
+/**
+ * Curva do limitador de segurança do master (WaveShaper): idêntica à entrada até `SOFT_CLIP_KNEE` e
+ * depois satura suave (a escala cheia sai em ~0.9, nunca passa de 1). Com os sliders no máximo a soma
+ * das vozes pode passar de 1; isto evita o estalo do corte seco. (Um DynamicsCompressor não serve: ele aplica ganho de compensação e mexeria na
+ * mixagem calibrada.)
+ */
+export const SOFT_CLIP_KNEE = 0.6
+
+export function softClipCurve(size = 2048): Float32Array<ArrayBuffer> {
+  const curve = new Float32Array(size)
+  const room = 1 - SOFT_CLIP_KNEE
+  for (let i = 0; i < size; i++) {
+    const x = (i / (size - 1)) * 2 - 1
+    const a = Math.abs(x)
+    const y = a <= SOFT_CLIP_KNEE ? a : SOFT_CLIP_KNEE + room * Math.tanh((a - SOFT_CLIP_KNEE) / room)
+    curve[i] = x < 0 ? -y : y
+  }
+  return curve
+}
 
 export function clamp01(x: number): number {
   return x < 0 ? 0 : x > 1 ? 1 : x

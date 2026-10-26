@@ -2,4 +2,6 @@
 export { audio } from './engine'
 export type { AudioDebugState, AudioEngine } from './engine'
 export { ambientLevel, fanLevel, staticLevel } from './mix'
+export { DEFAULT_VOLUMES, SOUND_CATEGORIES } from './volumes'
+export type { SoundCategory, Volumes } from './volumes'
 export type { KeyVariant, MousePhase } from './voices'

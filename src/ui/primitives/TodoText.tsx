@@ -1,4 +1,4 @@
-import { UI_TEXT } from '@/content/site'
+import { useUiText } from '../i18n/useLocale'
 
 // Um único grupo de captura: no `split`, os marcadores caem nos índices ímpares.
 const TODO_SPLIT = /(\[TODO:[^\]]*\])/
@@ -8,6 +8,7 @@ const TODO_SPLIT = /(\[TODO:[^\]]*\])/
  * fica visível na UI (chip âmbar tracejado) em vez de passar por texto final.
  */
 export function TodoText({ text }: { text: string }) {
+  const hint = useUiText().panel.todo
   const parts = text.split(TODO_SPLIT)
   return (
     <>
@@ -15,7 +16,7 @@ export function TodoText({ text }: { text: string }) {
         i % 2 === 1 ? (
           <mark
             key={i}
-            title={UI_TEXT.panel.todo}
+            title={hint}
             className="rounded-sm border border-dashed border-todo/50 bg-todo/10 px-1 py-px font-mono text-[0.86em] text-todo"
           >
             {part}

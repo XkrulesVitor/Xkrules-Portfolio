@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { UI_TEXT } from '@/content/site'
 import { selectShowBack } from '@/store/selectors'
 import { useExperienceStore } from '@/store/useExperienceStore'
+import { useUiText } from '../i18n/useLocale'
 
 /**
  * "← Voltar (Esc)": visível em focused e em transitioning rumo a um hotspot. Com um jogo na TV vira
@@ -11,7 +11,8 @@ import { useExperienceStore } from '@/store/useExperienceStore'
 export function BackButton() {
   const visible = useExperienceStore(selectShowBack)
   const playing = useExperienceStore((s) => s.playing !== null)
-  const label = playing ? UI_TEXT.tvGame.exit : UI_TEXT.back.label
+  const text = useUiText()
+  const label = playing ? text.tvGame.exit : text.back.label
 
   return (
     <AnimatePresence>
@@ -19,7 +20,7 @@ export function BackButton() {
         <motion.button
           key="back"
           type="button"
-          aria-label={playing ? UI_TEXT.tvGame.exitAria : UI_TEXT.back.aria}
+          aria-label={playing ? text.tvGame.exitAria : text.back.aria}
           onClick={() => {
             const s = useExperienceStore.getState()
             if (s.playing !== null) s.stopGame()
@@ -37,7 +38,7 @@ export function BackButton() {
             aria-hidden="true"
             className="rounded border border-[var(--glass-border)] px-1.5 py-0.5 font-mono text-[10px] text-ink/70"
           >
-            {UI_TEXT.back.key}
+            {text.back.key}
           </kbd>
         </motion.button>
       ) : null}

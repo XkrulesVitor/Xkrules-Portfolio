@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { motion, useIsPresent, type Variants } from 'motion/react'
-import { getHotspot } from '@/content/hotspots'
 import type { HotspotId, PanelSide } from '@/content/types'
+import { useContent } from '../i18n/useLocale'
 import { cx, DURATION, EASE, Reveal, STAGGER, useReduceMotion } from '../primitives'
 
 /** Abaixo desta largura (do container, que no app é o overlay inteiro) o painel vira bottom-sheet. */
@@ -46,7 +46,7 @@ export function PanelShell({
   side,
   children,
 }: PanelShellProps) {
-  const hotspot = getHotspot(hotspotId)
+  const hotspot = useContent().getHotspot(hotspotId)
   const titleId = useId()
   const eyebrowId = useId()
   const titleRef = useRef<HTMLHeadingElement>(null)

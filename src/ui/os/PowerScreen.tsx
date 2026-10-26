@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PowerIcon } from '@phosphor-icons/react'
-import { OS_TEXT } from '@/content/os'
+import { useOsText } from '../i18n/useLocale'
 import styles from './PowerScreen.module.css'
 
 /** Fases em que o SO não mostra a área de trabalho. `on` (ligado) não passa por aqui. */
@@ -76,6 +76,7 @@ interface PowerScreenProps {
  */
 export function PowerScreen({ phase, onShutdownDone, onPowerOn, onBootDone }: PowerScreenProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const os = useOsText()
 
   // Tela apagada: o foco vai para o botão de energia (teclado liga com Enter ou Espaço).
   useEffect(() => {
@@ -88,8 +89,8 @@ export function PowerScreen({ phase, onShutdownDone, onPowerOn, onBootDone }: Po
         <Sequence
           key="shutdown"
           kind="shutdown"
-          lines={OS_TEXT.power.shutdownLines}
-          label={OS_TEXT.power.shutdownLabel}
+          lines={os.power.shutdownLines}
+          label={os.power.shutdownLabel}
           onDone={onShutdownDone}
         />
       ) : null}
@@ -97,25 +98,25 @@ export function PowerScreen({ phase, onShutdownDone, onPowerOn, onBootDone }: Po
         <Sequence
           key="boot"
           kind="boot"
-          lines={OS_TEXT.power.bootLines}
-          label={OS_TEXT.power.bootLabel}
+          lines={os.power.bootLines}
+          label={os.power.bootLabel}
           onDone={onBootDone}
         />
       ) : null}
       {phase === 'off' ? (
-        <div className={styles.off} role="status" aria-label={OS_TEXT.power.offLabel}>
+        <div className={styles.off} role="status" aria-label={os.power.offLabel}>
           <button
             ref={buttonRef}
             type="button"
             className={styles.powerButton}
-            aria-label={OS_TEXT.power.button}
+            aria-label={os.power.button}
             onClick={onPowerOn}
           >
             <span className={styles.powerGlyph} aria-hidden="true">
               <PowerIcon weight="bold" />
             </span>
           </button>
-          <p className={styles.hint}>{OS_TEXT.power.buttonHint}</p>
+          <p className={styles.hint}>{os.power.buttonHint}</p>
         </div>
       ) : null}
     </div>

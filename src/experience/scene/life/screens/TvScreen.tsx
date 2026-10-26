@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { damp } from 'maath/easing'
 import { resolveView } from '@/content/hotspots'
-import { SCREEN_TEXT } from '@/content/screens'
-import { GAME_PROJECTS } from '@/content/projects.games'
+import type { Locale } from '@/content/i18n'
+import { contentFor } from '@/content/locales'
 import type { GameProject } from '@/content/types'
 import { useExperienceStore, type ExperienceState } from '@/store/useExperienceStore'
 import { useRoomRegistry } from '../../baked/RoomContext'
@@ -43,7 +43,11 @@ const BURST_TIME = 0.26
 const HOVER_BOOST = 1.12
 const FADE_SMOOTH = 0.25
 
-const GAME_BY_SLUG: ReadonlyMap<string, GameProject> = new Map(GAME_PROJECTS.map((g) => [g.slug, g]))
+/** Jogos por slug, um mapa por idioma (o título da tela de título segue o idioma do store). */
+const GAME_BY_SLUG: Record<Locale, ReadonlyMap<string, GameProject>> = {
+  pt: new Map(contentFor('pt').games.map((g) => [g.slug, g])),
+  en: new Map(contentFor('en').games.map((g) => [g.slug, g])),
+}
 
 /** Estado da TV no store: título só em `focused` + `shelf` + vista `digital`; estática no hover da zona. */
 function tvModeOf(s: Pick<ExperienceState, 'mode' | 'focus' | 'view' | 'hovered'>): TvMode {
@@ -57,12 +61,13 @@ function subtitleOf(game: GameProject): string {
   return game.year ? String(game.year) : ''
 }
 
-function titleFor(slug: string | null): TitleScreen {
-  const game = slug ? GAME_BY_SLUG.get(slug) : undefined
+function titleFor(slug: string | null, locale: Locale): TitleScreen {
+  const game = slug ? GAME_BY_SLUG[locale].get(slug) : undefined
   if (!game) {
+    const tv = contentFor(locale).screens.tv
     return {
-      title: SCREEN_TEXT.tv.zoneTitle,
-      subtitle: SCREEN_TEXT.tv.zoneHint,
+      title: tv.zoneTitle,
+      subtitle: tv.zoneHint,
       accent: NEUTRAL_ACCENT,
       showStart: false,
     }
@@ -81,7 +86,7 @@ interface TvState {
   noise: NoiseBuffer | null
   overlay: HTMLCanvasElement | null
   throttle: ReturnType<typeof createThrottle>
-  /** `mode:slug` do último quadro desenhado (reduced-motion só redesenha quando muda). */
+  /** `mode:slug:idioma` do último quadro desenhado (reduced-motion só redesenha quando muda). */
   paintedKey: string
   /** O logo estava parado no centro (reduced) ou solto (normal). */
   logoCentered: boolean
@@ -104,16 +109,17 @@ function createTvState(): TvState {
 }
 
 /** Desenha um quadro da TV conforme o modo (e a estática do burst por cima da troca). */
-function paintTv(screen: CanvasScreen, state: TvState, mode: TvMode, animated: boolean): void {
+function paintTv(screen: CanvasScreen, state: TvState, mode: TvMode, animated: boolean, locale: Locale): void {
   const { ctx } = screen
+  const text = contentFor(locale).screens.tv
   if (state.burst > 0 && state.noise) {
     paintStatic(ctx, state.noise, state.overlay, state.time)
   } else if (mode === 'static' && state.noise) {
     paintStatic(ctx, state.noise, state.overlay, state.time)
   } else if (mode === 'title') {
-    paintTitle(ctx, titleFor(state.slug), state.overlay, state.time, animated)
+    paintTitle(ctx, titleFor(state.slug, locale), state.overlay, state.time, animated, text)
   } else {
-    paintLogo(ctx, state.logo, state.overlay)
+    paintLogo(ctx, state.logo, state.overlay, text)
   }
   markScreenDirty(screen)
 }
@@ -123,8 +129,10 @@ function paintTv(screen: CanvasScreen, state: TvState, mode: TvMode, animated: b
  * `BouncingLogo` de Bruno Simon), estática retrô no hover da zona e, em `focused` + `shelf` + vista
  * `digital`, tela de título com o nome do jogo em `highlightBox` tingida pelo `accent` dele (tela
  * neutra da zona quando nenhum está destacado). Trocar de conteúdo dá um pico curto de estática. O
- * canvas atualiza a no máximo 15 Hz. `prefers-reduced-motion`: logo parado, estática congelada,
- * título sem piscar e sem pico (só redesenha quando o conteúdo muda). Não renderiza nada.
+ * canvas atualiza a no máximo 15 Hz. O título do jogo e os textos da tela seguem o idioma do store (lido
+ * com `getState()` no frame; trocar de idioma redesenha, sem pico de estática). `prefers-reduced-motion`:
+ * logo parado, estática congelada, título sem piscar e sem pico (só redesenha quando o conteúdo ou o
+ * idioma muda). Não renderiza nada.
  */
 export function TvScreen({ material, flipY = false }: ScreenProps) {
   const registry = useRoomRegistry()
@@ -153,6 +161,7 @@ export function TvScreen({ material, flipY = false }: ScreenProps) {
     const mode = tvModeOf(s)
     const slug = mode === 'title' ? s.highlightBox : null
     const noMotion = reduced.current
+    const locale = s.locale
 
     if (mode !== state.mode || slug !== state.slug) {
       // Primeira vez (state.mode null) não faz pico: a TV já nasce com o logo.
@@ -173,14 +182,14 @@ export function TvScreen({ material, flipY = false }: ScreenProps) {
       state.time += elapsed
       state.burst = Math.max(0, state.burst - elapsed)
       if (noMotion) {
-        const key = `${mode}:${slug ?? ''}`
+        const key = `${mode}:${slug ?? ''}:${locale}`
         if (key !== state.paintedKey) {
           state.paintedKey = key
-          paintTv(screen, state, mode, false)
+          paintTv(screen, state, mode, false, locale)
         }
       } else {
         if (mode === 'logo' || state.burst > 0) stepLogo(state.logo, Math.min(elapsed, 0.25))
-        paintTv(screen, state, mode, true)
+        paintTv(screen, state, mode, true, locale)
       }
     }
 

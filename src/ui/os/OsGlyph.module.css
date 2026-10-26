@@ -1,0 +1,14 @@
+/* Ícone de imagem de um projeto (WebProject.icon). Mede 1em e herda o font-size do pai, como o SVG
+   dos glifos do Phosphor: cada ladrilho só ajusta o font-size (o tamanho vira "px de design" ali).
+   A sombra segue o recorte da imagem (alfa) e é em em para escalar junto com o ladrilho: 0.14em é
+   8 px num ladrilho de 56 px, a mesma sombra do ladrilho com glifo. */
+.image {
+  display: block;
+  flex: none;
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  filter: drop-shadow(0 0.14em 0.16em rgb(0 0 0 / 0.38));
+  pointer-events: none;
+  user-select: none;
+}

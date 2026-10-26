@@ -1,3 +1,4 @@
+import { DECOR_COVERS } from '@/content/decor'
 import { GAME_PROJECTS } from '@/content/projects.games'
 
 /**
@@ -22,7 +23,18 @@ export const BAKED_TEXTURE_URLS: string[] = Object.values(BAKED_TEXTURES)
 
 /**
  * Capas dos jogos (content/projects.games.ts) que viram textura no quadro `cover_<slug>` de cada
- * caixa. O `GameCovers` carrega `GAME_COVER_URLS` e o preload usa a MESMA lista, na mesma ordem.
+ * caixa.
  */
 export const GAME_COVERS = GAME_PROJECTS.flatMap((game) => (game.cover ? [{ slug: game.slug, url: game.cover.src }] : []))
 export const GAME_COVER_URLS: string[] = GAME_COVERS.map((cover) => cover.url)
+
+/** Capas da decoração da estante (content/decor.ts): Root, Heat e Everdell, nos quadros `cover_decor_*`. */
+export const DECOR_COVER_ENTRIES = DECOR_COVERS.map((decor) => ({ node: decor.node, url: decor.image.src }))
+export const DECOR_COVER_URLS: string[] = DECOR_COVER_ENTRIES.map((decor) => decor.url)
+
+/**
+ * Todas as capas, na ordem do `useTexture` do `GameCovers`: primeiro as dos jogos (mesma ordem de
+ * `GAME_COVERS`), depois as da decoração (mesma ordem de `DECOR_COVER_ENTRIES`). O `preload.ts` usa
+ * esta MESMA lista para reaproveitar o carregamento (a chave do cache é a lista de URLs).
+ */
+export const COVER_URLS: string[] = [...GAME_COVER_URLS, ...DECOR_COVER_URLS]

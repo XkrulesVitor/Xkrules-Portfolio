@@ -3,6 +3,13 @@
 // Os componentes de src/ui/os/** só leem strings daqui; os dados dos projetos vêm de projects.web.ts,
 // e os fatos do autor (Este Computador, Terminal) vêm de about.ts e site.ts. O que falta nesses
 // arquivos aparece como `[TODO: ...]` (a UI do SO destaca o marcador).
+//
+// `OS_TEXT` vale o português; `OS_TEXT_BY_LOCALE` traz os dois idiomas (o inglês está em `en/os.ts`).
+// O que NÃO é texto (ids, ordem das listas, URLs, a arte ASCII) fica nas constantes deste arquivo,
+// compartilhadas pelos idiomas: assim o texto em inglês não repete dado nenhum. O locale do relógio e
+// da data vem de `LOCALE_INFO` (i18n.ts).
+import { OS_TEXT_EN } from './en/os.ts'
+import type { ByLocale, Widened } from './i18n.ts'
 
 /** Glifos disponíveis nos atalhos e janelas. O componente de cada um fica em ui/os/OsGlyph.tsx. */
 export type OsGlyphKey =
@@ -30,6 +37,18 @@ export type MemorySymbolId =
   | 'rocket'
   | 'cards'
 
+/** Os símbolos do jogo, uma vez cada (o nome de cada um está em `OS_TEXT.memory.symbols`). */
+export const MEMORY_SYMBOL_IDS: readonly MemorySymbolId[] = [
+  'controller',
+  'cube',
+  'printer',
+  'dice',
+  'code',
+  'mug',
+  'rocket',
+  'cards',
+]
+
 /** Linhas da tabela de especificações de Este Computador (valores calculados em ThisComputerApp). */
 export type ComputerSpecId =
   | 'device'
@@ -44,21 +63,109 @@ export type ComputerSpecId =
   | 'network'
   | 'location'
 
-export interface CommandHelp {
-  name: string
-  usage: string
-  description: string
-}
+/** Ordem das linhas de Este Computador (rótulo e nota de cada uma: `OS_TEXT.computer.specs`). */
+export const COMPUTER_SPEC_IDS: readonly ComputerSpecId[] = [
+  'device',
+  'system',
+  'cpu',
+  'gpu',
+  'memory',
+  'storage',
+  'workshop',
+  'peripherals',
+  'lab',
+  'network',
+  'location',
+]
 
-export interface CreditLink {
-  label: string
-  href: string
-}
+/** Quantos itens do grupo aparecem no valor da linha antes do "+N". */
+export const COMPUTER_SHOWN_ITEMS = 3
+
+export type TerminalCommandName =
+  | 'help'
+  | 'whoami'
+  | 'projects'
+  | 'open'
+  | 'links'
+  | 'date'
+  | 'neofetch'
+  | 'clear'
+
+/** Comandos do terminal, na ordem do `help` (a descrição de cada um: `OS_TEXT.terminal.commandHelp`). */
+export const TERMINAL_COMMANDS: readonly { name: TerminalCommandName; usage: string }[] = [
+  { name: 'help', usage: 'help' },
+  { name: 'whoami', usage: 'whoami' },
+  { name: 'projects', usage: 'projects' },
+  { name: 'open', usage: 'open <slug>' },
+  { name: 'links', usage: 'links' },
+  { name: 'date', usage: 'date' },
+  { name: 'neofetch', usage: 'neofetch' },
+  { name: 'clear', usage: 'clear' },
+]
+
+/** Identidade do terminal (igual nos idiomas). */
+export const TERMINAL_IDENTITY = {
+  prompt: 'xkrules@os:~$',
+  host: 'xkrules@os',
+  user: 'xkrules',
+} as const
+
+/** Arte do neofetch: um "X" em ASCII, com o nome embaixo. Fonte monoespaçada, 10 colunas. */
+export const TERMINAL_ART: readonly string[] = [
+  '  __  __  ',
+  String.raw`  \ \/ /  `,
+  '   >  <   ',
+  String.raw`  /_/\_\  `,
+  '          ',
+  ' XKRULES  ',
+  '    OS    ',
+]
+
+export type CreditInspirationId = 'bruno' | 'henry' | 'julien'
+/** Rótulo de cada link das inspirações (`OS_TEXT.credits.inspirations.links`). */
+export type CreditLinkId = 'repo' | 'site' | 'system'
+export type CreditStackId = 'next' | 'r3f' | 'drei' | 'three' | 'zustand' | 'motion' | 'tailwind'
+
+/** Dados dos Créditos (nomes próprios, links e ordem). Os textos de cada item: `OS_TEXT.credits`. */
+export const CREDITS = {
+  inspirations: [
+    {
+      id: 'bruno',
+      name: 'Bruno Simon',
+      links: [{ id: 'repo', href: 'https://github.com/brunosimon/my-room-in-3d' }],
+    },
+    {
+      id: 'henry',
+      name: 'Henry Heffernan',
+      links: [
+        { id: 'site', href: 'https://github.com/henryjeff/portfolio-website' },
+        { id: 'system', href: 'https://github.com/henryjeff/portfolio-inner-site' },
+      ],
+    },
+    {
+      id: 'julien',
+      name: 'Julien Quenneville',
+      links: [{ id: 'repo', href: 'https://github.com/JulienQ1/NextThree-js-Portfolio' }],
+    },
+  ] as readonly {
+    id: CreditInspirationId
+    name: string
+    links: readonly { id: CreditLinkId; href: string }[]
+  }[],
+  stack: [
+    { id: 'next', name: 'Next.js', href: 'https://nextjs.org' },
+    { id: 'r3f', name: 'React Three Fiber', href: 'https://r3f.docs.pmnd.rs' },
+    { id: 'drei', name: 'drei', href: 'https://github.com/pmndrs/drei' },
+    { id: 'three', name: 'three', href: 'https://threejs.org' },
+    { id: 'zustand', name: 'zustand', href: 'https://github.com/pmndrs/zustand' },
+    { id: 'motion', name: 'motion', href: 'https://motion.dev' },
+    { id: 'tailwind', name: 'Tailwind CSS', href: 'https://tailwindcss.com' },
+  ] as readonly { id: CreditStackId; name: string; href: string }[],
+  icons: { name: 'Phosphor Icons', href: 'https://phosphoricons.com' },
+} as const
 
 export const OS_TEXT = {
   name: 'XKrules OS',
-  /** Locale do relógio da barra de tarefas. */
-  locale: 'pt-BR',
   /** Dica (title) dos marcadores [TODO: ...] destacados no SO. */
   todoHint: 'Conteúdo pendente',
   desktop: {
@@ -124,7 +231,7 @@ export const OS_TEXT = {
     heading: 'Especificações',
     intro: 'Ficha técnica do autor, em tom de brincadeira.',
     table: 'Especificações do computador',
-    /** Grupos de habilidades de about.ts que alimentam cada linha (o rótulo tem de existir lá). */
+    /** Rótulos dos grupos de habilidades de about.ts que alimentam cada linha (têm de existir lá, no mesmo idioma). */
     skillGroups: {
       cpu: 'Front-end',
       gpu: '3D e interação',
@@ -132,21 +239,19 @@ export const OS_TEXT = {
       peripherals: 'Jogos',
       lab: 'Acadêmico',
     },
-    specs: [
-      { id: 'device', label: 'Dispositivo', note: 'o autor' },
-      { id: 'system', label: 'Sistema', note: 'este aqui que você está usando' },
-      { id: 'cpu', label: 'Processador', note: 'stack principal' },
-      { id: 'gpu', label: 'Placa de vídeo', note: '3D e interação' },
-      { id: 'memory', label: 'Memória', note: 'anos de experiência' },
-      { id: 'storage', label: 'Armazenamento', note: 'formação' },
-      { id: 'workshop', label: 'Oficina', note: 'impressão 3D' },
-      { id: 'peripherals', label: 'Periféricos', note: 'jogos' },
-      { id: 'lab', label: 'Laboratório', note: 'acadêmico' },
-      { id: 'network', label: 'Rede', note: 'links públicos' },
-      { id: 'location', label: 'Localização', note: 'onde a máquina está' },
-    ] as readonly { id: ComputerSpecId; label: string; note: string }[],
-    /** Quantos itens do grupo aparecem no valor da linha antes do "+N". */
-    shownItems: 3,
+    specs: {
+      device: { label: 'Dispositivo', note: 'o autor' },
+      system: { label: 'Sistema', note: 'este aqui que você está usando' },
+      cpu: { label: 'Processador', note: 'stack principal' },
+      gpu: { label: 'Placa de vídeo', note: '3D e interação' },
+      memory: { label: 'Memória', note: 'anos de experiência' },
+      storage: { label: 'Armazenamento', note: 'formação' },
+      workshop: { label: 'Oficina', note: 'impressão 3D' },
+      peripherals: { label: 'Periféricos', note: 'jogos' },
+      lab: { label: 'Laboratório', note: 'acadêmico' },
+      network: { label: 'Rede', note: 'links públicos' },
+      location: { label: 'Localização', note: 'onde a máquina está' },
+    },
     /** Modelos com {chaves}. */
     cores: '{n} núcleos',
     coresHeading: 'Núcleos em uso',
@@ -163,27 +268,25 @@ export const OS_TEXT = {
 
   // Terminal -------------------------------------------------------------------------------------
   terminal: {
-    prompt: 'xkrules@os:~$',
-    host: 'xkrules@os',
     inputLabel: 'Linha de comando do terminal',
     outputLabel: 'Saída do terminal',
     welcome: [
       'XKrules OS Terminal',
       'Digite "help" para ver os comandos. Tab completa, as setas ↑ e ↓ percorrem o histórico.',
     ],
-    commands: [
-      { name: 'help', usage: 'help', description: 'mostra esta lista' },
-      { name: 'whoami', usage: 'whoami', description: 'quem é o dono desta máquina' },
-      { name: 'projects', usage: 'projects', description: 'lista os projetos web' },
-      { name: 'open', usage: 'open <slug>', description: 'abre a janela de um projeto' },
-      { name: 'links', usage: 'links', description: 'links públicos do autor' },
-      { name: 'date', usage: 'date', description: 'data e hora atuais' },
-      { name: 'neofetch', usage: 'neofetch', description: 'resumo do sistema, com arte' },
-      { name: 'clear', usage: 'clear', description: 'limpa a tela (ou Ctrl+L)' },
-    ] as readonly CommandHelp[],
+    /** Descrição de cada comando no `help` (nome e uso: `TERMINAL_COMMANDS`). */
+    commandHelp: {
+      help: 'mostra esta lista',
+      whoami: 'quem é o dono desta máquina',
+      projects: 'lista os projetos web',
+      open: 'abre a janela de um projeto',
+      links: 'links públicos do autor',
+      date: 'data e hora atuais',
+      neofetch: 'resumo do sistema, com arte',
+      clear: 'limpa a tela (ou Ctrl+L)',
+    },
     helpTitle: 'Comandos disponíveis:',
     whoami: {
-      user: 'xkrules',
       stack: 'Stack: {stack}',
     },
     projects: {
@@ -216,16 +319,6 @@ export const OS_TEXT = {
       projectsValue: '{n} na área de trabalho',
       swatchLabel: 'Paleta do sistema',
     },
-    /** Arte do neofetch: um "X" em ASCII, com o nome embaixo. Fonte monoespaçada, 10 colunas. */
-    art: [
-      '  __  __  ',
-      String.raw`  \ \/ /  `,
-      '   >  <   ',
-      String.raw`  /_/\_\  `,
-      '          ',
-      ' XKRULES  ',
-      '    OS    ',
-    ] as readonly string[],
   },
 
   // Jogo da Memória ------------------------------------------------------------------------------
@@ -260,16 +353,17 @@ export const OS_TEXT = {
       fullRepo: 'Versão completa no GitHub',
       details: 'Ver o projeto',
     },
-    symbols: [
-      { id: 'controller', name: 'controle' },
-      { id: 'cube', name: 'cubo 3D' },
-      { id: 'printer', name: 'impressora 3D' },
-      { id: 'dice', name: 'dado' },
-      { id: 'code', name: 'código' },
-      { id: 'mug', name: 'caneca' },
-      { id: 'rocket', name: 'foguete' },
-      { id: 'cards', name: 'cartas' },
-    ] as readonly { id: MemorySymbolId; name: string }[],
+    /** Nome de cada símbolo (lido pelos leitores de tela). */
+    symbols: {
+      controller: 'controle',
+      cube: 'cubo 3D',
+      printer: 'impressora 3D',
+      dice: 'dado',
+      code: 'código',
+      mug: 'caneca',
+      rocket: 'foguete',
+      cards: 'cartas',
+    },
   },
 
   // Créditos -------------------------------------------------------------------------------------
@@ -278,62 +372,45 @@ export const OS_TEXT = {
       'Este portfólio não nasceu do zero. Estes projetos abertos me mostraram o caminho, e o XKrules OS é uma homenagem ao sistema do monitor de Henry Heffernan.',
     inspirations: {
       heading: 'Inspirações',
-      items: [
-        {
-          id: 'bruno',
-          name: 'Bruno Simon',
+      /** Texto de cada inspiração (nome e links: `CREDITS.inspirations`). */
+      items: {
+        bruno: {
           work: 'My Room in 3D',
           description:
             'Quarto em 3D com luz pré-calculada no Blender e um shader que mistura dia, noite e luzes coloridas.',
-          links: [
-            { label: 'Repositório', href: 'https://github.com/brunosimon/my-room-in-3d' },
-          ],
         },
-        {
-          id: 'henry',
-          name: 'Henry Heffernan',
+        henry: {
           work: 'Portfólio com sistema operacional',
           description:
             'Um monitor 3D que roda um sistema operacional por dentro: janelas, desktop e apps. A maior inspiração do XKrules OS.',
-          links: [
-            { label: 'Site 3D', href: 'https://github.com/henryjeff/portfolio-website' },
-            { label: 'Sistema do monitor', href: 'https://github.com/henryjeff/portfolio-inner-site' },
-          ],
         },
-        {
-          id: 'julien',
-          name: 'Julien Quenneville',
+        julien: {
           work: 'Portfólio em Next e Three.js',
           description: 'Quarto em React Three Fiber com troca de tema entre dia e noite.',
-          links: [
-            { label: 'Repositório', href: 'https://github.com/JulienQ1/NextThree-js-Portfolio' },
-          ],
         },
-      ] as readonly {
-        id: string
-        name: string
-        work: string
-        description: string
-        links: readonly CreditLink[]
-      }[],
+      },
+      links: {
+        repo: 'Repositório',
+        site: 'Site 3D',
+        system: 'Sistema do monitor',
+      },
     },
     stack: {
       heading: 'Feito com',
-      items: [
-        { name: 'Next.js', role: 'framework', href: 'https://nextjs.org' },
-        { name: 'React Three Fiber', role: 'React para o three', href: 'https://r3f.docs.pmnd.rs' },
-        { name: 'drei', role: 'ajudantes do R3F', href: 'https://github.com/pmndrs/drei' },
-        { name: 'three', role: 'motor 3D', href: 'https://threejs.org' },
-        { name: 'zustand', role: 'estado global', href: 'https://github.com/pmndrs/zustand' },
-        { name: 'motion', role: 'animações da interface', href: 'https://motion.dev' },
-        { name: 'Tailwind CSS', role: 'estilos', href: 'https://tailwindcss.com' },
-      ] as readonly { name: string; role: string; href: string }[],
+      /** Papel de cada ferramenta (nome e link: `CREDITS.stack`). */
+      roles: {
+        next: 'framework',
+        r3f: 'React para o three',
+        drei: 'ajudantes do R3F',
+        three: 'motor 3D',
+        zustand: 'estado global',
+        motion: 'animações da interface',
+        tailwind: 'estilos',
+      },
     },
     icons: {
       heading: 'Ícones',
-      name: 'Phosphor Icons',
       role: 'família de ícones, peso duotone',
-      href: 'https://phosphoricons.com',
     },
     newTab: '(abre em nova aba)',
   },
@@ -361,11 +438,17 @@ export const OS_TEXT = {
   },
 } as const
 
+/** Forma do texto do SO, sem os literais do `as const`: o inglês é escrito contra ela. */
+export type OsText = Widened<typeof OS_TEXT>
+
+export const OS_TEXT_BY_LOCALE: ByLocale<OsText> = { pt: OS_TEXT, en: OS_TEXT_EN }
+
 /** Slug do projeto web ligado ao Jogo da Memória do SO (projects.web.ts). */
 export const OS_MEMORY_PROJECT_SLUG = 'memory-game'
 
 /**
- * Glifo de cada projeto na área de trabalho, por slug de WEB_PROJECTS.
+ * Glifo de reserva de cada projeto, por slug de WEB_PROJECTS: vale quando o projeto não tem `icon`
+ * (ícone real, em projects.web.ts); com `icon`, o SO desenha a imagem e este glifo fica sem uso.
  * Slug sem entrada usa 'app'. Só apresentação: o dado do projeto não muda.
  */
 export const OS_PROJECT_GLYPHS: Readonly<Record<string, OsGlyphKey>> = {

@@ -18,8 +18,9 @@ import {
   TrophyIcon,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
-import { OS_TEXT, type MemorySymbolId } from '@/content/os'
+import type { MemorySymbolId, OsText } from '@/content/os'
 import type { WebProject } from '@/content/types'
+import { useOsText } from '../../i18n/useLocale'
 import { fmt } from '../format'
 import scope from '../scope.module.css'
 import shared from '../shared.module.css'
@@ -37,8 +38,6 @@ import {
 } from './memoryGame'
 import styles from './MemoryGameApp.module.css'
 
-const TEXT = OS_TEXT.memory
-
 /** Glifo e cor de cada símbolo (a cor é só apresentação). */
 const SYMBOLS: Record<MemorySymbolId, { Glyph: Icon; color: string }> = {
   controller: { Glyph: GameControllerIcon, color: '#b583ff' },
@@ -50,10 +49,6 @@ const SYMBOLS: Record<MemorySymbolId, { Glyph: Icon; color: string }> = {
   rocket: { Glyph: RocketLaunchIcon, color: '#4dd8ee' },
   cards: { Glyph: CardsIcon, color: '#f78fd0' },
 }
-
-const SYMBOL_NAMES: Record<MemorySymbolId, string> = Object.fromEntries(
-  TEXT.symbols.map((symbol) => [symbol.id, symbol.name]),
-) as Record<MemorySymbolId, string>
 
 /** Posição vizinha ao andar com as setas; fica parado na borda do tabuleiro. */
 function neighbour(index: number, key: string): number {
@@ -76,10 +71,10 @@ function neighbour(index: number, key: string): number {
   }
 }
 
-function statusMessage(state: MemoryState, time: string): string {
+function statusMessage(state: MemoryState, time: string, TEXT: OsText['memory']): string {
   if (state.status === 'won') return fmt(TEXT.status.won, { moves: state.moves, time })
   if (state.last === 'match' && state.lastSymbol) {
-    return fmt(TEXT.status.match, { name: SYMBOL_NAMES[state.lastSymbol] })
+    return fmt(TEXT.status.match, { name: TEXT.symbols[state.lastSymbol] })
   }
   if (state.last === 'miss') return TEXT.status.miss
   return TEXT.status.start
@@ -98,6 +93,8 @@ export interface MemoryGameAppProps {
  * teclado (setas andam, Enter ou Espaço viram). As regras ficam em memoryGame.ts (reducer puro).
  */
 export const MemoryGameApp = memo(function MemoryGameApp({ project, onOpenProject }: MemoryGameAppProps) {
+  const os = useOsText()
+  const TEXT = os.memory
   // Inicializador do reducer: roda uma vez, só no cliente (a janela nunca vem do servidor).
   const [state, dispatch] = useReducer(memoryReducer, undefined, () => createGame(shuffleDeck(Math.random)))
   // Relógio do tempo de jogo: o intervalo só roda durante a partida; o render nunca lê Date.now().
@@ -219,7 +216,7 @@ export const MemoryGameApp = memo(function MemoryGameApp({ project, onOpenProjec
               : fmt(matched ? TEXT.card.matched : TEXT.card.shown, {
                   n: index + 1,
                   total: CARD_COUNT,
-                  name: SYMBOL_NAMES[symbol],
+                  name: TEXT.symbols[symbol],
                 })
             return (
               <button
@@ -272,7 +269,7 @@ export const MemoryGameApp = memo(function MemoryGameApp({ project, onOpenProjec
 
       <footer className={styles.footer}>
         <p className={styles.status} role="status">
-          {statusMessage(state, time)}
+          {statusMessage(state, time, TEXT)}
         </p>
         {project ? (
           <div className={styles.links}>
@@ -282,7 +279,7 @@ export const MemoryGameApp = memo(function MemoryGameApp({ project, onOpenProjec
                   <FullGlyph weight="regular" />
                 </span>
                 {project.liveUrl ? TEXT.project.full : TEXT.project.fullRepo}
-                <span className={shared.srOnly}>{OS_TEXT.detail.newTab}</span>
+                <span className={shared.srOnly}>{os.detail.newTab}</span>
                 <span className={shared.actionArrow} aria-hidden="true">
                   <ArrowUpRightIcon weight="regular" />
                 </span>

@@ -1,9 +1,9 @@
 // Regras do Jogo da Memória 4x4: estado + reducer PUROS (sem React, sem DOM, sem Math.random e
 // sem relógio: o embaralhamento e o "agora" entram como argumento). O componente (MemoryGameApp)
 // só desenha o estado e chama o reducer.
-import { OS_TEXT, type MemorySymbolId } from '@/content/os'
+import { MEMORY_SYMBOL_IDS, type MemorySymbolId } from '@/content/os'
 
-export const SYMBOL_IDS: readonly MemorySymbolId[] = OS_TEXT.memory.symbols.map((symbol) => symbol.id)
+export const SYMBOL_IDS: readonly MemorySymbolId[] = MEMORY_SYMBOL_IDS
 export const PAIR_COUNT = SYMBOL_IDS.length
 export const CARD_COUNT = PAIR_COUNT * 2
 /** Colunas do tabuleiro (4x4). */

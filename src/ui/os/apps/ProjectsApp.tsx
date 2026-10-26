@@ -1,10 +1,9 @@
 import { memo, useEffect, useId, useRef, useState } from 'react'
 import { ArrowLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
-import { OS_TEXT } from '@/content/os'
-import { WEB_PROJECTS } from '@/content/projects.web'
 import type { WebProject } from '@/content/types'
+import { useContent } from '../../i18n/useLocale'
 import type { CssVars } from '../cssVars'
-import { OsGlyph, projectGlyph } from '../OsGlyph'
+import { AppGlyph, projectGlyph } from '../OsGlyph'
 import scope from '../scope.module.css'
 import shared from '../shared.module.css'
 import { ProjectWindow } from './ProjectWindow'
@@ -25,6 +24,7 @@ function nearestScroller(el: HTMLElement | null): HTMLElement | null {
 }
 
 export interface ProjectsAppProps {
+  /** Projetos. Padrão: content/projects.web.ts, no idioma ativo. */
   projects?: readonly WebProject[]
   /**
    * Modo controlado (Desktop): o clique só avisa o host, que abre uma janela própria.
@@ -59,8 +59,11 @@ function ProjectCard({ project, onOpen }: ProjectCardProps) {
         aria-describedby={`${summaryId} ${stackId}`}
         onClick={() => onOpen(project.slug)}
       >
-        <span className={styles.cardGlyph} aria-hidden="true">
-          <OsGlyph name={projectGlyph(project.slug)} />
+        <span
+          className={project.icon ? `${styles.cardGlyph} ${styles.cardGlyphIcon}` : styles.cardGlyph}
+          aria-hidden="true"
+        >
+          <AppGlyph name={projectGlyph(project.slug)} icon={project.icon} />
         </span>
         <span className={styles.cardMain}>
           <span className={styles.cardHead}>
@@ -99,11 +102,14 @@ function ProjectCard({ project, onOpen }: ProjectCardProps) {
  * fluido (grid auto-fill) e todo tamanho vem de `--px` (1px fora do Desktop).
  */
 export const ProjectsApp = memo(function ProjectsApp({
-  projects = WEB_PROJECTS,
+  projects: given,
   onOpenProject,
   showHeading = true,
   className,
 }: ProjectsAppProps) {
+  const content = useContent()
+  const os = content.os
+  const projects = given ?? content.web
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
@@ -150,7 +156,7 @@ export const ProjectsApp = memo(function ProjectsApp({
               <span className={styles.backGlyph} aria-hidden="true">
                 <ArrowLeftIcon weight="regular" />
               </span>
-              {OS_TEXT.projects.back}
+              {os.projects.back}
             </button>
           </div>
           <ProjectWindow project={detail} headingRef={headingRef} flush />
@@ -159,15 +165,15 @@ export const ProjectsApp = memo(function ProjectsApp({
         <div key="list" className={controlled ? styles.viewStatic : styles.view}>
           {showHeading ? (
             <header className={styles.heading}>
-              <p className={styles.eyebrow}>{OS_TEXT.projects.subtitle}</p>
-              <h2 className={styles.title}>{OS_TEXT.projects.title}</h2>
+              <p className={styles.eyebrow}>{os.projects.subtitle}</p>
+              <h2 className={styles.title}>{os.projects.title}</h2>
             </header>
           ) : null}
-          <p className={styles.hint}>{OS_TEXT.projects.hint}</p>
+          <p className={styles.hint}>{os.projects.hint}</p>
           {projects.length === 0 ? (
-            <p className={styles.empty}>{OS_TEXT.projects.empty}</p>
+            <p className={styles.empty}>{os.projects.empty}</p>
           ) : (
-            <ul className={styles.list} role="list" aria-label={OS_TEXT.projects.list}>
+            <ul className={styles.list} role="list" aria-label={os.projects.list}>
               {projects.map((project) => (
                 <ProjectCard key={project.slug} project={project} onOpen={open} />
               ))}

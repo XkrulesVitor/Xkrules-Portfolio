@@ -1,9 +1,8 @@
 import { useMemo, type RefObject, type SyntheticEvent } from 'react'
 import { Html } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
-import { GAME_PROJECTS } from '@/content/projects.games'
-import type { GameProject } from '@/content/types'
 import { useExperienceStore } from '@/store/useExperienceStore'
+import { useContent } from '@/ui/i18n/useLocale'
 import { TV_SCREEN_SIZE, TvGameScreen } from '@/ui/tv/TvGameScreen'
 import { LAYOUT } from '../../scene/layout'
 
@@ -50,8 +49,6 @@ const KEEP_EVENTS_INSIDE = {
   onLostPointerCapture: stopEvent,
 } as const
 
-const GAME_BY_SLUG: ReadonlyMap<string, GameProject> = new Map(GAME_PROJECTS.map((g) => [g.slug, g]))
-
 /**
  * Jogo na TV da zona de jogos (ARCHITECTURE §6.6): drei `<Html transform>` com o `TvGameScreen`
  * (wrapper fixo de 1280x716 px) preso à tela da TV, posição, rotação e escala derivadas de
@@ -62,7 +59,10 @@ const GAME_BY_SLUG: ReadonlyMap<string, GameProject> = new Map(GAME_PROJECTS.map
 export function TvGameHtml() {
   const canvasParent = useThree((s) => s.gl.domElement.parentElement)
   const portal = useMemo(() => ({ current: canvasParent }) as RefObject<HTMLElement>, [canvasParent])
-  const game = useExperienceStore((s) => (s.playing ? (GAME_BY_SLUG.get(s.playing) ?? null) : null))
+  // Os jogos no idioma ativo: o título (aria do iframe, "Ligando...") segue o seletor de idioma.
+  const games = useContent().games
+  const playing = useExperienceStore((s) => s.playing)
+  const game = playing ? (games.find((g) => g.slug === playing) ?? null) : null
 
   return (
     <Html

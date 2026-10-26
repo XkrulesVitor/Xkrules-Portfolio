@@ -8,7 +8,11 @@ import {
   clamp01,
   fanLevel,
   pitchRatio,
+  SOFT_CLIP_KNEE,
+  LEVEL_TARGETS_DB,
+  VOICE_GAIN,
   smoothstep,
+  softClipCurve,
   staticLevel,
   toDb,
 } from '../mix.ts'
@@ -92,5 +96,29 @@ describe('mix: utilitários', () => {
     assert.equal(toDb(1), 0)
     assert.ok(Math.abs(toDb(0.5) + 6.0206) < 1e-3)
     assert.equal(toDb(0), -Infinity)
+  })
+})
+
+describe('mix: música e limitador', () => {
+  it('a música entra bem baixinha: alvo abaixo do zumbido do PC e acima do ambiente', () => {
+    assert.ok(LEVEL_TARGETS_DB.music < LEVEL_TARGETS_DB.fan)
+    assert.ok(LEVEL_TARGETS_DB.music > LEVEL_TARGETS_DB.ambient - 6)
+    assert.ok(VOICE_GAIN.music > 0 && VOICE_GAIN.music < 0.3)
+  })
+
+  it('softClipCurve é transparente abaixo do joelho, crescente, simétrica e nunca passa de 1', () => {
+    const size = 2049
+    const curve = softClipCurve(size)
+    let previous = -Infinity
+    for (let i = 0; i < size; i++) {
+      const x = (i / (size - 1)) * 2 - 1
+      const y = curve[i]
+      assert.ok(y > previous - 1e-9, )
+      assert.ok(Math.abs(y) <= 1)
+      assert.ok(Math.abs(y + curve[size - 1 - i]) < 1e-6, 'simétrica')
+      if (Math.abs(x) <= SOFT_CLIP_KNEE) assert.ok(Math.abs(y - x) < 1e-5, )
+      else assert.ok(Math.abs(y) <= Math.abs(x) + 1e-9, 'comprime acima do joelho')
+      previous = y
+    }
   })
 })

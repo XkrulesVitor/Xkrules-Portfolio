@@ -89,6 +89,11 @@ export interface WebProject {
   liveUrl?: string
   video?: MediaVideo
   images: readonly MediaImage[]
+  /**
+   * Ícone real do projeto (quadrado, ~256 px, fundo transparente; webp ou svg em /public/media/web/<slug>/).
+   * O SO o usa no lugar do glifo desenhado de `OS_PROJECT_GLYPHS`; sem ele, o glifo continua valendo.
+   */
+  icon?: MediaImage
   /** Cor de destaque do ícone e da janela no SO (hex). */
   accent: string
 }

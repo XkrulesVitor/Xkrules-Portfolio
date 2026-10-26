@@ -1,8 +1,8 @@
 import { memo, useId } from 'react'
 import type { Ref } from 'react'
 import { ArrowUpRightIcon, CalendarBlankIcon, GithubLogoIcon, GlobeIcon, UserIcon } from '@phosphor-icons/react'
-import { OS_TEXT } from '@/content/os'
 import type { WebProject } from '@/content/types'
+import { useOsText } from '../../i18n/useLocale'
 import type { CssVars } from '../cssVars'
 import scope from '../scope.module.css'
 import shared from '../shared.module.css'
@@ -24,6 +24,7 @@ export interface ProjectWindowProps {
  */
 export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, flush = false }: ProjectWindowProps) {
   const stackId = useId()
+  const os = useOsText()
   const style: CssVars = { '--accent': project.accent }
   const hasMeta = project.year !== undefined || project.role !== undefined
   const hasLinks = project.repoUrl !== undefined || project.liveUrl !== undefined
@@ -45,7 +46,7 @@ export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, 
               <dl className={styles.meta}>
                 {project.year !== undefined ? (
                   <div className={styles.metaItem}>
-                    <dt className={shared.srOnly}>{OS_TEXT.detail.year}</dt>
+                    <dt className={shared.srOnly}>{os.detail.year}</dt>
                     <dd className={styles.metaValue}>
                       <span className={styles.metaGlyph} aria-hidden="true">
                         <CalendarBlankIcon weight="duotone" />
@@ -56,7 +57,7 @@ export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, 
                 ) : null}
                 {project.role !== undefined ? (
                   <div className={styles.metaItem}>
-                    <dt className={shared.srOnly}>{OS_TEXT.detail.role}</dt>
+                    <dt className={shared.srOnly}>{os.detail.role}</dt>
                     <dd className={styles.metaValue}>
                       <span className={styles.metaGlyph} aria-hidden="true">
                         <UserIcon weight="duotone" />
@@ -82,7 +83,7 @@ export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, 
           {project.stack.length > 0 ? (
             <section aria-labelledby={stackId}>
               <h3 id={stackId} className={styles.sectionLabel}>
-                {OS_TEXT.detail.stack}
+                {os.detail.stack}
               </h3>
               <ul className={shared.chips} role="list">
                 {project.stack.map((tech) => (
@@ -95,14 +96,14 @@ export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, 
           ) : null}
 
           {hasLinks ? (
-            <div className={styles.actions} role="group" aria-label={OS_TEXT.detail.links}>
+            <div className={styles.actions} role="group" aria-label={os.detail.links}>
               {project.repoUrl ? (
                 <a className={shared.action} href={project.repoUrl} target="_blank" rel="noopener noreferrer">
                   <span className={shared.actionGlyph} aria-hidden="true">
                     <GithubLogoIcon weight="regular" />
                   </span>
-                  {OS_TEXT.detail.repo}
-                  <span className={shared.srOnly}>{OS_TEXT.detail.newTab}</span>
+                  {os.detail.repo}
+                  <span className={shared.srOnly}>{os.detail.newTab}</span>
                   <span className={shared.actionArrow} aria-hidden="true">
                     <ArrowUpRightIcon weight="regular" />
                   </span>
@@ -113,8 +114,8 @@ export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, 
                   <span className={shared.actionGlyph} aria-hidden="true">
                     <GlobeIcon weight="regular" />
                   </span>
-                  {OS_TEXT.detail.live}
-                  <span className={shared.srOnly}>{OS_TEXT.detail.newTab}</span>
+                  {os.detail.live}
+                  <span className={shared.srOnly}>{os.detail.newTab}</span>
                   <span className={shared.actionArrow} aria-hidden="true">
                     <ArrowUpRightIcon weight="regular" />
                   </span>

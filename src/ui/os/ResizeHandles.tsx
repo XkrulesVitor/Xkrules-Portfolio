@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import type { PointerEvent as ReactPointerEvent, RefObject } from 'react'
-import { OS_TEXT } from '@/content/os'
+import { useOsText } from '../i18n/useLocale'
 import { pointerDeltaPct } from './desktopPointer'
 import type { ResizeEdges, WindowGeometry } from './windowManager'
 import styles from './ResizeHandles.module.css'
@@ -36,6 +36,7 @@ interface ResizeHandleProps {
 
 function ResizeHandle({ name, edges, geometry, desktopRef, onResize, onActiveChange }: ResizeHandleProps) {
   const sessionRef = useRef<ResizeSession | null>(null)
+  const hint = useOsText().window.resize
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || sessionRef.current) return
@@ -75,7 +76,7 @@ function ResizeHandle({ name, edges, geometry, desktopRef, onResize, onActiveCha
     <div
       className={styles.handle}
       data-handle={name}
-      title={OS_TEXT.window.resize}
+      title={hint}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endResize}

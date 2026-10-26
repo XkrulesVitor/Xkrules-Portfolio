@@ -13,8 +13,8 @@ import {
   type Icon as PhosphorIcon,
 } from '@phosphor-icons/react'
 import { motion, type HTMLMotionProps } from 'motion/react'
-import { UI_TEXT } from '@/content/site'
 import type { ExternalLink, LinkKind } from '@/content/types'
+import { useUiText } from '../i18n/useLocale'
 import { cx } from './cx'
 import { usePress } from './motion'
 import { FOCUS_RING, LIFT_HITAREA } from './styles'
@@ -68,6 +68,7 @@ export function LinkButton({
   ...props
 }: LinkButtonProps) {
   const press = usePress()
+  const text = useUiText()
   const Icon = LINK_ICONS[link.kind]
   const opensNewTab = !link.href.startsWith('mailto:')
   const compact = size === 'sm'
@@ -104,7 +105,7 @@ export function LinkButton({
             aria-hidden="true"
             className="shrink-0 opacity-60"
           />
-          <span className="sr-only">, {UI_TEXT.link.newTab}</span>
+          <span className="sr-only">, {text.link.newTab}</span>
         </>
       ) : null}
     </motion.a>

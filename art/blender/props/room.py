@@ -183,29 +183,43 @@ def _outlets(ctx):
 
 
 def _city(ctx):
-    """Cidade noturna vista pela janela: janelinhas acesas em prédios, num painel logo atrás da janela.
+    """Cidade noturna vista pela janela: janelinhas acesas em prédios, DENTRO da espessura da parede.
 
-    O painel é pequeno de propósito: ele só aparece através da abertura (um plano grande e distante
-    vazaria pelas bordas do quarto na vista HOME). Dois planos dão um pouco de paralaxe."""
+    Os dois planos ficam entre o vidro e a face externa da parede, ATRÁS da luz da lua (`lt_moon`, em
+    WALL_LEFT_X - 0.1: se ficassem na frente dela, sombreariam o facho), e só têm quadradinhos dentro da
+    abertura da janela. Assim a cidade só aparece através do vidro: a órbita da câmera HOME mostra a parede de
+    fora da ponta aberta (+Z) e um painel maior ou mais afastado vazava para o ar, ao lado da parede. O que
+    vale é o tamanho e a densidade dos quadradinhos, calibrados para a janela inteira ficar povoada."""
     r = random.Random(21)
     win = WINDOW
+    xli = ctx.W['WALL_LEFT_X']
     zc, ww = win['z'], win['w']
+    y0, y1 = win['y0'], win['y1']
+    margin = 0.05                       # o caixilho (bastidor de 4,5 cm) cobre a borda da abertura
+    z_lo, z_hi = zc - ww / 2 + margin, zc + ww / 2 - margin
+    y_lo, y_hi = y0 + margin, y1 - margin
     warm = Prop('emit_window_city', None)
     cool = Prop('emit_window_city_cool', None)
-    layers = ((-4.62, 0.17, 0.24, 0.26, 0.5), (-4.9, 0.11, 0.16, 0.19, 0.4))     # x, largura, altura, passo, densidade
-    for xp, wz, wy, step, dens in layers:
-        z = zc - ww / 2 - 0.5
-        while z < zc + ww / 2 + 0.5:
-            bw = r.uniform(0.45, 0.9)
-            top = r.uniform(1.1, 2.6)
-            cols = max(1, int(bw / step))
-            y = 0.35
-            while y < top:
-                for ci in range(cols):
+    # dx (a partir da face interna da parede), largura e altura do quadradinho, passo em z e em y, densidade.
+    # O quadradinho tem 4 mm de espessura: o plano mais ao fundo (xli - 0.116) termina em xli - 0.118, antes da
+    # face externa (xli - 0.12), e os dois ficam atrás da luz da lua (xli - 0.1).
+    layers = ((-0.111, 0.10, 0.11, 0.2, 0.21, 0.46), (-0.116, 0.062, 0.07, 0.13, 0.14, 0.4))
+    for dx, qz, qy, step_z, step_y, dens in layers:
+        xp = xli + dx
+        z = z_lo - 0.1
+        while z < z_hi:
+            bw = r.uniform(0.4, 0.85)                 # largura do prédio
+            top = r.uniform(1.3, 2.4)                 # altura do prédio: o que passa dele é céu
+            for ci in range(max(1, int(bw / step_z))):
+                zq = z + step_z * (ci + 0.5)
+                if zq - qz / 2 < z_lo or zq + qz / 2 > z_hi:
+                    continue                          # fora da abertura: ficaria na parede ou vazaria
+                y = y_lo + qy / 2
+                while y + qy / 2 <= min(top, y_hi):
                     if r.random() < dens:
-                        target = cool if r.random() < 0.2 else warm
-                        target.box((0.012, wy * 0.5, wz * 0.6), (xp, y, z + 0.08 + ci * step), (1, 1, 1, 1), bevel=0.0)
-                y += step * 1.2
-            z += bw + r.uniform(0.05, 0.25)
+                        target = cool if r.random() < 0.22 else warm
+                        target.box((0.004, qy, qz), (xp, y, zq), (1, 1, 1, 1), bevel=0.0)
+                    y += step_y
+            z += bw + r.uniform(0.04, 0.14)
     ctx.add_emit(warm, '#ffd89b', 2.2, 0.0)
     ctx.add_emit(cool, '#9fe3ff', 2.0, 0.0)

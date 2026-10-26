@@ -4,6 +4,8 @@ export const selectMode = (s: ExperienceState) => s.mode
 export const selectFocus = (s: ExperienceState) => s.focus
 export const selectHovered = (s: ExperienceState) => s.hovered
 export const selectMuted = (s: ExperienceState) => s.muted
+export const selectVolumes = (s: ExperienceState) => s.volumes
+export const selectLocale = (s: ExperienceState) => s.locale
 
 export const selectIsFocused = (s: ExperienceState) => s.mode === 'focused'
 
