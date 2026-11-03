@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import { isLocale, type Locale } from '../content/i18n.ts'
-import type { GameKind, HotspotId, PcApp } from '../content/types'
+import type { GameKind, HotspotId } from '../content/types'
 import { applyDocumentLang, detectInitialLocale, writeStoredLocale } from '../lib/locale.ts'
 import {
   changedVolumes,
@@ -35,6 +35,11 @@ export interface ExperienceState {
    */
   view: string | null
   hovered: HotspotId | null
+  /**
+   * Sub-vista sob o ponteiro, junto com `hovered` (`userData.view` da hitbox). A zona de jogos tem um
+   * `hovered` só para estante e rack; é este canal que diz qual marcador abrir. Só existe com `hovered`.
+   */
+  hoveredView: string | null
   quality: Quality
   /** Tema dia/noite (ARCHITECTURE §12.3). O 3D faz damp de `uNightMix` até o alvo, sem setState no frame. */
   theme: Theme
@@ -61,18 +66,14 @@ export interface ExperienceState {
   /** Único canal UI -> 3D além de `focus` (ARCHITECTURE §6.4). */
   highlightBox: string | null
   /**
-   * Jogo (slug) rodando na TV da zona de jogos, ou `null` (ARCHITECTURE §6.6). Só existe em `focused`
-   * + `shelf` + vista `digital`; a câmera vai para o preset `shelfTv` e o painel some. Sai em
-   * `stopGame`, em qualquer troca de vista e ao voltar para HOME.
+   * Jogo (slug) rodando na TV da zona de jogos, ou `null` (ARCHITECTURE §6.6). Só existe com a zona de
+   * jogos na vista `digital`: em `focused`, ou em `transitioning` no voo direto até a TV. A câmera vai
+   * para o preset `shelfTv` e o painel some. Sai em `stopGame`, em qualquer troca de vista e ao voltar
+   * para HOME.
    */
   playing: string | null
-  /**
-   * Último pedido para abrir um app do XkrulesOS no monitor (`openOnPc`). O `id` cresce a cada
-   * pedido: o Desktop abre a janela uma vez por id. Não é limpo (o Desktop guarda o último atendido).
-   */
-  pcLaunch: { app: PcApp; id: number } | null
   setMode(mode: Mode): void
-  setHovered(id: HotspotId | null): void
+  setHovered(id: HotspotId | null, view?: string | null): void
   /**
    * idle | intro | transitioning(home) -> transitioning(focus = id, view).
    * Ignorado em loading, focused e transitioning rumo a outro hotspot (sem spam de câmera).
@@ -94,15 +95,14 @@ export interface ExperienceState {
   /** Troca o idioma: grava no localStorage e atualiza `<html lang>`. Idioma inválido é ignorado. */
   setLocale(locale: Locale): void
   setHighlightBox(slug: string | null): void
-  /** Liga o jogo na TV. Só em `focused` + `shelf` + vista `digital`. */
+  /**
+   * Liga o jogo na TV. Em `focused` + `shelf` + vista `digital`, liga ali mesmo. De `idle` ou de
+   * `focused` em outro hotspot ou vista, a câmera voa direto para a TV (`transitioning`, exceção
+   * deliberada à guarda 1: o pedido vem de um botão). Ignorado em loading, intro e em voo.
+   */
   startGame(slug: string): void
   /** Desliga o jogo da TV (a câmera volta para a vista Digital, com o painel). */
   stopGame(): void
-  /**
-   * Abre um app do XkrulesOS: de `idle` ou de `focused` em qualquer hotspot, a câmera voa direto para
-   * a mesa (`transitioning` -> `desk`) e a janela abre no monitor. Já com a mesa em foco, só abre.
-   */
-  openOnPc(app: PcApp): void
 }
 
 /** Grava a escolha de som. O mudo só entra se o visitante o escolheu; dos volumes, só o que mudou. */
@@ -123,6 +123,7 @@ export const useExperienceStore = create<ExperienceState>()(
     focus: null,
     view: null,
     hovered: null,
+    hoveredView: null,
     quality: 'high',
     theme: 'night',
     muted: sound.muted,
@@ -131,7 +132,6 @@ export const useExperienceStore = create<ExperienceState>()(
     locale: detectInitialLocale(),
     highlightBox: null,
     playing: null,
-    pcLaunch: null,
 
     setMode: (mode) => {
       const s = get()
@@ -141,20 +141,24 @@ export const useExperienceStore = create<ExperienceState>()(
         mode,
         // Guarda 3: hovered só existe em idle.
         hovered: mode === 'idle' ? s.hovered : null,
+        hoveredView: mode === 'idle' ? s.hoveredView : null,
         // Fora de focused/transitioning não há alvo (nem sub-vista).
         focus: mode === 'focused' || mode === 'transitioning' ? s.focus : null,
         view: mode === 'focused' || mode === 'transitioning' ? s.view : null,
         highlightBox: mode === 'focused' ? s.highlightBox : null,
-        playing: mode === 'focused' ? s.playing : null,
+        // O jogo sobrevive só ao voo direto até a TV (`startGame`) e à chegada.
+        playing: mode === 'focused' || mode === 'transitioning' ? s.playing : null,
       })
     },
 
-    setHovered: (id) => {
+    setHovered: (id, view = null) => {
       const s = get()
       // Guarda 3: só reporta hover em idle (limpar com null é sempre permitido).
       if (id !== null && s.mode !== 'idle') return
-      if (s.hovered === id) return
-      set({ hovered: id })
+      // Sem hotspot não há sub-vista.
+      const hoveredView = id === null ? null : view
+      if (s.hovered === id && s.hoveredView === hoveredView) return
+      set({ hovered: id, hoveredView })
     },
 
     requestFocus: (id, view = null) => {
@@ -165,7 +169,7 @@ export const useExperienceStore = create<ExperienceState>()(
       const canAccept =
         s.mode === 'idle' || s.mode === 'intro' || (s.mode === 'transitioning' && s.focus === null)
       if (!canAccept) return
-      set({ mode: 'transitioning', focus: id, view, hovered: null, playing: null })
+      set({ mode: 'transitioning', focus: id, view, hovered: null, hoveredView: null, playing: null })
     },
 
     setView: (view) => {
@@ -178,16 +182,24 @@ export const useExperienceStore = create<ExperienceState>()(
       const s = get()
       // Guarda 2: aceito em focused e transitioning (cancelar uma entrada).
       if (s.mode === 'focused') {
-        set({ mode: 'transitioning', focus: null, view: null, hovered: null, highlightBox: null, playing: null })
+        set({
+          mode: 'transitioning',
+          focus: null,
+          view: null,
+          hovered: null,
+          hoveredView: null,
+          highlightBox: null,
+          playing: null,
+        })
       } else if (s.mode === 'transitioning' && s.focus !== null) {
-        set({ focus: null, view: null, hovered: null, highlightBox: null, playing: null })
+        set({ focus: null, view: null, hovered: null, hoveredView: null, highlightBox: null, playing: null })
       }
     },
 
     onCameraRest: () => {
       const s = get()
       if (s.mode === 'transitioning') {
-        set(s.focus ? { mode: 'focused' } : { mode: 'idle', hovered: null })
+        set(s.focus ? { mode: 'focused' } : { mode: 'idle', hovered: null, hoveredView: null })
       } else if (s.mode === 'intro') {
         set({ mode: 'idle', focus: null })
       }
@@ -239,34 +251,27 @@ export const useExperienceStore = create<ExperienceState>()(
 
     startGame: (slug) => {
       const s = get()
-      const onTvView = s.mode === 'focused' && s.focus === 'shelf' && s.view === TV_VIEW
-      if (!onTvView || s.playing === slug) return
+      if (s.playing === slug) return
       // O painel sai de cena durante o jogo: nenhum destaque fica preso no rack.
-      set({ playing: slug, highlightBox: null })
+      if (s.mode === 'focused' && s.focus === 'shelf' && s.view === TV_VIEW) {
+        set({ playing: slug, highlightBox: null })
+      } else if (s.mode === 'focused' || s.mode === 'idle') {
+        // Exceção deliberada à guarda 1: o pedido vem de um botão, não de um clique na cena.
+        set({
+          mode: 'transitioning',
+          focus: 'shelf',
+          view: TV_VIEW,
+          hovered: null,
+          hoveredView: null,
+          highlightBox: null,
+          playing: slug,
+        })
+      }
     },
 
     stopGame: () => {
       if (get().playing === null) return
       set({ playing: null, highlightBox: null })
-    },
-
-    openOnPc: (app) => {
-      const s = get()
-      const pcLaunch = { app, id: (s.pcLaunch?.id ?? 0) + 1 }
-      if (s.mode === 'focused' && s.focus === 'desk') {
-        set({ pcLaunch })
-      } else if (s.mode === 'focused' || s.mode === 'idle') {
-        // Exceção deliberada à guarda 1: o pedido vem de um botão, não de um clique na cena.
-        set({
-          mode: 'transitioning',
-          focus: 'desk',
-          view: null,
-          hovered: null,
-          highlightBox: null,
-          playing: null,
-          pcLaunch,
-        })
-      }
     },
   })),
 )

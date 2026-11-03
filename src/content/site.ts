@@ -7,7 +7,7 @@ import type { ExternalLink } from './types'
 
 export const SITE = {
   author: 'Vitor "XKrules" Noronha',
-  title: 'Vitor "XKrules" Noronha — Portfólio 3D',
+  title: 'Vitor "XKrules" Noronha | Portfólio 3D',
   shortTitle: 'Vitor "XKrules" Noronha',
   description:
     'Portfólio 3D interativo: projetos web, impressão 3D, board games e game dev num diorama isométrico.',
@@ -25,9 +25,14 @@ export const SITE = {
   },
   /** Código-fonte deste portfólio. */
   sourceUrl: 'https://github.com/XkrulesVitor/Xkrules-Portfolio',
-  /** Links globais. [TODO] LinkedIn, Instagram, itch.io e loja do Reino de Amestris. */
+  /**
+   * Links globais, o GitHub primeiro (o SO o usa como link principal). Sem e-mail, de propósito.
+   * [TODO] itch.io e loja do Reino de Amestris.
+   */
   links: [
     { label: 'GitHub', href: 'https://github.com/XkrulesVitor', kind: 'github' },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/in/vitor-noronha', kind: 'linkedin' },
+    { label: 'Made By You', href: 'https://www.instagram.com/use.mby/', kind: 'instagram' },
   ] as readonly ExternalLink[],
 } as const
 
@@ -122,6 +127,18 @@ export const UI_TEXT = {
       label: 'Idioma',
     },
   },
+  /** Marcadores flutuantes sobre cada ponto interativo do quarto, em HOME. */
+  markers: {
+    /** Nome acessível do botão; `{label}` é o rótulo do marcador. */
+    aria: 'Ir para {label}',
+    labels: {
+      chair: 'Sobre mim',
+      desk: 'Projetos web',
+      printer: 'Impressão 3D',
+      tabuleiro: 'Jogos de tabuleiro',
+      digital: 'Jogos digitais',
+    },
+  },
   back: {
     label: 'Voltar',
     aria: 'Voltar para a visão geral (Esc)',
@@ -154,6 +171,12 @@ export const UI_TEXT = {
     skills: 'Habilidades',
     links: 'Onde me encontrar',
     sourceCode: 'Ver o código deste portfólio',
+    awards: 'Prêmios',
+    /** Contador de prêmios ao lado do título da seção; `{n}` é a quantidade. */
+    awardsCount: '{n} prêmios',
+    /** Selo do prêmio em destaque (o primeiro da lista). */
+    featuredAward: 'Em destaque',
+    timeline: 'Trajetória',
   },
   printer: {
     eyebrow: 'Impressão 3D',
@@ -199,12 +222,10 @@ export const UI_TEXT = {
       digital: 'Passe o mouse sobre um jogo para vê-lo na TV.',
     },
     emptyTab: 'Nenhum jogo nesta categoria por enquanto.',
-    /** Botão "Jogar" do cartão, por destino (`GamePlay.where`). */
+    /** Botão "Jogar na TV" do cartão. */
     play: {
       tv: 'Jogar na TV',
       tvAria: 'Jogar {title} na TV do quarto',
-      pc: 'Jogar no PC',
-      pcAria: 'Abrir {title} no computador do quarto',
     },
     /** Botão do cartão que revela os parágrafos seguintes da descrição. */
     readMore: 'Ler mais',
@@ -222,7 +243,7 @@ export const UI_TEXT = {
   tvGame: {
     exit: 'Sair do jogo',
     exitAria: 'Sair do jogo e voltar à zona de jogos (Esc)',
-    /** Nome acessível do iframe. */
+    /** Nome acessível do jogo (o iframe ou o app local). */
     frameTitle: '{title}, jogo na TV',
     loading: 'Ligando {title}',
     hint: 'Clique no jogo para jogar. Para sair, clique fora da TV e aperte Esc.',

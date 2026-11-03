@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { damp } from 'maath/easing'
 import { Vector3 } from 'three'
+import { GAME_PROJECTS } from '@/content/projects.games'
 import { audio, ambientLevel, fanLevel, staticLevel, type AudioDebugState } from '@/lib/audio'
 import { useExperienceStore } from '@/store/useExperienceStore'
 import { LAYOUT, ROOM } from '../scene/layout'
@@ -39,6 +40,11 @@ declare global {
   }
 }
 
+/** Jogos que tocam o próprio som: os da TV em iframe, cujo volume o site não controla. */
+const GAMES_WITH_OWN_SOUND: ReadonlySet<string> = new Set(
+  GAME_PROJECTS.filter((game) => game.play && 'src' in game.play).map((game) => game.slug),
+)
+
 /**
  * Áudio do quarto no lado 3D (sem DOM). Dois trabalhos:
  * - por frame (refs, sem setState): ajusta o volume do zumbido pela distância da câmera ao PC e o do
@@ -54,8 +60,9 @@ export function AudioDirector() {
   // Som do store -> motor. `fireImmediately` aplica o estado inicial (mudo/volumes salvos).
   // - `muted`: mudo geral.
   // - `volumes`: Música, Ambiente e Efeitos (o motor traduz para o ganho de cada bus).
-  // - `playing`: com um jogo na TV, Música e Ambiente calam (o som é o do jogo), sem mexer nas
-  //   preferências do visitante; ao desligar o jogo, voltam.
+  // - `playing`: com um jogo de iframe na TV, Música e Ambiente calam (o som é o do jogo), sem mexer
+  //   nas preferências do visitante; ao desligar o jogo, voltam. O app local (Jogo da Memória) não tem
+  //   som próprio, então o quarto continua tocando.
   useEffect(() => {
     const store = useExperienceStore
     const stops = [
@@ -63,9 +70,11 @@ export function AudioDirector() {
       store.subscribe((s) => s.volumes, (volumes) => audio.setVolumes(volumes), {
         fireImmediately: true,
       }),
-      store.subscribe((s) => s.playing !== null, (playing) => audio.setGameActive(playing), {
-        fireImmediately: true,
-      }),
+      store.subscribe(
+        (s) => GAMES_WITH_OWN_SOUND.has(s.playing ?? ''),
+        (active) => audio.setGameActive(active),
+        { fireImmediately: true },
+      ),
     ]
     return () => {
       for (const stop of stops) stop()

@@ -5,7 +5,7 @@ import type { ByLocale } from './i18n.ts'
 import type { GameProject } from './types'
 
 // Ordem do painel. Tabuleiro: a da estante, da esquerda para a direita. Digital: primeiro os que rodam
-// na TV, depois o que roda no PC e por último os sem versão jogável no quarto. No rack, a ordem dos
+// na TV (o Jogo da Memória por último) e depois os sem versão jogável no quarto. No rack, a ordem dos
 // estojos é a do bake (art/blender/props/games.py) e não precisa acompanhar esta.
 export const GAME_PROJECTS: readonly GameProject[] = [
   {
@@ -172,8 +172,8 @@ export const GAME_PROJECTS: readonly GameProject[] = [
       width: 512,
       height: 512,
     },
-    // O mesmo jogo roda no XkrulesOS (app Memória 4×4): "Jogar" leva a câmera até o PC.
-    play: { where: 'pc', app: 'memory' },
+    // Sem build do itch.io: o jogo é o componente React do próprio site, desenhado na tela da TV.
+    play: { where: 'tv', app: 'memory' },
     images: [],
     links: [{ label: 'Ver no site da cliente', href: 'https://jessicamartins.com.br/#diversao', kind: 'live' }],
   },

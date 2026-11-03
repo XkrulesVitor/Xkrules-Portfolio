@@ -94,9 +94,12 @@ function readDeepLink(): DeepLink | null {
   return isHotspotId(focus) ? { focus, view: params.get(VIEW_QUERY_PARAM) } : null
 }
 
-/** Jogo rodando na TV: a câmera fica de frente para a tela, sem painel (ARCHITECTURE §6.6). */
+/**
+ * Jogo rodando na TV: a câmera fica de frente para a tela, sem painel (ARCHITECTURE §6.6). Vale também
+ * em `transitioning`: `startGame` de fora da vista Digital voa direto para a TV, sem parar no painel.
+ */
 function isPlaying(mode: Mode, focus: HotspotId | null, playing: boolean): boolean {
-  return playing && mode === 'focused' && focus === 'shelf'
+  return playing && (mode === 'focused' || mode === 'transitioning') && focus === 'shelf'
 }
 
 /** Preset de destino de um estado do store, com a sub-vista resolvida pelo registry. */

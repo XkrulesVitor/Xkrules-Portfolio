@@ -110,7 +110,7 @@ export function Preview() {
           outra moldura (o layout escala pelo container, sem vw/vh), o Desktop sob um transform CSS
           (simula o matrix3d do drei: arraste e resize têm de continuar certos), o ProjectsApp sozinho
           num painel estreito e o detalhe com mídia sintética. Apps: Projetos, Este Computador,
-          Terminal, Memória 4×4 e Créditos; janelas redimensionam pelas bordas e cantos, maximizam
+          Terminal e Créditos; janelas redimensionam pelas bordas e cantos, maximizam
           (botão ou duplo clique na barra) e o menu iniciar desliga e religa o SO.
         </p>
       </header>

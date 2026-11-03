@@ -21,7 +21,7 @@ const INK_BOTTOM = '#070b17'
 const MINT = '#7ff5d0'
 const BLUE = '#6aa8ff'
 const TEXT = '#e8ecff'
-const ICON_ACCENTS = [BLUE, '#9bb4ff', MINT, '#b583ff', '#f78fd0'] as const
+const ICON_ACCENTS = [BLUE, '#9bb4ff', MINT, '#f78fd0'] as const
 
 const FONT_SANS = 'system-ui, "Segoe UI", -apple-system, sans-serif'
 

@@ -5,7 +5,7 @@ import { useContent } from '../i18n/useLocale'
 import { cx, EASE, fmt, FOCUS_RING, LinkButton, usePress } from '../primitives'
 import { TV_GAME_FRAME_ID } from '../tv/TvGameScreen'
 
-/** Põe o iframe do jogo em tela cheia (top layer: as transformações 3D do Html não valem lá). */
+/** Põe o jogo (iframe ou app local) em tela cheia (top layer: as transformações 3D do Html não valem lá). */
 function enterFullscreen() {
   const frame = document.getElementById(TV_GAME_FRAME_ID)
   void frame?.requestFullscreen?.().catch(() => {})
@@ -13,7 +13,7 @@ function enterFullscreen() {
 
 /**
  * Barra de controles do jogo na TV, embaixo, na faixa que o preset `shelfTv` deixa livre: nome do
- * jogo, "Tela cheia" e o link do itch.io. Só com o jogo ligado e a câmera em foco.
+ * jogo, "Tela cheia" e o link do itch.io, quando o jogo tem um. Só com o jogo ligado e a câmera em foco.
  */
 export function TvGameBar() {
   const { ui, games } = useContent()

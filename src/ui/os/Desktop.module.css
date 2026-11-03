@@ -94,8 +94,8 @@
 
 /* Atalhos ------------------------------------------------------------------------------------- */
 
-/* Atalhos do sistema: uma coluna à esquerda (5 apps, 5 linhas). Os atalhos dos projetos ficam em
-   outro bloco, à direita (.iconsProjects). As janelas abrem no meio (windowManager.ts). */
+/* Atalhos do sistema: uma coluna à esquerda (4 apps, em até 5 linhas). Os atalhos dos projetos ficam
+   em outro bloco, à direita (.iconsProjects). As janelas abrem no meio (windowManager.ts). */
 .icons {
   position: absolute;
   top: var(--sp-5);

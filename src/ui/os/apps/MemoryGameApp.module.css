@@ -1,12 +1,21 @@
-/* Jogo da Memória: preenche a janela (data-fill) em coluna: cabeçalho, placar, tabuleiro (flexível)
-   e rodapé. O tamanho do tabuleiro (quadrado) vem inline, medido em MemoryGameApp. */
+/* Jogo da Memória: preenche a tela da TV, que é larga. À esquerda, uma coluna com cabeçalho, placar e
+   rodapé; à direita, o tabuleiro (quadrado), na altura toda. O tamanho dele vem inline, medido em
+   MemoryGameApp. */
 .root {
   display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--sp-3);
+  gap: var(--sp-5);
+  min-width: 0;
   min-height: 0;
   padding: var(--sp-4);
+}
+
+.side {
+  display: flex;
+  flex: 0 0 calc(var(--px) * 330);
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-height: 0;
 }
 
 .header {
@@ -74,15 +83,15 @@
 .stats {
   display: grid;
   flex: none;
-  grid-template-columns: repeat(3, 1fr);
   gap: var(--sp-2);
   margin: 0;
 }
 
 .stat {
   display: flex;
-  flex-direction: column;
-  gap: calc(var(--px) * 2);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
   padding: var(--sp-2) var(--sp-3);
   border: 1px solid var(--os-line);
   border-radius: var(--r-md);
@@ -119,6 +128,7 @@
   display: grid;
   flex: 1 1 0;
   place-items: center;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -230,7 +240,7 @@
     radial-gradient(90% 90% at 20% 10%, rgb(127 245 208 / 0.18), transparent 65%),
     linear-gradient(150deg, #1a2550, #101936);
   color: rgb(234 240 255 / 0.4);
-  font-size: calc(var(--px) * 26);
+  font-size: calc(var(--px) * 36);
   box-shadow:
     0 calc(var(--px) * 6) calc(var(--px) * 14) rgb(0 0 0 / 0.3),
     inset 0 1px 0 rgb(255 255 255 / 0.12);
@@ -250,7 +260,7 @@
     color-mix(in srgb, var(--symbol) 10%, #0b1226)
   );
   color: var(--symbol);
-  font-size: calc(var(--px) * 40);
+  font-size: calc(var(--px) * 60);
   box-shadow: 0 calc(var(--px) * 6) calc(var(--px) * 14) rgb(0 0 0 / 0.3);
 }
 
@@ -358,18 +368,16 @@
 .footer {
   display: flex;
   flex: none;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2) var(--sp-3);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-top: auto;
 }
 
 .status {
-  flex: 1 1 calc(var(--px) * 180);
-  min-width: 0;
   margin: 0;
   color: var(--os-ink-dim);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
 }
 
 .links {

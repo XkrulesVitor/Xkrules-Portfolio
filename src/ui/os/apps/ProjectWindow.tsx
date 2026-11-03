@@ -1,7 +1,15 @@
 import { memo, useId } from 'react'
 import type { Ref } from 'react'
-import { ArrowUpRightIcon, CalendarBlankIcon, GithubLogoIcon, GlobeIcon, UserIcon } from '@phosphor-icons/react'
+import {
+  ArrowUpRightIcon,
+  CalendarBlankIcon,
+  GithubLogoIcon,
+  GlobeIcon,
+  TelevisionSimpleIcon,
+  UserIcon,
+} from '@phosphor-icons/react'
 import type { WebProject } from '@/content/types'
+import { useExperienceStore } from '@/store/useExperienceStore'
 import { useOsText } from '../../i18n/useLocale'
 import type { CssVars } from '../cssVars'
 import scope from '../scope.module.css'
@@ -18,25 +26,30 @@ export interface ProjectWindowProps {
 }
 
 /**
- * Detalhe de um projeto: mídia, resumo, detalhes, stack, ano e links. Só conteúdo, sem moldura:
- * o Desktop o coloca numa Window e o ProjectsApp standalone o mostra no lugar da lista.
- * Layout fluido (flex-wrap): duas colunas quando cabe, uma coluna em painéis estreitos.
+ * Detalhe de um projeto, de cima para baixo: galeria em destaque (carrossel), título e ano/papel,
+ * resumo, ações (site, jogar na TV, repositório), detalhes, área de atuação e stack. Só conteúdo,
+ * sem moldura: o Desktop o coloca numa Window e o ProjectsApp standalone o mostra no lugar da lista.
+ * Coluna única e largura de leitura limitada: a galeria ocupa a janela inteira, o texto não se estica.
  */
 export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, flush = false }: ProjectWindowProps) {
+  const areasId = useId()
   const stackId = useId()
   const os = useOsText()
   const style: CssVars = { '--accent': project.accent }
   const hasMeta = project.year !== undefined || project.role !== undefined
-  const hasLinks = project.repoUrl !== undefined || project.liveUrl !== undefined
+  const areas = project.areas ?? []
+  const playOnTv = project.playOnTv
+  const hasActions = project.repoUrl !== undefined || project.liveUrl !== undefined || playOnTv !== undefined
+  const hasFacets = areas.length > 0 || project.stack.length > 0
+  // Sem site no ar, o jogo na TV é a ação principal da janela.
+  const tvClass = project.liveUrl ? shared.action : styles.primary
 
   return (
     <article className={`${scope.scope} ${styles.root} ${flush ? styles.flush : ''}`} style={style}>
       <div className={styles.layout}>
-        <div className={styles.mediaCol}>
-          <ProjectMedia key={project.slug} project={project} />
-        </div>
+        <ProjectMedia key={project.slug} project={project} />
 
-        <div className={styles.infoCol}>
+        <div className={styles.info}>
           <header className={styles.header}>
             <span className={styles.bar} aria-hidden="true" />
             <h2 ref={headingRef} tabIndex={-1} className={styles.title}>
@@ -72,33 +85,34 @@ export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, 
 
           <p className={styles.summary}>{project.summary}</p>
 
-          {project.details && project.details.length > 0 ? (
-            <div className={styles.details}>
-              {project.details.map((paragraph, i) => (
-                <p key={i}>{paragraph}</p>
-              ))}
-            </div>
-          ) : null}
-
-          {project.stack.length > 0 ? (
-            <section aria-labelledby={stackId}>
-              <h3 id={stackId} className={styles.sectionLabel}>
-                {os.detail.stack}
-              </h3>
-              <ul className={shared.chips} role="list">
-                {project.stack.map((tech) => (
-                  <li key={tech} className={shared.chip}>
-                    {tech}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-
-          {hasLinks ? (
+          {hasActions ? (
             <div className={styles.actions} role="group" aria-label={os.detail.links}>
+              {project.liveUrl ? (
+                <a className={styles.primary} href={project.liveUrl} target="_blank" rel="noopener noreferrer">
+                  <span className={shared.actionGlyph} aria-hidden="true">
+                    <GlobeIcon weight="duotone" />
+                  </span>
+                  {os.detail.live}
+                  <span className={shared.srOnly}>{os.detail.newTab}</span>
+                  <span className={shared.actionArrow} aria-hidden="true">
+                    <ArrowUpRightIcon weight="regular" />
+                  </span>
+                </a>
+              ) : null}
+              {playOnTv !== undefined ? (
+                <button
+                  type="button"
+                  className={tvClass}
+                  onClick={() => useExperienceStore.getState().startGame(playOnTv)}
+                >
+                  <span className={shared.actionGlyph} aria-hidden="true">
+                    <TelevisionSimpleIcon weight="duotone" />
+                  </span>
+                  {os.detail.playTv}
+                </button>
+              ) : null}
               {project.repoUrl ? (
-                <a className={shared.action} href={project.repoUrl} target="_blank" rel="noopener noreferrer">
+                <a className={shared.actionQuiet} href={project.repoUrl} target="_blank" rel="noopener noreferrer">
                   <span className={shared.actionGlyph} aria-hidden="true">
                     <GithubLogoIcon weight="regular" />
                   </span>
@@ -109,17 +123,47 @@ export const ProjectWindow = memo(function ProjectWindow({ project, headingRef, 
                   </span>
                 </a>
               ) : null}
-              {project.liveUrl ? (
-                <a className={shared.action} href={project.liveUrl} target="_blank" rel="noopener noreferrer">
-                  <span className={shared.actionGlyph} aria-hidden="true">
-                    <GlobeIcon weight="regular" />
-                  </span>
-                  {os.detail.live}
-                  <span className={shared.srOnly}>{os.detail.newTab}</span>
-                  <span className={shared.actionArrow} aria-hidden="true">
-                    <ArrowUpRightIcon weight="regular" />
-                  </span>
-                </a>
+            </div>
+          ) : null}
+
+          {project.details && project.details.length > 0 ? (
+            <div className={styles.details}>
+              {project.details.map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
+            </div>
+          ) : null}
+
+          {hasFacets ? (
+            <div className={styles.facets}>
+              {areas.length > 0 ? (
+                <section aria-labelledby={areasId}>
+                  <h3 id={areasId} className={styles.sectionLabel}>
+                    {os.detail.areas}
+                  </h3>
+                  <ul className={styles.areas} role="list">
+                    {areas.map((area) => (
+                      <li key={area} className={styles.area}>
+                        {area}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+
+              {project.stack.length > 0 ? (
+                <section aria-labelledby={stackId}>
+                  <h3 id={stackId} className={styles.sectionLabel}>
+                    {os.detail.stack}
+                  </h3>
+                  <ul className={shared.chips} role="list">
+                    {project.stack.map((tech) => (
+                      <li key={tech} className={shared.chip}>
+                        {tech}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               ) : null}
             </div>
           ) : null}

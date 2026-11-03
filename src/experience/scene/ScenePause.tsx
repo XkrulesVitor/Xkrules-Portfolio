@@ -4,9 +4,10 @@ import { useExperienceStore } from '@/store/useExperienceStore'
 
 /**
  * Com um jogo rodando na TV (`store.playing`), o quarto passa a renderizar SOB DEMANDA: a câmera fica
- * parada de frente para a tela e o iframe do jogo cobre a TV, então redesenhar o quarto a 60 fps só
- * disputaria GPU com o jogo. O voo até a TV continua animado (o `CameraControls` do drei invalida a
- * cada passo da transição), e o resize também redesenha. Sem jogo, volta ao `always`. Não desenha nada.
+ * parada de frente para a tela e o jogo cobre a TV, então redesenhar o quarto a 60 fps só disputaria
+ * GPU com ele. O voo que nasce em `focused` continua animado (o `CameraControls` do drei invalida a
+ * cada passo da transição), e o resize também redesenha. Sem jogo, volta ao `always`. No voo direto até
+ * a TV (`transitioning`) o quarto segue em `always`: a chegada depende de um quadro. Não desenha nada.
  */
 export function ScenePause() {
   const setFrameloop = useThree((s) => s.setFrameloop)
@@ -14,7 +15,7 @@ export function ScenePause() {
   useEffect(
     () =>
       useExperienceStore.subscribe(
-        (s) => s.playing !== null,
+        (s) => s.mode === 'focused' && s.playing !== null,
         (playing) => setFrameloop(playing ? 'demand' : 'always'),
         { fireImmediately: true },
       ),

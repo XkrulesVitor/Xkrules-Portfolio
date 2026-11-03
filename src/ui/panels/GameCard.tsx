@@ -48,25 +48,19 @@ function Cover({ game }: { game: GameProject }) {
 }
 
 /**
- * "Jogar na TV" (iframe na TV do quarto, `startGame`) ou "Jogar no PC" (app do XkrulesOS, `openOnPc`).
+ * "Jogar na TV" (`startGame`): liga o jogo na TV do quarto, num iframe ou como app local (`GamePlay`).
  * Pílula cheia na cor do jogo: é a ação principal do cartão.
  */
 function PlayButton({ game }: { game: GameProject }) {
   const t = useUiText().games.play
   const press = usePress({ lift: false })
-  const play = game.play
-  if (!play) return null
-  const onTv = play.where === 'tv'
+  if (!game.play) return null
 
   return (
     <motion.button
       type="button"
-      aria-label={fmt(onTv ? t.tvAria : t.pcAria, { title: game.title })}
-      onClick={() => {
-        const s = useExperienceStore.getState()
-        if (play.where === 'tv') s.startGame(game.slug)
-        else s.openOnPc(play.app)
-      }}
+      aria-label={fmt(t.tvAria, { title: game.title })}
+      onClick={() => useExperienceStore.getState().startGame(game.slug)}
       {...press}
       className={cx(
         'inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-ink select-none pointer-coarse:min-h-10',
@@ -76,7 +70,7 @@ function PlayButton({ game }: { game: GameProject }) {
       )}
     >
       <PlayIcon size={14} weight="fill" aria-hidden="true" />
-      {onTv ? t.tv : t.pc}
+      {t.tv}
     </motion.button>
   )
 }

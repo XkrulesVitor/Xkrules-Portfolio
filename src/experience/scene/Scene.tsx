@@ -5,6 +5,7 @@ import { Chair } from '../hotspots/chair/Chair'
 import { Desk } from '../hotspots/desk/Desk'
 import { Printer } from '../hotspots/printer/Printer'
 import { Shelf } from '../hotspots/shelf/Shelf'
+import { HotspotMarkers } from '../interaction/HotspotMarkers'
 import { BakedBoundary } from './baked/BakedBoundary'
 import { BakedRoom } from './baked/BakedRoom'
 import { useSceneMode } from './baked/useSceneMode'
@@ -96,6 +97,8 @@ export function Scene() {
           </Suspense>
         </BakedBoundary>
       )}
+      {/* Fora do BakedBoundary: os marcadores valem nos dois modos e sobrevivem à queda para o grey-box. */}
+      <HotspotMarkers />
     </>
   )
 }

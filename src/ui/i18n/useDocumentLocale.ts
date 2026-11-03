@@ -13,6 +13,14 @@ export function useDocumentLocale(): void {
 
   useEffect(() => {
     document.documentElement.lang = LOCALE_INFO[locale].htmlLang
-    document.title = SITE_BY_LOCALE[locale].title
+    const title = SITE_BY_LOCALE[locale].title
+    const apply = () => {
+      if (document.title !== title) document.title = title
+    }
+    apply()
+    // Em produção o Next grava o título do servidor depois da hidratação: reaplica quando o <head> muda.
+    const observer = new MutationObserver(apply)
+    observer.observe(document.head, { subtree: true, childList: true, characterData: true })
+    return () => observer.disconnect()
   }, [locale])
 }

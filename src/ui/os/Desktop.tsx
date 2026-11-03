@@ -1,10 +1,9 @@
 import { memo, useCallback, useId, useReducer, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
-import { OS_MEMORY_PROJECT_SLUG, type OsGlyphKey, type OsText } from '@/content/os'
+import type { OsGlyphKey, OsText } from '@/content/os'
 import type { MediaImage, WebProject } from '@/content/types'
 import { useContent } from '../i18n/useLocale'
 import { CreditsApp } from './apps/CreditsApp'
-import { MemoryGameApp } from './apps/MemoryGameApp'
 import { ProjectsApp } from './apps/ProjectsApp'
 import { ProjectWindow } from './apps/ProjectWindow'
 import { TerminalApp } from './apps/TerminalApp'
@@ -15,7 +14,7 @@ import { projectGlyph } from './OsGlyph'
 import { PowerScreen, type PowerPhase } from './PowerScreen'
 import scope from './scope.module.css'
 import { StartMenu } from './StartMenu'
-import { SYSTEM_APPS, type LaunchRequest } from './systemApps'
+import { SYSTEM_APPS } from './systemApps'
 import { Taskbar, type TaskbarEntry } from './Taskbar'
 import { Window } from './Window'
 import {
@@ -35,11 +34,6 @@ export interface DesktopProps {
   projects?: readonly WebProject[]
   /** Janelas abertas na montagem (padrão: nenhuma). */
   initialWindows?: readonly AppRef[]
-  /**
-   * Pedido de fora do SO para abrir um app (ex.: "Jogar no PC" no painel de Jogos). Cada `id` novo
-   * abre (ou traz para a frente) a janela uma vez; com o SO desligado, ele liga junto.
-   */
-  launch?: LaunchRequest | null
   className?: string
 }
 
@@ -49,7 +43,7 @@ interface AppMeta {
   /** Ícone real do projeto (`WebProject.icon`): tem prioridade sobre o glifo onde o SO o aceita. */
   icon?: MediaImage
   accent?: string
-  /** O corpo da janela não rola e o app preenche a altura (terminal, jogo). */
+  /** O corpo da janela não rola e o app preenche a altura (terminal). */
   fill?: boolean
 }
 
@@ -75,8 +69,6 @@ function describeApp(app: AppRef, projects: readonly WebProject[], os: OsText): 
       return { title: os.apps.computer.title, glyph: 'computer' }
     case 'terminal':
       return { title: os.apps.terminal.title, glyph: 'terminal', fill: true }
-    case 'memory':
-      return { title: os.apps.memory.title, glyph: 'puzzle', accent: '#b583ff', fill: true }
     case 'credits':
       return { title: os.apps.credits.title, glyph: 'heart', accent: '#f78fd0' }
   }
@@ -100,13 +92,6 @@ const AppContent = memo(function AppContent({ app, projects, onOpenProject }: Ap
       return <ThisComputerApp />
     case 'terminal':
       return <TerminalApp projects={projects} onOpenProject={onOpenProject} />
-    case 'memory':
-      return (
-        <MemoryGameApp
-          project={projects.find((p) => p.slug === OS_MEMORY_PROJECT_SLUG)}
-          onOpenProject={onOpenProject}
-        />
-      )
     case 'credits':
       return <CreditsApp />
   }
@@ -121,7 +106,7 @@ const STAGE_STYLE: CssVars = { '--taskbar-h': `${TASKBAR_HEIGHT_PCT}%` }
  * Estado das janelas local (useReducer): não toca o store global. "Desligar" também é local:
  * a tela do SO apaga, e religar a recomeça com a janela Projetos; nada fora do SO muda.
  */
-export function Desktop({ projects: given, initialWindows, launch = null, className }: DesktopProps) {
+export function Desktop({ projects: given, initialWindows, className }: DesktopProps) {
   // Textos e projetos no idioma ativo: trocar o idioma re-renderiza o SO sem fechar nenhuma janela.
   const content = useContent()
   const os = content.os
@@ -129,16 +114,6 @@ export function Desktop({ projects: given, initialWindows, launch = null, classN
   const [wm, dispatch] = useReducer(wmReducer, initialWindows, initWm)
   const [startOpen, setStartOpen] = useState(false)
   const [power, setPower] = useState<'on' | PowerPhase>('on')
-
-  // Pedido de abertura de fora: atendido durante o render (ajuste de estado por prop, sem efeito),
-  // uma vez por id.
-  const [launchedId, setLaunchedId] = useState(0)
-  if (launch && launch.id !== launchedId) {
-    setLaunchedId(launch.id)
-    dispatch({ type: 'open', app: launch.app })
-    setStartOpen(false)
-    if (power === 'off') setPower('boot')
-  }
   // Verdadeiro depois do primeiro boot: a área de trabalho então entra com um fade curto.
   const [rebooted, setRebooted] = useState(false)
   const desktopRef = useRef<HTMLDivElement>(null)

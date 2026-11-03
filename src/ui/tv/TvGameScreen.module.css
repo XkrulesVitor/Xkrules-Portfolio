@@ -1,0 +1,26 @@
+/* Jogo local (componente React) na tela da TV. O elemento é o container do jogo: a conta do --px usa o
+   tamanho DELE, então o jogo escala junto na TV (1280x716) e em tela cheia. Como no Desktop do SO,
+   `container-type: size` fica aqui e o --px no filho (ver ui/os/scope.module.css). */
+.app {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: size;
+  background: #070b17;
+}
+
+.stage {
+  /* 1 px de design do SO vale 1.5 px na tela da TV: o quarto em volta encolhe a TV na janela, e o
+     jogo foi desenhado para ser lido de perto, no monitor. */
+  --px: calc(min(100cqw / 1280, 100cqh / 716) * 1.5);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
+  background:
+    radial-gradient(52% 62% at 14% 6%, rgb(127 245 208 / 0.17), transparent 68%),
+    radial-gradient(48% 60% at 94% 92%, rgb(106 168 255 / 0.22), transparent 66%),
+    linear-gradient(165deg, #0d1530 0%, #0b1020 48%, #070b17 100%);
+  user-select: none;
+  -webkit-user-select: none;
+}

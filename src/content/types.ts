@@ -83,11 +83,16 @@ export interface WebProject {
   details?: readonly string[]
   /** Papel do autor (ex.: "Front-end"). Omitir quando não se sabe. */
   role?: string
+  /** Áreas de atuação do autor no projeto; aparecem logo abaixo da descrição. */
+  areas?: readonly string[]
+  /** Jogo que este projeto liga na TV do quarto: mostra o botão "Jogar na TV" na janela do projeto. */
+  playOnTv?: GameSlug
   year?: number
   stack: readonly string[]
   repoUrl?: string
   liveUrl?: string
   video?: MediaVideo
+  /** Prints reais do projeto: o carrossel da janela alterna entre eles. */
   images: readonly MediaImage[]
   /**
    * Ícone real do projeto (quadrado, ~256 px, fundo transparente; webp ou svg em /public/media/web/<slug>/).
@@ -136,10 +141,7 @@ export type GameSlug =
 
 export type GameKind = 'tabuleiro' | 'digital'
 
-/** Apps do XkrulesOS que um jogo pode abrir no monitor (os `AppRef` sem parâmetro de ui/os). */
-export type PcApp = 'memory'
-
-/** Onde o jogo roda quando o visitante clica em "Jogar" no cartão. */
+/** Como o jogo roda na TV do quarto quando o visitante clica em "Jogar na TV" no cartão. */
 export type GamePlay =
   | {
       /** Versão web (HTML5) num iframe sobre a tela da TV do quarto. */
@@ -158,9 +160,9 @@ export type GamePlay =
       area?: { width: number; height: number }
     }
   | {
-      /** App do XkrulesOS: a câmera vai até o monitor da mesa e a janela abre lá. */
-      where: 'pc'
-      app: PcApp
+      /** Componente React local, sem iframe, desenhado direto na tela da TV (ui/tv/TvGameScreen.tsx). */
+      where: 'tv'
+      app: 'memory'
     }
 
 /** Jogos (hotspot `shelf`). */
@@ -212,6 +214,28 @@ export interface AboutContent {
   bio: readonly string[]
   location?: string
   avatar?: MediaImage
+  /** Frase de abertura, em destaque acima da bio. */
+  tagline?: string
+  /** Prêmios, do mais recente para o mais antigo. */
+  awards?: readonly AboutAward[]
+  /** Trajetória profissional e acadêmica, do mais recente para o mais antigo. */
+  timeline?: readonly AboutTimelineItem[]
   skills: readonly SkillGroup[]
   links: readonly ExternalLink[]
+}
+
+export interface AboutAward {
+  title: string
+  /** Quem concedeu e quando (ex.: "45ª FETIN, Inatel, 2026"). */
+  issuer: string
+  /** Por que venceu, em uma frase. */
+  detail?: string
+}
+
+export interface AboutTimelineItem {
+  role: string
+  place: string
+  /** Período já formatado (ex.: "2026 até hoje"). */
+  period: string
+  detail?: string
 }

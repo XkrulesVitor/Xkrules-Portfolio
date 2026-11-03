@@ -13,7 +13,6 @@ export type AppRef =
   | { readonly kind: 'project'; readonly slug: string }
   | { readonly kind: 'computer' }
   | { readonly kind: 'terminal' }
-  | { readonly kind: 'memory' }
   | { readonly kind: 'credits' }
 
 export type AppKind = AppRef['kind']
@@ -89,10 +88,10 @@ export type WmAction =
 // A coluna de atalhos do sistema ocupa até ~11% da largura, então as janelas nascem à direita dela.
 const BASE_GEOMETRY: Record<AppKind, WindowGeometry> = {
   projects: { x: 20, y: 8, w: 48, h: 68 },
-  project: { x: 33, y: 11, w: 56, h: 70 },
+  // Larga e alta: a galeria do projeto (carrossel) ocupa a largura toda e o texto começa à vista.
+  project: { x: 31, y: 7, w: 62, h: 84 },
   computer: { x: 24, y: 9, w: 46, h: 68 },
   terminal: { x: 22, y: 13, w: 52, h: 60 },
-  memory: { x: 35, y: 4, w: 34, h: 88 },
   credits: { x: 30, y: 8, w: 44, h: 74 },
 }
 
@@ -102,7 +101,6 @@ const MIN_SIZE: Record<AppKind, WindowSize> = {
   project: { w: 34, h: 36 },
   computer: { w: 32, h: 40 },
   terminal: { w: 28, h: 28 },
-  memory: { w: 28, h: 56 },
   credits: { w: 30, h: 38 },
 }
 

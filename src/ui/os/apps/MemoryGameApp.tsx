@@ -83,19 +83,18 @@ function statusMessage(state: MemoryState, time: string, TEXT: OsText['memory'])
 export interface MemoryGameAppProps {
   /** Projeto `memory-game` de projects.web.ts: liga o jogo à versão completa. */
   project?: WebProject
-  /** Abre a janela do projeto no SO. */
-  onOpenProject?: (slug: string) => void
 }
 
 /**
- * Jogo da Memória 4x4 dentro do SO. Cartas com glifos Phosphor que viram em 3D (sem movimento
- * para quem pediu menos), contador de jogadas e de tempo, vitória, reiniciar e jogável só pelo
- * teclado (setas andam, Enter ou Espaço viram). As regras ficam em memoryGame.ts (reducer puro).
+ * Jogo da Memória 4x4, na tela da TV do quarto (ui/tv/TvGameScreen). Usa o visual e os tokens do SO:
+ * quem o embute define o `--px`. Cartas com glifos Phosphor que viram (sem movimento para quem pediu
+ * menos), contador de jogadas e de tempo, vitória, reiniciar e jogável só pelo teclado (setas andam,
+ * Enter ou Espaço viram). As regras ficam em memoryGame.ts (reducer puro).
  */
-export const MemoryGameApp = memo(function MemoryGameApp({ project, onOpenProject }: MemoryGameAppProps) {
+export const MemoryGameApp = memo(function MemoryGameApp({ project }: MemoryGameAppProps) {
   const os = useOsText()
   const TEXT = os.memory
-  // Inicializador do reducer: roda uma vez, só no cliente (a janela nunca vem do servidor).
+  // Inicializador do reducer: roda uma vez, só no cliente (a TV nunca vem do servidor).
   const [state, dispatch] = useReducer(memoryReducer, undefined, () => createGame(shuffleDeck(Math.random)))
   // Relógio do tempo de jogo: o intervalo só roda durante a partida; o render nunca lê Date.now().
   const [now, setNow] = useState(0)
@@ -109,8 +108,13 @@ export const MemoryGameApp = memo(function MemoryGameApp({ project, onOpenProjec
   const won = state.status === 'won'
   const locked = state.open.length === 2
 
+  // O jogo ligou: o teclado já vai para o tabuleiro (como o iframe dos outros jogos ao carregar).
+  useEffect(() => {
+    cardRefs.current[0]?.focus({ preventScroll: true })
+  }, [])
+
   // O tabuleiro é o maior quadrado que cabe na área livre. Mede em px de LAYOUT (clientWidth), que
-  // não sofrem o transform 3D do monitor, e acompanha o resize da janela.
+  // não sofrem o transform 3D da TV, e acompanha a entrada e a saída da tela cheia.
   useEffect(() => {
     const stage = stageRef.current
     if (!stage) return
@@ -167,43 +171,65 @@ export const MemoryGameApp = memo(function MemoryGameApp({ project, onOpenProjec
 
   return (
     <div className={`${scope.scope} ${styles.root}`}>
-      <header className={styles.header}>
-        <div className={styles.titles}>
-          <h2 className={styles.title}>{TEXT.heading}</h2>
-          <p className={styles.hint}>{TEXT.hint}</p>
-        </div>
-        <button type="button" className={styles.restart} onClick={restart}>
-          <span className={styles.restartGlyph} aria-hidden="true">
-            <ArrowCounterClockwiseIcon weight="bold" />
-          </span>
-          {TEXT.restart}
-        </button>
-      </header>
+      <div className={styles.side}>
+        <header className={styles.header}>
+          <div className={styles.titles}>
+            <h2 className={styles.title}>{TEXT.heading}</h2>
+            <p className={styles.hint}>{TEXT.hint}</p>
+          </div>
+          <button type="button" className={styles.restart} onClick={restart}>
+            <span className={styles.restartGlyph} aria-hidden="true">
+              <ArrowCounterClockwiseIcon weight="bold" />
+            </span>
+            {TEXT.restart}
+          </button>
+        </header>
 
-      <dl className={styles.stats} aria-label={TEXT.stats}>
-        <div className={styles.stat}>
-          <dt>{TEXT.moves}</dt>
-          <dd>{state.moves}</dd>
-        </div>
-        <div className={styles.stat}>
-          <dt>
-            <span className={styles.statGlyph} aria-hidden="true">
-              <TimerIcon weight="duotone" />
-            </span>
-            {TEXT.time}
-          </dt>
-          <dd>{time}</dd>
-        </div>
-        <div className={styles.stat}>
-          <dt>
-            <span className={styles.statGlyph} aria-hidden="true">
-              <TrophyIcon weight="duotone" />
-            </span>
-            {TEXT.best}
-          </dt>
-          <dd>{bestLabel}</dd>
-        </div>
-      </dl>
+        <dl className={styles.stats} aria-label={TEXT.stats}>
+          <div className={styles.stat}>
+            <dt>{TEXT.moves}</dt>
+            <dd>{state.moves}</dd>
+          </div>
+          <div className={styles.stat}>
+            <dt>
+              <span className={styles.statGlyph} aria-hidden="true">
+                <TimerIcon weight="duotone" />
+              </span>
+              {TEXT.time}
+            </dt>
+            <dd>{time}</dd>
+          </div>
+          <div className={styles.stat}>
+            <dt>
+              <span className={styles.statGlyph} aria-hidden="true">
+                <TrophyIcon weight="duotone" />
+              </span>
+              {TEXT.best}
+            </dt>
+            <dd>{bestLabel}</dd>
+          </div>
+        </dl>
+
+        <footer className={styles.footer}>
+          <p className={styles.status} role="status">
+            {statusMessage(state, time, TEXT)}
+          </p>
+          {fullUrl ? (
+            <div className={styles.links}>
+              <a className={shared.actionQuiet} href={fullUrl} target="_blank" rel="noreferrer">
+                <span className={shared.actionGlyph} aria-hidden="true">
+                  <FullGlyph weight="regular" />
+                </span>
+                {project?.liveUrl ? TEXT.project.full : TEXT.project.fullRepo}
+                <span className={shared.srOnly}>{os.detail.newTab}</span>
+                <span className={shared.actionArrow} aria-hidden="true">
+                  <ArrowUpRightIcon weight="regular" />
+                </span>
+              </a>
+            </div>
+          ) : null}
+        </footer>
+      </div>
 
       <div ref={stageRef} className={styles.stage}>
         <div className={styles.board} style={boardStyle} role="group" aria-label={TEXT.boardLabel}>
@@ -266,37 +292,6 @@ export const MemoryGameApp = memo(function MemoryGameApp({ project, onOpenProjec
           ) : null}
         </div>
       </div>
-
-      <footer className={styles.footer}>
-        <p className={styles.status} role="status">
-          {statusMessage(state, time, TEXT)}
-        </p>
-        {project ? (
-          <div className={styles.links}>
-            {fullUrl ? (
-              <a className={shared.actionQuiet} href={fullUrl} target="_blank" rel="noreferrer">
-                <span className={shared.actionGlyph} aria-hidden="true">
-                  <FullGlyph weight="regular" />
-                </span>
-                {project.liveUrl ? TEXT.project.full : TEXT.project.fullRepo}
-                <span className={shared.srOnly}>{os.detail.newTab}</span>
-                <span className={shared.actionArrow} aria-hidden="true">
-                  <ArrowUpRightIcon weight="regular" />
-                </span>
-              </a>
-            ) : null}
-            {onOpenProject ? (
-              <button
-                type="button"
-                className={shared.actionQuiet}
-                onClick={() => onOpenProject(project.slug)}
-              >
-                {TEXT.project.details}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      </footer>
     </div>
   )
 })

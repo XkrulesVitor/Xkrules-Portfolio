@@ -157,8 +157,9 @@ describe('i18n: o inglês só troca texto', () => {
       const base = WEB_PROJECTS.find((p) => p.slug === project.slug)
       assert.ok(base)
       assert.notEqual(project.summary, '', project.slug)
-      if (project.slug === 'portfolio-gab') assert.notEqual(project.summary, base.summary)
-      else assert.equal(project.summary, 'Coming soon.')
+      // O Noronha App segue sem descrição; os demais têm texto próprio em cada idioma.
+      if (project.slug === 'noronha-app') assert.equal(project.summary, 'Coming soon.')
+      else assert.notEqual(project.summary, base.summary, project.slug)
     }
     for (const piece of PRINT_SHOWCASE.projects) {
       assert.ok(PRINT_PROJECT_TEXT_EN[piece.slug], `peça "${piece.slug}" sem texto em inglês`)
@@ -201,7 +202,6 @@ describe('i18n: coerência entre os módulos', () => {
         os.projects.title,
         os.apps.computer.title,
         os.apps.terminal.title,
-        os.apps.memory.title,
         os.apps.credits.title,
       ])
     })

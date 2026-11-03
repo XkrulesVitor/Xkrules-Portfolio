@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { DEFAULT_VOLUMES, SOUND_PREFS_KEY } from '../../lib/audio/volumes.ts'
 import { LOCALE_STORAGE_KEY } from '../../lib/locale.ts'
+import { selectHoverOn } from '../selectors.ts'
 import { useExperienceStore } from '../useExperienceStore.ts'
 
 // Rodar: npm test  (node --test com type stripping nativo; zero dependências extras).
@@ -112,6 +113,71 @@ describe('store: máquina de estados', () => {
     get().setHovered('chair')
     get().setMode('transitioning')
     assert.equal(get().hovered, null)
+  })
+
+  it('hoveredView acompanha o hover, troca sem mudar o hotspot e só existe com hovered', () => {
+    assert.equal(get().hoveredView, null)
+    get().setHovered('shelf', 'digital')
+    assert.equal(get().hoveredView, null) // loading: guarda 3
+    toIdle()
+    get().setHovered('shelf', 'digital')
+    assert.equal(get().hovered, 'shelf')
+    assert.equal(get().hoveredView, 'digital')
+    get().setHovered('shelf', 'tabuleiro') // da estante para o rack: mesmo hotspot, outra vista
+    assert.equal(get().hovered, 'shelf')
+    assert.equal(get().hoveredView, 'tabuleiro')
+    get().setHovered('desk') // sem vista
+    assert.equal(get().hoveredView, null)
+    get().setHovered('shelf', 'digital')
+    get().setHovered(null, 'digital') // sem hotspot não há vista
+    assert.equal(get().hovered, null)
+    assert.equal(get().hoveredView, null)
+  })
+
+  it('hoveredView some junto com hovered ao sair de idle', () => {
+    const exits: (() => void)[] = [
+      () => get().requestFocus('shelf', 'digital'),
+      () => get().startGame('racco'),
+      () => get().setMode('transitioning'),
+    ]
+    for (const exit of exits) {
+      useExperienceStore.setState(initial, true)
+      toIdle()
+      get().setHovered('shelf', 'digital')
+      exit()
+      assert.equal(get().hovered, null)
+      assert.equal(get().hoveredView, null)
+    }
+  })
+
+  it('repetir o mesmo hover não notifica (o hitbox o reafirma a cada movimento)', () => {
+    toIdle()
+    let notified = 0
+    const stop = useExperienceStore.subscribe(() => {
+      notified += 1
+    })
+    get().setHovered('shelf', 'digital')
+    get().setHovered('shelf', 'digital')
+    get().setHovered('shelf', 'digital')
+    stop()
+    assert.equal(notified, 1)
+  })
+
+  it('selectHoverOn: só o marcador da vista certa reage', () => {
+    toIdle()
+    get().setHovered('shelf', 'digital')
+    assert.equal(selectHoverOn(get(), 'shelf', 'digital'), true)
+    assert.equal(selectHoverOn(get(), 'shelf', 'tabuleiro'), false)
+    assert.equal(selectHoverOn(get(), 'desk', null), false)
+    // Marcador sem vista vale para o hotspot inteiro.
+    get().setHovered('desk')
+    assert.equal(selectHoverOn(get(), 'desk', null), true)
+    // Hover na zona sem vista (hitbox sem `userData.view`): os dois marcadores reagem.
+    get().setHovered('shelf')
+    assert.equal(selectHoverOn(get(), 'shelf', 'digital'), true)
+    assert.equal(selectHoverOn(get(), 'shelf', 'tabuleiro'), true)
+    get().setHovered(null)
+    assert.equal(selectHoverOn(get(), 'shelf', 'digital'), false)
   })
 
   it('onCameraRest é no-op fora de transitioning/intro', () => {
@@ -266,26 +332,121 @@ describe('store: máquina de estados', () => {
   })
 })
 
-describe('store: jogo na TV e app no PC', () => {
+describe('store: jogo na TV', () => {
   function toShelfDigital() {
     toIdle()
     get().requestFocus('shelf', 'digital')
     get().onCameraRest()
   }
 
-  it('startGame só vale com a zona de jogos em foco na vista digital', () => {
-    toIdle()
-    get().startGame('porriland')
-    assert.equal(get().playing, null) // idle
-    get().requestFocus('shelf')
-    get().onCameraRest()
-    get().startGame('porriland')
-    assert.equal(get().playing, null) // vista tabuleiro
-    get().setView('digital')
+  function assertFlyingToTv(slug: string) {
+    assert.equal(get().mode, 'transitioning')
+    assert.equal(get().focus, 'shelf')
+    assert.equal(get().view, 'digital')
+    assert.equal(get().playing, slug)
+    assert.equal(get().highlightBox, null)
+  }
+
+  it('startGame na vista digital da zona de jogos liga ali mesmo, sem sair do foco', () => {
+    toShelfDigital()
     get().setHighlightBox('porriland')
     get().startGame('porriland')
+    assert.equal(get().mode, 'focused')
     assert.equal(get().playing, 'porriland')
     assert.equal(get().highlightBox, null) // o painel sai: nenhum destaque preso
+  })
+
+  it('startGame de idle voa direto para a TV e o jogo sobrevive à chegada', () => {
+    toIdle()
+    get().setHovered('desk')
+    get().startGame('memory_game')
+    assertFlyingToTv('memory_game')
+    assert.equal(get().hovered, null)
+    get().setMode('transitioning') // reafirmar o voo não desliga o jogo
+    assert.equal(get().playing, 'memory_game')
+    get().onCameraRest()
+    assert.equal(get().mode, 'focused')
+    assert.equal(get().focus, 'shelf')
+    assert.equal(get().view, 'digital')
+    assert.equal(get().playing, 'memory_game')
+  })
+
+  it('startGame de outro hotspot ou de outra vista também voa para a TV', () => {
+    toIdle()
+    get().requestFocus('desk')
+    get().onCameraRest()
+    get().startGame('memory_game')
+    assertFlyingToTv('memory_game')
+
+    useExperienceStore.setState(initial, true)
+    toIdle()
+    get().requestFocus('shelf') // vista tabuleiro
+    get().onCameraRest()
+    get().setHighlightBox('aldeia_dorme')
+    get().startGame('piter')
+    assertFlyingToTv('piter')
+  })
+
+  it('startGame é ignorado em loading, intro e em voo', () => {
+    get().startGame('piter') // loading
+    assert.equal(get().mode, 'loading')
+    assert.equal(get().playing, null)
+
+    get().setMode('intro')
+    get().startGame('piter')
+    assert.equal(get().mode, 'intro')
+    assert.equal(get().playing, null)
+
+    get().onCameraRest()
+    get().requestFocus('desk')
+    get().startGame('piter') // voo rumo a um hotspot
+    assert.equal(get().focus, 'desk')
+    assert.equal(get().playing, null)
+
+    get().requestHome()
+    get().startGame('piter') // voo de volta
+    assert.equal(get().focus, null)
+    assert.equal(get().playing, null)
+  })
+
+  it('requestHome cancela o voo até a TV e desliga o jogo', () => {
+    toIdle()
+    get().startGame('memory_game')
+    get().requestHome()
+    assert.equal(get().mode, 'transitioning')
+    assert.equal(get().focus, null)
+    assert.equal(get().view, null)
+    assert.equal(get().playing, null)
+    get().onCameraRest()
+    assert.equal(get().mode, 'idle')
+  })
+
+  it('stopGame depois do voo volta à vista digital, em foco', () => {
+    toIdle()
+    get().startGame('memory_game')
+    get().onCameraRest()
+    get().stopGame()
+    assert.equal(get().mode, 'focused')
+    assert.equal(get().focus, 'shelf')
+    assert.equal(get().view, 'digital')
+    assert.equal(get().playing, null)
+  })
+
+  it('stopGame no meio do voo mantém o destino na vista digital', () => {
+    toIdle()
+    get().startGame('memory_game')
+    get().stopGame()
+    assert.equal(get().mode, 'transitioning')
+    assert.equal(get().focus, 'shelf')
+    assert.equal(get().view, 'digital')
+    assert.equal(get().playing, null)
+  })
+
+  it('setMode fora de focused e transitioning desliga o jogo', () => {
+    toShelfDigital()
+    get().startGame('racco')
+    get().setMode('idle')
+    assert.equal(get().playing, null)
   })
 
   it('stopGame, troca de vista e volta para HOME desligam o jogo', () => {
@@ -305,35 +466,6 @@ describe('store: jogo na TV e app no PC', () => {
     get().startGame('racco')
     get().requestHome()
     assert.equal(get().playing, null)
-    assert.equal(get().mode, 'transitioning')
-  })
-
-  it('openOnPc voa direto para a mesa e numera cada pedido', () => {
-    toShelfDigital()
-    get().startGame('o_anel')
-    get().openOnPc('memory')
-    assert.equal(get().mode, 'transitioning')
-    assert.equal(get().focus, 'desk')
-    assert.equal(get().view, null)
-    assert.equal(get().playing, null)
-    assert.deepEqual(get().pcLaunch, { app: 'memory', id: 1 })
-
-    get().openOnPc('memory') // em voo: ignorado
-    assert.equal(get().pcLaunch?.id, 1)
-
-    get().onCameraRest()
-    get().openOnPc('memory') // mesa já em foco: só reabre
-    assert.equal(get().mode, 'focused')
-    assert.equal(get().focus, 'desk')
-    assert.equal(get().pcLaunch?.id, 2)
-  })
-
-  it('openOnPc de idle também vai para a mesa; em loading é ignorado', () => {
-    get().openOnPc('memory')
-    assert.equal(get().pcLaunch, null)
-    toIdle()
-    get().openOnPc('memory')
-    assert.equal(get().focus, 'desk')
     assert.equal(get().mode, 'transitioning')
   })
 })

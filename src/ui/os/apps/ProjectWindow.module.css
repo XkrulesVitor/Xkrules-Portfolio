@@ -3,23 +3,18 @@
   padding: var(--sp-5);
 }
 
-/* Duas colunas quando cabem (mídia + texto), uma coluna em painéis estreitos. Sem media query:
-   os mínimos são em px de design, então a quebra acontece no mesmo ponto em qualquer escala. */
+/* Coluna única: a galeria (carrossel) ocupa a largura toda da janela, em destaque, e o texto vem
+   embaixo. No monitor (1280x720) a janela do projeto é larga e baixa; duas colunas deixariam as
+   capturas pequenas demais para ler. Sem media query: tudo é px de design, então o ponto de
+   quebra é o mesmo em qualquer escala. */
 .layout {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--sp-5);
-  align-items: flex-start;
 }
 
-.mediaCol {
-  flex: 1.2 1 calc(var(--px) * 300);
-  min-width: 0;
-}
-
-.infoCol {
+.info {
   display: flex;
-  flex: 1 1 calc(var(--px) * 270);
   flex-direction: column;
   gap: var(--sp-4);
   min-width: 0;
@@ -47,6 +42,7 @@
   line-height: 1.15;
   outline: none;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .meta {
@@ -77,23 +73,30 @@
   color: var(--accent, var(--os-mint));
 }
 
+/* Texto de leitura: largura limitada em `ch` (acompanha o corpo da fonte e a escala do SO), para
+   as linhas não passarem de ~65 caracteres mesmo numa janela larga. */
 .summary {
+  max-width: 60ch;
   margin: 0;
-  font-size: var(--fs-md);
-  line-height: 1.55;
+  color: var(--os-ink);
+  font-size: var(--fs-lg);
+  line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .details {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  max-width: 66ch;
 }
 
 .details p {
   margin: 0;
   color: var(--os-ink-dim);
-  font-size: var(--fs-sm);
-  line-height: 1.6;
+  font-size: calc(var(--px) * 15);
+  line-height: 1.65;
+  text-wrap: pretty;
 }
 
 .sectionLabel {
@@ -105,11 +108,83 @@
   text-transform: uppercase;
 }
 
+/* Área de atuação e stack lado a lado quando cabem (duas colunas), empilhadas quando não. */
+.facets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--px) * 240), 1fr));
+  gap: var(--sp-4) var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--os-line);
+}
+
+/* Chips da área de atuação: na cor do projeto e um pouco maiores que os da stack (neutros). */
+.areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.area {
+  display: inline-flex;
+  align-items: center;
+  padding: calc(var(--px) * 4) var(--sp-3);
+  border: 1px solid color-mix(in srgb, var(--accent, var(--os-mint)) 50%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent, var(--os-mint)) 16%, transparent);
+  color: var(--os-ink);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--sp-3);
-  padding-top: var(--sp-1);
+}
+
+/* Ação principal (Abrir site; Jogar na TV quando o projeto não tem site). O fundo é a cor do
+   projeto misturada com o azul da janela, escura o bastante para o texto branco passar de 4,5:1
+   com qualquer cor de destaque, inclusive a menta; o brilho e a borda carregam a cor. */
+.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: calc(var(--px) * 44);
+  padding: var(--sp-2) var(--sp-5);
+  border: 1px solid color-mix(in srgb, var(--accent, var(--os-mint)) 82%, transparent);
+  border-radius: var(--r-md);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent, var(--os-mint)) 44%, #0e1630),
+    color-mix(in srgb, var(--accent, var(--os-mint)) 30%, #0e1630)
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 calc(var(--px) * 8) calc(var(--px) * 22) color-mix(in srgb, var(--accent, var(--os-mint)) 30%, transparent);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color 0.16s,
+    box-shadow 0.16s,
+    transform 0.16s;
+}
+
+.primary:hover {
+  border-color: var(--accent, var(--os-mint));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.24),
+    0 calc(var(--px) * 10) calc(var(--px) * 28) color-mix(in srgb, var(--accent, var(--os-mint)) 52%, transparent);
+  transform: translateY(-1px);
 }
 
 .flush {

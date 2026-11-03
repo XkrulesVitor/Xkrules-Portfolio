@@ -2,7 +2,7 @@
 import type { SiteText, UiText } from '../site.ts'
 
 export const SITE_TEXT_EN = {
-  title: 'Vitor "XKrules" Noronha — 3D Portfolio',
+  title: 'Vitor "XKrules" Noronha | 3D Portfolio',
   description:
     'Interactive 3D portfolio: web projects, 3D printing, board games and game dev in an isometric diorama.',
   ogLocale: 'en_US',
@@ -61,6 +61,16 @@ export const UI_TEXT_EN = {
       label: 'Language',
     },
   },
+  markers: {
+    aria: 'Go to {label}',
+    labels: {
+      chair: 'About me',
+      desk: 'Web projects',
+      printer: '3D printing',
+      tabuleiro: 'Board games',
+      digital: 'Digital games',
+    },
+  },
   back: {
     label: 'Back',
     aria: 'Back to the overview (Esc)',
@@ -90,6 +100,10 @@ export const UI_TEXT_EN = {
     skills: 'Skills',
     links: 'Where to find me',
     sourceCode: 'View this portfolio’s source code',
+    awards: 'Awards',
+    awardsCount: '{n} awards',
+    featuredAward: 'Featured',
+    timeline: 'Background',
   },
   printer: {
     eyebrow: '3D printing',
@@ -137,8 +151,6 @@ export const UI_TEXT_EN = {
     play: {
       tv: 'Play on the TV',
       tvAria: 'Play {title} on the room TV',
-      pc: 'Play on the PC',
-      pcAria: 'Open {title} on the room computer',
     },
     readMore: 'Read more',
     readLess: 'Show less',

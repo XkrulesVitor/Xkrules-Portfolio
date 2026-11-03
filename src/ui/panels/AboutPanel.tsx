@@ -2,33 +2,13 @@ import { MapPinIcon } from '@phosphor-icons/react'
 import { SITE } from '@/content/site'
 import type { AboutContent } from '@/content/types'
 import { useContent } from '../i18n/useLocale'
-import { LinkButton, SmartImage, Tag, TodoText } from '../primitives'
+import { GlassCard, LinkButton, TodoText } from '../primitives'
+import { AboutAvatar } from './about/AboutAvatar'
+import { AwardsSection } from './about/AwardsSection'
+import { SkillsSection } from './about/SkillsSection'
+import { TimelineSection } from './about/TimelineSection'
 import { PanelSection } from './PanelSection'
 import { PanelShell } from './PanelShell'
-
-/** Iniciais do nome, sem o apelido entre aspas: 'Vitor "XKrules" Noronha' -> 'VN'. */
-function initials(name: string): string {
-  const words = name
-    .replace(/["“”][^"“”]*["“”]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean)
-  if (words.length === 0) return ''
-  const first = words[0][0]
-  const last = words.length > 1 ? words[words.length - 1][0] : ''
-  return (first + last).toUpperCase()
-}
-
-function Avatar({ content }: { content: AboutContent }) {
-  return (
-    <div className="relative grid size-14 shrink-0 place-items-center overflow-hidden rounded-full border border-[var(--glass-border-strong)] bg-linear-to-br from-accent-mint/30 to-accent-blue/30 text-lg font-semibold tracking-tight text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_8px_20px_-10px_rgb(0_0_0/0.6)]">
-      {content.avatar ? (
-        <SmartImage image={content.avatar} sizes="56px" priority />
-      ) : (
-        <span aria-hidden="true">{initials(content.name)}</span>
-      )}
-    </div>
-  )
-}
 
 interface AboutPanelProps {
   /** Conteúdo. Padrão: content/about.ts, no idioma ativo. */
@@ -36,7 +16,11 @@ interface AboutPanelProps {
   autoFocus?: boolean
 }
 
-/** Painel do hotspot `chair`: quem eu sou, habilidades e links. Data-driven (content/about.ts). */
+/**
+ * Painel do hotspot `chair`: quem eu sou. Cabeçalho com a foto, frase de abertura, bio, prêmios,
+ * trajetória, habilidades e links. Data-driven (content/about.ts); `tagline`, `awards` e `timeline`
+ * são opcionais e a seção some quando falta o dado.
+ */
 export function AboutPanel({ content: given, autoFocus }: AboutPanelProps) {
   const { ui, about, getHotspot } = useContent()
   const content = given ?? about
@@ -49,16 +33,30 @@ export function AboutPanel({ content: given, autoFocus }: AboutPanelProps) {
       eyebrow={getHotspot('chair').label}
       title={content.name}
       subtitle={content.headline}
-      leading={<Avatar content={content} />}
+      leading={<AboutAvatar content={content} />}
       autoFocus={autoFocus}
     >
       <PanelSection>
         {content.location ? (
           <p className="flex items-center gap-1.5 text-xs text-ink/70">
-            <MapPinIcon size={14} weight="duotone" aria-hidden="true" />
+            <MapPinIcon size={14} weight="duotone" aria-hidden="true" className="text-accent-mint" />
             {content.location}
           </p>
         ) : null}
+        {content.tagline ? (
+          <GlassCard variant="inset" padding="md" className="overflow-hidden">
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-3 left-0 w-[3px] rounded-full bg-linear-to-b from-accent-mint to-accent-blue"
+            />
+            <p className="pl-2 text-[17px] leading-snug font-medium text-balance text-ink">
+              <TodoText text={content.tagline} />
+            </p>
+          </GlassCard>
+        ) : null}
+      </PanelSection>
+
+      <PanelSection>
         <div className="flex flex-col gap-3 text-sm leading-relaxed text-ink/85">
           {content.bio.map((paragraph, i) => (
             <p key={i}>
@@ -68,24 +66,9 @@ export function AboutPanel({ content: given, autoFocus }: AboutPanelProps) {
         </div>
       </PanelSection>
 
-      <PanelSection title={t.skills}>
-        <div className="flex flex-col gap-4">
-          {content.skills.map((group) => (
-            <div key={group.label} className="flex flex-col gap-2">
-              <p className="text-xs font-medium text-ink/75">{group.label}</p>
-              <ul className="flex flex-wrap gap-1.5">
-                {group.items.map((item) => (
-                  <li key={item}>
-                    <Tag>
-                      <TodoText text={item} />
-                    </Tag>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </PanelSection>
+      <AwardsSection awards={content.awards ?? []} />
+      <TimelineSection timeline={content.timeline ?? []} />
+      <SkillsSection skills={content.skills} />
 
       <PanelSection title={t.links}>
         {content.links.length > 0 ? (

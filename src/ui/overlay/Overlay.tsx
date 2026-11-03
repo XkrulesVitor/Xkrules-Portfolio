@@ -4,6 +4,7 @@ import { getHotspot } from '@/content/hotspots'
 import type { PanelKind } from '@/content/types'
 import { selectFocus, selectMode } from '@/store/selectors'
 import { useExperienceStore } from '@/store/useExperienceStore'
+import { useDocumentLocale } from '../i18n/useDocumentLocale'
 import { AboutPanel } from '../panels/AboutPanel'
 import { GamesPanel } from '../panels/GamesPanel'
 import { PrinterPanel } from '../panels/PrinterPanel'
@@ -26,6 +27,8 @@ const PANELS: Partial<Record<PanelKind, ComponentType>> = {
  * dentro (HUD, botão Voltar, painéis) perde os deslocamentos e escalas e fica só nos esmaecimentos.
  */
 export function Overlay() {
+  // Em produção o Next aplica o título do servidor depois da tela de loading: reaplica o idioma ao montar.
+  useDocumentLocale()
   const mode = useExperienceStore(selectMode)
   const focus = useExperienceStore(selectFocus)
   // Jogo na TV: o painel sai para a tela ficar livre (a câmera vai para o preset `shelfTv`).

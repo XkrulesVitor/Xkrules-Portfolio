@@ -5,7 +5,7 @@ export const SCREEN_TEXT_EN = {
   wallpaper: {
     brand: 'XKrules OS',
     tagline: '3D Portfolio',
-    icons: ['Projects', 'This Computer', 'Terminal', 'Memory 4×4', 'Credits'],
+    icons: ['Projects', 'This Computer', 'Terminal', 'Credits'],
     start: 'Start',
   },
 

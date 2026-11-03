@@ -14,7 +14,6 @@ import {
   LinkedinLogoIcon,
   LinkIcon,
   PowerIcon,
-  PuzzlePieceIcon,
   RocketLaunchIcon,
   StorefrontIcon,
   TerminalWindowIcon,
@@ -34,7 +33,6 @@ const GLYPHS: Record<OsGlyphKey, Icon> = {
   envelope: EnvelopeSimpleIcon,
   computer: DesktopTowerIcon,
   terminal: TerminalWindowIcon,
-  puzzle: PuzzlePieceIcon,
   heart: HeartIcon,
   power: PowerIcon,
 }

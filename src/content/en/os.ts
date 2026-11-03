@@ -32,7 +32,6 @@ export const OS_TEXT_EN = {
   apps: {
     computer: { title: 'This Computer' },
     terminal: { title: 'Terminal' },
-    memory: { title: 'Memory 4×4' },
     credits: { title: 'Credits' },
   },
   projects: {
@@ -46,16 +45,24 @@ export const OS_TEXT_EN = {
   detail: {
     year: 'Year',
     role: 'Role',
+    areas: 'Areas of work',
     stack: 'Stack',
     links: 'Project links',
     repo: 'View repository',
     live: 'Open website',
+    playTv: 'Play on the TV',
     newTab: '(opens in a new tab)',
   },
   media: {
     gallery: 'Project media',
     placeholder: 'Screenshots coming soon',
     video: 'Project video',
+    prev: 'Previous image',
+    next: 'Next image',
+    counter: 'Image {n} of {total}',
+    goTo: 'Go to image {n}',
+    pause: 'Pause the automatic slideshow',
+    play: 'Resume the automatic slideshow',
   },
 
   computer: {
@@ -179,7 +186,6 @@ export const OS_TEXT_EN = {
     project: {
       full: 'Full version',
       fullRepo: 'Full version on GitHub',
-      details: 'View the project',
     },
     symbols: {
       controller: 'controller',

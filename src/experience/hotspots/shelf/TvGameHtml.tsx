@@ -33,8 +33,9 @@ const SCALE: [number, number, number] = [1, METERS_PER_PX_Y / METERS_PER_PX_X, 1
 const Z_INDEX_RANGE: [number, number] = [9, 0]
 
 /**
- * Cliques na tela "Ligando..." não podem virar "clique fora" na cena (o R3F lê `offsetX/Y` relativos
- * a este elemento). Dentro do iframe os eventos já não sobem: são de outro documento.
+ * Cliques na tela "Ligando..." e no jogo local não podem virar "clique fora" na cena (o R3F lê
+ * `offsetX/Y` relativos a este elemento). Dentro do iframe os eventos já não sobem: são de outro
+ * documento.
  */
 const stopEvent = (event: SyntheticEvent) => event.stopPropagation()
 const KEEP_EVENTS_INSIDE = {
@@ -55,13 +56,15 @@ const KEEP_EVENTS_INSIDE = {
  * LAYOUT.tv. Como o MonitorHtml: sem `occlude` (a câmera fica parada de frente para a TV enquanto o
  * jogo roda) e com PORTAL ESTÁVEL no pai do canvas (sem ele o drei recria a raiz React do Html e,
  * em produção, o conteúdo some; ver MonitorHtml). Vazio e sem ponteiro quando `store.playing` é null.
+ * No voo direto até a TV (`startGame` de fora da vista Digital) também fica vazio: sem `occlude`, o
+ * jogo apareceria por cima de tudo que estiver no caminho da câmera. Ele liga na chegada.
  */
 export function TvGameHtml() {
   const canvasParent = useThree((s) => s.gl.domElement.parentElement)
   const portal = useMemo(() => ({ current: canvasParent }) as RefObject<HTMLElement>, [canvasParent])
   // Os jogos no idioma ativo: o título (aria do iframe, "Ligando...") segue o seletor de idioma.
   const games = useContent().games
-  const playing = useExperienceStore((s) => s.playing)
+  const playing = useExperienceStore((s) => (s.mode === 'focused' ? s.playing : null))
   const game = playing ? (games.find((g) => g.slug === playing) ?? null) : null
 
   return (

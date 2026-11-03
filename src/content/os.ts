@@ -22,7 +22,6 @@ export type OsGlyphKey =
   | 'envelope'
   | 'computer'
   | 'terminal'
-  | 'puzzle'
   | 'heart'
   | 'power'
 
@@ -199,7 +198,6 @@ export const OS_TEXT = {
   apps: {
     computer: { title: 'Este Computador' },
     terminal: { title: 'Terminal' },
-    memory: { title: 'Memória 4×4' },
     credits: { title: 'Créditos' },
   },
   projects: {
@@ -213,16 +211,26 @@ export const OS_TEXT = {
   detail: {
     year: 'Ano',
     role: 'Papel',
+    areas: 'Área de atuação',
     stack: 'Stack',
     links: 'Links do projeto',
     repo: 'Ver repositório',
     live: 'Abrir site',
+    /** Botão que liga o jogo do projeto na TV do quarto (`project.playOnTv`). */
+    playTv: 'Jogar na TV',
     newTab: '(abre em nova aba)',
   },
   media: {
     gallery: 'Mídia do projeto',
     placeholder: 'Capturas de tela em breve',
     video: 'Vídeo do projeto',
+    prev: 'Imagem anterior',
+    next: 'Próxima imagem',
+    /** Contador do carrossel e rótulo de cada slide. */
+    counter: 'Imagem {n} de {total}',
+    goTo: 'Ir para a imagem {n}',
+    pause: 'Pausar a troca automática',
+    play: 'Retomar a troca automática',
   },
 
   // Este Computador ------------------------------------------------------------------------------
@@ -321,7 +329,7 @@ export const OS_TEXT = {
     },
   },
 
-  // Jogo da Memória ------------------------------------------------------------------------------
+  // Jogo da Memória (roda na TV do quarto, ui/tv) ---------------------------------------------------
   memory: {
     heading: 'Jogo da Memória',
     hint: 'Encontre os 8 pares. Setas andam pelas cartas, Enter vira.',
@@ -351,7 +359,6 @@ export const OS_TEXT = {
     project: {
       full: 'Versão completa',
       fullRepo: 'Versão completa no GitHub',
-      details: 'Ver o projeto',
     },
     /** Nome de cada símbolo (lido pelos leitores de tela). */
     symbols: {
@@ -443,7 +450,7 @@ export type OsText = Widened<typeof OS_TEXT>
 
 export const OS_TEXT_BY_LOCALE: ByLocale<OsText> = { pt: OS_TEXT, en: OS_TEXT_EN }
 
-/** Slug do projeto web ligado ao Jogo da Memória do SO (projects.web.ts). */
+/** Slug do projeto web ligado ao Jogo da Memória da TV (projects.web.ts). */
 export const OS_MEMORY_PROJECT_SLUG = 'memory-game'
 
 /**

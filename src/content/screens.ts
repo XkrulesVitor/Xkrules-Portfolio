@@ -13,7 +13,7 @@ export const SCREEN_TEXT = {
     brand: 'XKrules OS',
     tagline: 'Portfólio 3D',
     /** Atalhos decorativos na coluna da esquerda (o SO de verdade abre ao clicar na mesa). */
-    icons: ['Projetos', 'Este Computador', 'Terminal', 'Memória 4×4', 'Créditos'],
+    icons: ['Projetos', 'Este Computador', 'Terminal', 'Créditos'],
     /** Rótulo do botão do menu iniciar na barra de tarefas desenhada. */
     start: 'Iniciar',
   },

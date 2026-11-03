@@ -78,8 +78,6 @@ export function MonitorHtml() {
   const active = useExperienceStore(
     (s) => (s.mode === 'focused' || (s.mode === 'transitioning' && s.focus === 'desk')) && s.focus === 'desk',
   )
-  // "Jogar no PC" (painel de Jogos): o SO abre o app pedido.
-  const launch = useExperienceStore((s) => s.pcLaunch)
 
   return (
     <Html
@@ -91,7 +89,7 @@ export function MonitorHtml() {
       distanceFactor={DISTANCE_FACTOR}
       zIndexRange={Z_INDEX_RANGE}
     >
-      <MonitorScreen active={active} launch={launch} {...KEEP_EVENTS_INSIDE} />
+      <MonitorScreen active={active} {...KEEP_EVENTS_INSIDE} />
     </Html>
   )
 }

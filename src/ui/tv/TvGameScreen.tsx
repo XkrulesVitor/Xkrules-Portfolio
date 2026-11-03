@@ -1,8 +1,11 @@
 import { useRef, useState, type CSSProperties, type HTMLAttributes } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { OS_MEMORY_PROJECT_SLUG } from '@/content/os'
 import type { GamePlay, GameProject } from '@/content/types'
-import { useUiText } from '../i18n/useLocale'
+import { useContent, useUiText } from '../i18n/useLocale'
+import { MemoryGameApp } from '../os/apps/MemoryGameApp'
 import { EASE, fmt, SmartImage } from '../primitives'
+import styles from './TvGameScreen.module.css'
 
 /**
  * Tamanho fixo do wrapper do jogo, em px CSS: a tela da TV mede 1.68 x 0.94 m (LAYOUT.tv), então
@@ -11,13 +14,13 @@ import { EASE, fmt, SmartImage } from '../primitives'
  */
 export const TV_SCREEN_SIZE = { width: 1280, height: 716 } as const
 
-/** Id do iframe: o botão "Tela cheia" da barra do overlay o procura por aqui. */
+/** Id do elemento do jogo (o iframe ou o app local): o botão "Tela cheia" da barra o procura por aqui. */
 export const TV_GAME_FRAME_ID = 'tv-game-frame'
 
 /** Permissões que o embed do itch.io dá aos jogos e que um jogo de navegador usa de fato. */
 const FRAME_ALLOW = 'autoplay; fullscreen *; gamepad; accelerometer; gyroscope'
 
-type TvPlay = Extract<GamePlay, { where: 'tv' }>
+type TvEmbedPlay = Extract<GamePlay, { src: string }>
 
 /**
  * O embed oficial do itch.io (upload_embed.css) põe o jogo num quadro com 1 px de borda e um rodapé de
@@ -29,7 +32,7 @@ type TvPlay = Extract<GamePlay, { where: 'tv' }>
 const DEFAULT_GAME_AREA = { width: 1280, height: 720 } as const
 const EMBED_CHROME = { x: 2, y: 21 } as const
 
-function frameStyle(play: TvPlay): CSSProperties {
+function frameStyle(play: TvEmbedPlay): CSSProperties {
   const area = play.area ?? DEFAULT_GAME_AREA
   const width = area.width + EMBED_CHROME.x
   const height = area.height + EMBED_CHROME.y
@@ -44,7 +47,7 @@ function frameStyle(play: TvPlay): CSSProperties {
   }
 }
 
-function TvGame({ game, play }: { game: GameProject; play: TvPlay }) {
+function TvEmbedGame({ game, play }: { game: GameProject; play: TvEmbedPlay }) {
   const t = useUiText().tvGame
   const [loaded, setLoaded] = useState(false)
   const frameRef = useRef<HTMLIFrameElement>(null)
@@ -111,6 +114,30 @@ function TvGame({ game, play }: { game: GameProject; play: TvPlay }) {
   )
 }
 
+/**
+ * Jogo da Memória (`play.app`): o componente React direto na tela, sem iframe e sem "Ligando...". O
+ * escopo visual vem do próprio app (`scope.module.css`); o `--px` e o fundo, de `styles.stage`. O id
+ * fica aqui para a tela cheia levar o fundo junto; lá o `--px` acompanha o tamanho da tela.
+ */
+function TvMemoryGame({ game }: { game: GameProject }) {
+  const { ui, web } = useContent()
+  return (
+    <motion.div
+      id={TV_GAME_FRAME_ID}
+      role="region"
+      aria-label={fmt(ui.tvGame.frameTitle, { title: game.title })}
+      className={styles.app}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, ease: EASE }}
+    >
+      <div className={styles.stage}>
+        <MemoryGameApp project={web.find((p) => p.slug === OS_MEMORY_PROJECT_SLUG)} />
+      </div>
+    </motion.div>
+  )
+}
+
 export interface TvGameScreenProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'className' | 'style'> {
   /** Jogo ligado na TV (`store.playing`). `null`: o wrapper fica vazio e sem ponteiro. */
@@ -119,12 +146,13 @@ export interface TvGameScreenProps
 
 /**
  * Jogo rodando na TV do quarto (ARCHITECTURE §6.6): um wrapper FIXO de 1280x716 px com o iframe do
- * jogo (a versão web do itch.io) e, até o iframe carregar, uma tela "Ligando..." com a capa. Não
- * conhece o 3D: quem o embute (TvGameHtml) o põe sobre a tela da TV. Trocar de jogo remonta o iframe;
- * sem jogo, nada é montado e o jogo anterior para de vez (áudio incluído).
+ * jogo (a versão web do itch.io) e, até o iframe carregar, uma tela "Ligando..." com a capa; ou, no
+ * jogo local, o próprio componente. Não conhece o 3D: quem o embute (TvGameHtml) o põe sobre a tela da
+ * TV. Trocar de jogo remonta tudo; sem jogo, nada é montado e o jogo anterior para de vez (áudio
+ * incluído).
  */
 export function TvGameScreen({ game, ...rest }: TvGameScreenProps) {
-  const play = game?.play?.where === 'tv' ? game.play : null
+  const play = game?.play ?? null
   return (
     <div
       {...rest}
@@ -135,7 +163,13 @@ export function TvGameScreen({ game, ...rest }: TvGameScreenProps) {
         pointerEvents: play ? 'auto' : 'none',
       }}
     >
-      {game && play ? <TvGame key={game.slug} game={game} play={play} /> : null}
+      {game && play ? (
+        'src' in play ? (
+          <TvEmbedGame key={game.slug} game={game} play={play} />
+        ) : (
+          <TvMemoryGame key={game.slug} game={game} />
+        )
+      ) : null}
     </div>
   )
 }
